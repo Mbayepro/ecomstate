@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   Activity,
+  ArrowRight,
   Check,
   Download,
   Eye,
@@ -12,12 +13,15 @@ import {
   Globe,
   KeyRound,
   Layers,
+  Lock,
+  LogOut,
   MessageCircle,
   ShieldCheck,
   Store as StoreIcon,
   TrendingUp,
   Wallet,
 } from "lucide-react";
+
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -39,8 +43,12 @@ type AdminTab =
 
 export default function AdminDashboardPage() {
   const {
+    session,
+    loginAsAdmin,
+    logout,
     stores,
     orders,
+
     plans,
     modules,
     countries,
@@ -78,6 +86,11 @@ export default function AdminDashboardPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [savedNotice, setSavedNotice] = useState(false);
 
+  // États du portail de connexion sécurisé Super Admin
+  const [gateEmail, setGateEmail] = useState("");
+  const [gatePassword, setGatePassword] = useState("");
+  const [gateError, setGateError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!adminAccount) return;
     setAdminName(adminAccount.fullName);
@@ -86,6 +99,90 @@ export default function AdminDashboardPage() {
     setAdminPhone(adminAccount.phone);
     setAdminPassword(adminAccount.password);
   }, [adminAccount]);
+
+  if (session?.role !== "super_admin") {
+    return (
+      <div className="bg-navy-architectural flex min-h-screen flex-col items-center justify-center bg-[#0B1F33] px-4 py-12">
+        <div className="mb-8">
+          <BrandLogo light />
+        </div>
+        <Card className="w-full max-w-md border-white/15 bg-white shadow-2xl">
+          <CardContent className="p-7">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#102A43] text-[#10B981]">
+                <Lock className="h-5 w-5" />
+              </span>
+              <div>
+                <h1 className="text-xl font-extrabold text-[#102A43]">
+                  Accès Super Administrateur
+                </h1>
+                <p className="text-xs text-slate-500">
+                  Zone réservée à la direction générale d&apos;EcomSate
+                </p>
+              </div>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                setGateError(null);
+                const res = loginAsAdmin(gateEmail, gatePassword);
+                if (!res.ok) {
+                  setGateError(
+                    res.error ?? "Identifiants Super Administrateur refusés."
+                  );
+                }
+              }}
+              className="mt-6 space-y-4"
+            >
+              <Input
+                label="E-mail Super Administrateur"
+                type="email"
+                required
+                value={gateEmail}
+                onChange={(e) => setGateEmail(e.target.value)}
+                placeholder="admin@ecomsate.bj"
+              />
+              <Input
+                label="Mot de passe"
+                type="password"
+                required
+                value={gatePassword}
+                onChange={(e) => setGatePassword(e.target.value)}
+                placeholder="••••••••••••"
+              />
+
+              {gateError && (
+                <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+                  {gateError}
+                </p>
+              )}
+
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                className="w-full"
+              >
+                Déverrouiller la console
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </form>
+
+            <div className="mt-5 text-center">
+              <Link
+                href="/"
+                className="text-xs font-semibold text-slate-500 hover:text-[#102A43]"
+              >
+                ← Retourner à l&apos;accueil public
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
 
   const handleSaveAdminAccount = (e: React.FormEvent) => {
     e.preventDefault();
@@ -164,7 +261,17 @@ export default function AdminDashboardPage() {
                 Espace commerçant
               </Button>
             </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={logout}
+              className="border-rose-400/30 bg-rose-500/15 text-rose-100 hover:bg-rose-500/30"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Déconnexion
+            </Button>
           </div>
+
         </div>
       </header>
 

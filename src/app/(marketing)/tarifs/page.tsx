@@ -16,14 +16,15 @@ export default function TarifsPage() {
     <div className="py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <Badge variant="navy">Tarifs & Abonnements</Badge>
-          <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-[#102A43]">
+          <Badge variant="success">Tarifs & Abonnements</Badge>
+          <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-white">
             Des prix simples, sans commissions cachées sur vos ventes
           </h1>
-          <p className="mt-3 text-base text-slate-600">
+          <p className="mt-3 text-base text-slate-300">
             Démarrez avec 2 000 FCFA (paiement unique) pour 30 jours d&apos;essai,
             puis choisissez la formule adaptée à votre volume.
           </p>
+
 
           <div className="mt-6 inline-flex items-center rounded-xl border border-[#E2E8F0] bg-white p-1">
             <button

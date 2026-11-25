@@ -32,15 +32,16 @@ export default function CommentCaMarchePage() {
     <div className="py-16">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <Badge variant="navy">Parcours commerçant</Badge>
-          <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-[#102A43]">
+          <Badge variant="success">Parcours commerçant</Badge>
+          <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-white">
             Comment ça marche ?
           </h1>
-          <p className="mt-3 text-base text-slate-600">
+          <p className="mt-3 text-base text-slate-300">
             Passez d&apos;une page sociale ou d&apos;un commerce physique à une vraie
             boutique en ligne en quelques minutes.
           </p>
         </div>
+
 
         <div className="mt-12 space-y-5">
           {TIMELINE.map((item) => (

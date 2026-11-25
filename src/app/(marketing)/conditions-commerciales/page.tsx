@@ -5,10 +5,11 @@ export default function ConditionsCommercialesPage() {
   return (
     <div className="py-16">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        <Badge variant="navy">Conditions Commerciales</Badge>
-        <h1 className="mt-3 text-3xl font-extrabold text-[#102A43]">
+        <Badge variant="success">Conditions Commerciales</Badge>
+        <h1 className="mt-3 text-3xl font-extrabold text-white">
           Conditions Commerciales & Abonnements EcomSate
         </h1>
+
         <Card className="mt-8">
           <CardContent className="space-y-4 p-7 text-sm leading-relaxed text-slate-600">
             <p>

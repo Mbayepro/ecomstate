@@ -83,11 +83,12 @@ export function MarketingFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/admin" className="hover:text-white">
-                  Administration plateforme
+                <Link href="/connexion" className="hover:text-white">
+                  Espace Partenaire & Direction
                 </Link>
               </li>
             </ul>
+
           </div>
 
           <div>

@@ -84,7 +84,9 @@ export interface Store {
   ownerName: string;
   ownerEmail: string;
   ownerPhone: string;
+  ownerPassword?: string;
   name: string;
+
   slug: string;
   subdomain: string;
   customDomain?: string | null;

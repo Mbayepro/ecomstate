@@ -56,12 +56,13 @@ export default function ConnexionPage() {
       router.push("/admin");
       return;
     }
-    const res = loginAsMerchant(email);
+    const res = loginAsMerchant(email, password);
     if (!res.ok) {
       setError(res.error ?? "Identifiants invalides");
       return;
     }
     router.push("/dashboard");
+
   };
 
 

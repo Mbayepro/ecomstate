@@ -7,11 +7,13 @@ import {
   MapPin,
   MessageCircle,
   Phone,
+  Printer,
   Search,
   ShoppingBag,
   Truck,
   X,
 } from "lucide-react";
+
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DashboardPageHeader } from "@/components/dashboard/page-header";
@@ -48,6 +50,8 @@ export default function DashboardCommandesPage() {
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
+  const [receiptOrder, setReceiptOrder] = useState<Order | null>(null);
+
 
   const storeOrders = useMemo(
     () =>
@@ -207,17 +211,27 @@ export default function DashboardCommandesPage() {
             </select>
           </div>
 
-          <div className="flex items-end">
+          <div className="flex items-end gap-2">
             <a
               href={whatsappHref}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex h-9.5 w-full items-center justify-center gap-2 rounded-xl border border-[#10B981]/30 bg-[#10B981]/10 px-3 text-xs font-bold text-[#102A43] transition-colors hover:bg-[#10B981] hover:text-white"
+              className="inline-flex h-9.5 flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#10B981]/30 bg-[#10B981]/10 px-3 text-xs font-bold text-[#102A43] transition-colors hover:bg-[#10B981] hover:text-white"
             >
               <MessageCircle className="h-4 w-4" />
-              WhatsApp client
+              WhatsApp
             </a>
+            <button
+              type="button"
+              onClick={() => setReceiptOrder(ord)}
+              className="inline-flex h-9.5 items-center justify-center gap-1.5 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-bold text-[#102A43] transition-colors hover:bg-slate-50 cursor-pointer"
+              title="Afficher et imprimer le reçu de commande"
+            >
+              <Printer className="h-3.5 w-3.5 text-[#10B981]" />
+              Reçu
+            </button>
           </div>
+
         </div>
 
         {/* Coordonnées & Livraison */}
@@ -455,6 +469,123 @@ export default function DashboardCommandesPage() {
           </div>
         </div>
       )}
+
+      {/* Modal Reçu / Bon de livraison imprimable */}
+      {receiptOrder && (
+        <div className="animate-backdrop fixed inset-0 z-50 flex items-center justify-center bg-[#0B1F33]/60 p-4 backdrop-blur-xs">
+          <div className="animate-modal-in max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-dashed border-[#CBD5E1] pb-4">
+              <div>
+                <p className="text-base font-extrabold text-[#102A43]">
+                  {activeStore.name}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {activeStore.customDomain || activeStore.subdomain} ·{" "}
+                  {activeStore.settings.whatsappPhone}
+                </p>
+              </div>
+              <div className="text-right">
+                <span className="rounded-lg bg-[#102A43] px-2.5 py-1 font-mono text-xs font-bold text-white">
+                  {receiptOrder.orderNumber}
+                </span>
+                <p className="mt-1 text-[11px] text-slate-400">
+                  {formatDate(receiptOrder.createdAt)}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl bg-[#F8FAFC] p-3.5 text-xs">
+              <div>
+                <p className="font-bold uppercase tracking-wider text-[10px] text-slate-400">
+                  Client
+                </p>
+                <p className="mt-0.5 font-bold text-[#102A43]">
+                  {receiptOrder.customerName}
+                </p>
+                <p className="text-slate-600">{receiptOrder.customerPhone}</p>
+              </div>
+              <div>
+                <p className="font-bold uppercase tracking-wider text-[10px] text-slate-400">
+                  Livraison
+                </p>
+                <p className="mt-0.5 font-semibold text-[#102A43]">
+                  {receiptOrder.deliveryCity}
+                </p>
+                <p className="text-slate-600">{receiptOrder.deliveryAddress}</p>
+              </div>
+            </div>
+
+            <div className="mt-4 divide-y divide-[#E2E8F0] border-y border-[#E2E8F0] text-xs">
+              {receiptOrder.items.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between py-2.5"
+                >
+                  <div>
+                    <p className="font-bold text-[#102A43]">
+                      {item.quantity} × {item.productName}
+                    </p>
+                    {item.variantLabel && (
+                      <p className="text-[11px] text-slate-500">
+                        {item.variantLabel}
+                      </p>
+                    )}
+                  </div>
+                  <span className="font-bold text-[#102A43]">
+                    {formatCurrency(item.totalPrice, activeStore.currency)}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 space-y-1.5 text-xs">
+              <div className="flex justify-between text-slate-600">
+                <span>Sous-total</span>
+                <span>
+                  {formatCurrency(receiptOrder.subtotal, activeStore.currency)}
+                </span>
+              </div>
+              <div className="flex justify-between text-slate-600">
+                <span>Frais de livraison</span>
+                <span>
+                  {formatCurrency(
+                    receiptOrder.deliveryFee,
+                    activeStore.currency
+                  )}
+                </span>
+              </div>
+              <div className="flex justify-between border-t border-[#E2E8F0] pt-2 text-base font-extrabold text-[#102A43]">
+                <span>Total à régler</span>
+                <span className="text-[#10B981]">
+                  {formatCurrency(
+                    receiptOrder.totalAmount,
+                    activeStore.currency
+                  )}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-2 border-t border-[#E2E8F0] pt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setReceiptOrder(null)}
+              >
+                Fermer
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => window.print()}
+              >
+                <Printer className="h-3.5 w-3.5" />
+                Imprimer / PDF
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
+
 }

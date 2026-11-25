@@ -39,11 +39,12 @@ export default function FaqPage() {
     <div className="py-16">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <Badge variant="navy">Centre d&apos;aide</Badge>
-          <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-[#102A43]">
+          <Badge variant="success">Centre d&apos;aide</Badge>
+          <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-white">
             Questions fréquentes
           </h1>
         </div>
+
 
         <div className="mt-10 space-y-3">
           {ITEMS.map((item, idx) => (

@@ -5,11 +5,12 @@ export default function AProposPage() {
   return (
     <div className="py-16">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        <Badge variant="navy">À propos</Badge>
-        <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-[#102A43]">
+        <Badge variant="success">À propos</Badge>
+        <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-white">
           Construire l&apos;infrastructure e-commerce des commerçants africains
         </h1>
-        <p className="mt-4 text-base leading-relaxed text-slate-600">
+        <p className="mt-4 text-base leading-relaxed text-slate-300">
+
           EcomSate est né d&apos;un constat simple : des milliers d&apos;entrepreneurs
           et de commerçants au Bénin, au Sénégal, en Côte d&apos;Ivoire, au Togo et
           au Burkina Faso vendent déjà avec talent sur WhatsApp, Facebook ou

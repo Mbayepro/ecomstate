@@ -111,15 +111,16 @@ export default function FonctionnalitesPage() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <Badge variant="success">Fonctionnalités</Badge>
-          <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-[#102A43]">
+          <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-white">
             Une plateforme complète pour vendre en ligne en Afrique
           </h1>
-          <p className="mt-4 text-base text-slate-600">
+          <p className="mt-4 text-base text-slate-300">
             Chaque outil a été pensé pour les réalités quotidiennes des
             commerçants : rapidité sur mobile, commandes WhatsApp, gestion des
             stocks et indépendance de marque.
           </p>
         </div>
+
 
         <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {MODULES.map((m) => {

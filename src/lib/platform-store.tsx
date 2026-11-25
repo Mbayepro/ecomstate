@@ -34,6 +34,12 @@ import { ADESHINA_SECTORS, getBlueprintBySector } from "@/lib/adeshina-ai";
 
 import { generateOrderNumber, slugify } from "@/lib/utils";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  fetchCloudPlatformState,
+  mergeById,
+  pushCloudPlatformState,
+} from "@/lib/supabase/cloud-sync";
+
 
 const STORAGE_KEY = "ecomsate_mvp_state_v1";
 export const PENDING_OAUTH_STORE_KEY = "ecomsate_pending_oauth_store";
@@ -151,8 +157,12 @@ interface PlatformContextValue extends PlatformState {
   hydrated: boolean;
   activeStore: Store | null;
   // Auth
-  loginAsMerchant: (email: string) => { ok: boolean; error?: string };
+  loginAsMerchant: (
+    email: string,
+    password?: string
+  ) => { ok: boolean; error?: string };
   loginAsAdmin: (
+
     email: string,
     password?: string
   ) => { ok: boolean; error?: string };
@@ -380,12 +390,113 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // Ignore storage quota errors
     }
-  }, [state, hydrated]);
+
+    const timer = window.setTimeout(() => {
+      void pushCloudPlatformState({
+        updatedAt: new Date().toISOString(),
+        adminAccount: state.adminAccount,
+        subscriptionPayments: state.subscriptionPayments,
+        notifications: state.notifications,
+        stores: state.stores,
+        categories: state.categories,
+        products: state.products,
+        customers: state.customers,
+        orders: state.orders,
+        inventoryMovements: state.inventoryMovements,
+        plans: state.plans,
+        modules: state.modules,
+        countries: state.countries,
+        auditLogs: state.auditLogs,
+      });
+    }, 450);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    hydrated,
+    state.adminAccount,
+    state.subscriptionPayments,
+    state.notifications,
+    state.stores,
+    state.categories,
+    state.products,
+    state.customers,
+    state.orders,
+    state.inventoryMovements,
+    state.plans,
+    state.modules,
+    state.countries,
+    state.auditLogs,
+  ]);
+
+  // Synchronisation Cloud Supabase multi-appareils (Téléphone <-> PC)
+  useEffect(() => {
+    if (!hydrated) return;
+    let cancelled = false;
+
+    const pullCloud = async () => {
+      const cloud = await fetchCloudPlatformState();
+      if (!cloud || cancelled) return;
+
+      setState((prev) => ({
+        ...prev,
+        adminAccount:
+          (cloud.adminAccount as AdminAccountConfig | undefined) ??
+          prev.adminAccount,
+        stores: mergeById(
+          cloud.stores as unknown as Store[],
+          prev.stores as unknown as Store[]
+        ) as unknown as Store[],
+        categories: mergeById(
+          cloud.categories as unknown as Category[],
+          prev.categories as unknown as Category[]
+        ) as unknown as Category[],
+        products: mergeById(
+          cloud.products as unknown as Product[],
+          prev.products as unknown as Product[]
+        ) as unknown as Product[],
+        customers: mergeById(
+          cloud.customers as unknown as Customer[],
+          prev.customers as unknown as Customer[]
+        ) as unknown as Customer[],
+        orders: mergeById(
+          cloud.orders as unknown as Order[],
+          prev.orders as unknown as Order[]
+        ) as unknown as Order[],
+        inventoryMovements: mergeById(
+          cloud.inventoryMovements as unknown as InventoryMovement[],
+          prev.inventoryMovements as unknown as InventoryMovement[]
+        ) as unknown as InventoryMovement[],
+        subscriptionPayments: mergeById(
+          cloud.subscriptionPayments as unknown as SubscriptionPaymentRequest[],
+          prev.subscriptionPayments as unknown as SubscriptionPaymentRequest[]
+        ) as unknown as SubscriptionPaymentRequest[],
+        notifications: mergeById(
+          cloud.notifications as unknown as AppNotification[],
+          prev.notifications as unknown as AppNotification[]
+        ) as unknown as AppNotification[],
+        auditLogs: mergeById(
+          cloud.auditLogs as unknown as AuditLog[],
+          prev.auditLogs as unknown as AuditLog[]
+        ) as unknown as AuditLog[],
+      }));
+    };
+
+    void pullCloud();
+    const onFocus = () => {
+      void pullCloud();
+    };
+    window.addEventListener("focus", onFocus);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [hydrated]);
+
 
   const activeStore =
     state.stores.find((s) => s.id === state.session?.activeStoreId) ?? null;
 
-  const loginAsMerchant = (email: string) => {
+  const loginAsMerchant = (email: string, password?: string) => {
     const normalized = email.trim().toLowerCase();
     const found = state.stores.find(
       (s) => s.ownerEmail.toLowerCase() === normalized
@@ -394,9 +505,29 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
       return {
         ok: false,
         error:
-          "Aucun compte commerçant trouvé avec cet e-mail. Essayez aminata@atelierdakar.sn ou créez votre boutique.",
+          "Aucun compte commerçant trouvé avec cet e-mail. Vérifiez votre adresse ou créez votre boutique.",
       };
     }
+    if (
+      typeof password === "string" &&
+      password !== "••••••••" &&
+      found.ownerPassword &&
+      password !== found.ownerPassword
+    ) {
+      return {
+        ok: false,
+        error: "Mot de passe incorrect pour ce compte commerçant.",
+      };
+    }
+
+    const supabase = createSupabaseBrowserClient();
+    if (supabase && typeof password === "string" && password !== "••••••••") {
+      void supabase.auth.signInWithPassword({
+        email: normalized,
+        password,
+      });
+    }
+
     setState((prev) => ({
       ...prev,
       session: {
@@ -409,6 +540,7 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
     }));
     return { ok: true };
   };
+
 
   const isAdminEmail = (email: string) => {
     const normalized = email.trim().toLowerCase();
@@ -737,7 +869,9 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
       ownerName: input.fullName.trim(),
       ownerEmail: input.email.trim().toLowerCase(),
       ownerPhone: input.phone.trim(),
+      ownerPassword: input.password,
       name: input.storeName.trim(),
+
       slug: finalSlug,
       subdomain: `${finalSlug}.ecomsate.com`,
       customDomain: null,
@@ -821,8 +955,24 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
       ],
     }));
 
+    const supabase = createSupabaseBrowserClient();
+    if (supabase && input.password) {
+      void supabase.auth.signUp({
+        email: newStore.ownerEmail,
+        password: input.password,
+        options: {
+          data: {
+            full_name: newStore.ownerName,
+            phone: newStore.ownerPhone,
+            country_code: newStore.countryCode,
+          },
+        },
+      });
+    }
+
     return { ok: true, store: newStore };
   };
+
 
   const switchActiveStore = (storeId: string) => {
     const target = state.stores.find((s) => s.id === storeId);

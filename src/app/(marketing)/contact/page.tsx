@@ -14,14 +14,15 @@ export default function ContactPage() {
     <div className="py-16">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <Badge variant="navy">Contact</Badge>
-          <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-[#102A43]">
+          <Badge variant="success">Contact</Badge>
+          <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-white">
             Parlons de votre boutique
           </h1>
-          <p className="mt-3 text-base text-slate-600">
+          <p className="mt-3 text-base text-slate-300">
             Notre équipe répond aux commerçants et partenaires sous 24 heures.
           </p>
         </div>
+
 
         <div className="mt-12 grid gap-8 md:grid-cols-12">
           <div className="space-y-4 md:col-span-5">

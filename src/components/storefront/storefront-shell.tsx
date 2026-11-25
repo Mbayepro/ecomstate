@@ -21,7 +21,12 @@ import {
 } from "@/components/storefront/storefront-context";
 import { StoreCartAndModals } from "@/components/storefront/cart-drawer";
 import { usePlatform } from "@/lib/platform-store";
-import { getStoreSubscriptionHealth } from "@/lib/permissions";
+import {
+  getStoreSubscriptionHealth,
+  ORDER_STATUS_META,
+} from "@/lib/permissions";
+import { formatCurrency, formatDate } from "@/lib/utils";
+
 
 
 function StorefrontChrome({ children }: { children: React.ReactNode }) {
@@ -37,6 +42,21 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [trackModalOpen, setTrackModalOpen] = useState(false);
+  const [trackQuery, setTrackQuery] = useState("");
+  const { orders } = usePlatform();
+
+  const trackedOrders = trackQuery.trim()
+    ? orders.filter((o) => {
+        if (o.storeId !== store.id) return false;
+        const q = trackQuery.trim().toLowerCase();
+        return (
+          o.orderNumber.toLowerCase().includes(q) ||
+          o.customerPhone.replace(/\s+/g, "").includes(q.replace(/\s+/g, ""))
+        );
+      })
+    : [];
+
 
   useEffect(() => {
     document.title = `${store.name} — Boutique en ligne`;
@@ -58,17 +78,28 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
             <Truck className="h-3.5 w-3.5 shrink-0" />
             <span className="truncate">{store.settings.deliveryInfo}</span>
           </p>
-          {cleanWa && (
-            <a
-              href={`https://wa.me/${cleanWa}`}
-              target="_blank"
-              rel="noreferrer"
-              className="hidden shrink-0 items-center gap-1.5 font-semibold text-white hover:underline sm:inline-flex"
+          <div className="flex shrink-0 items-center gap-4">
+            <button
+              type="button"
+              onClick={() => setTrackModalOpen(true)}
+              className="inline-flex items-center gap-1.5 font-semibold text-white hover:underline cursor-pointer"
             >
-              <MessageCircle className="h-3.5 w-3.5" />
-              Service client WhatsApp
-            </a>
-          )}
+              <ShoppingBag className="h-3.5 w-3.5" />
+              Suivre ma commande
+            </button>
+            {cleanWa && (
+              <a
+                href={`https://wa.me/${cleanWa}`}
+                target="_blank"
+                rel="noreferrer"
+                className="hidden shrink-0 items-center gap-1.5 font-semibold text-white hover:underline sm:inline-flex"
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                Service client WhatsApp
+              </a>
+            )}
+          </div>
+
         </div>
       </div>
 
@@ -472,9 +503,86 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
       </footer>
 
       <StoreCartAndModals />
+
+      {/* Modal Suivi de Commande Client */}
+      {trackModalOpen && (
+        <div className="animate-backdrop fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+          <div className="animate-modal-in w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
+              <div>
+                <h3 className="text-base font-extrabold text-slate-900">
+                  Suivre ma commande
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Saisissez votre N° de commande (ex: CMD-...) ou téléphone
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTrackModalOpen(false)}
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mt-4">
+              <input
+                type="text"
+                value={trackQuery}
+                onChange={(e) => setTrackQuery(e.target.value)}
+                placeholder="Ex : CMD-1042 ou +229 97 00 00 00"
+                className="h-10.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-sm font-medium text-slate-900 focus:border-slate-900 focus:bg-white focus:outline-none"
+              />
+            </div>
+
+            <div className="mt-4 max-h-72 space-y-3 overflow-y-auto">
+              {!trackQuery.trim() ? (
+                <p className="py-6 text-center text-xs text-slate-400">
+                  Entrez votre numéro de commande ou de téléphone ci-dessus pour
+                  consulter l&apos;avancement de votre livraison.
+                </p>
+              ) : trackedOrders.length === 0 ? (
+                <p className="py-6 text-center text-xs text-slate-500">
+                  Aucune commande trouvée dans {store.name} pour « {trackQuery}{" "}
+                  ».
+                </p>
+              ) : (
+                trackedOrders.map((ord) => (
+                  <div
+                    key={ord.id}
+                    className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-xs"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono font-bold text-slate-900">
+                        {ord.orderNumber}
+                      </span>
+                      <span
+                        className="rounded-full px-2.5 py-0.5 text-[11px] font-bold text-white"
+                        style={{ backgroundColor: secondary }}
+                      >
+                        {ORDER_STATUS_META[ord.status].label}
+                      </span>
+                    </div>
+                    <p className="mt-1 font-semibold text-slate-800">
+                      {ord.customerName} ·{" "}
+                      {formatCurrency(ord.totalAmount, store.currency)}
+                    </p>
+                    <p className="mt-0.5 text-slate-500">
+                      Livraison : {ord.deliveryAddress}, {ord.deliveryCity} (
+                      {formatDate(ord.createdAt)})
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
 
 export function StorefrontClientShell({
   slug,
