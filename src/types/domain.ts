@@ -51,6 +51,13 @@ export interface SubscriptionPlan {
   features: string[];
 }
 
+export interface DeliveryZone {
+  id: string;
+  name: string;
+  fee: number;
+  estimatedDelay?: string;
+}
+
 export interface StoreSettings {
   primaryColor: string;
   secondaryColor: string;
@@ -62,7 +69,10 @@ export interface StoreSettings {
   email: string;
   address: string;
   deliveryInfo: string;
+  deliveryZones?: DeliveryZone[];
+  freeDeliveryThreshold?: number | null;
   termsOfSale: string;
+
   socials: {
     instagram?: string;
     facebook?: string;

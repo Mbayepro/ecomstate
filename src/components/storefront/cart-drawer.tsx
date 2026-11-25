@@ -65,9 +65,27 @@ export function StoreCartAndModals() {
   const primary = store.settings.primaryColor || "#102A43";
   const secondary = store.settings.secondaryColor || "#10B981";
 
-  // Mode de livraison (domicile vs retrait en boutique)
+  // Mode de livraison (domicile vs retrait en boutique) & Zones configurées par le commerçant
+  const deliveryZones = useMemo(() => {
+    const configured = store.settings.deliveryZones ?? [];
+    if (configured.length > 0) return configured;
+    return [
+      {
+        id: "default-zone",
+        name: "Livraison standard",
+        fee: 1500,
+        estimatedDelay: "24h - 48h",
+      },
+    ];
+  }, [store.settings.deliveryZones]);
+
   const [deliveryMode, setDeliveryMode] = useState<"home" | "pickup">("home");
-  const deliveryFee = deliveryMode === "home" ? 1500 : 0;
+  const [selectedZoneId, setSelectedZoneId] = useState<string>(
+    deliveryZones[0]?.id ?? "default-zone"
+  );
+
+  const selectedZone =
+    deliveryZones.find((z) => z.id === selectedZoneId) ?? deliveryZones[0];
 
   // Code promo client isolé à cette boutique
   const [promoInput, setPromoInput] = useState("");
@@ -99,7 +117,20 @@ export function StoreCartAndModals() {
     return Math.min(cartSubtotal, activePromo.discountValue);
   }, [activePromo, cartSubtotal]);
 
-  const orderTotal = Math.max(0, cartSubtotal - discountAmount + deliveryFee);
+  const netMerchandise = Math.max(0, cartSubtotal - discountAmount);
+  const freeThreshold = store.settings.freeDeliveryThreshold ?? null;
+  const qualifiesFreeDelivery =
+    freeThreshold !== null && freeThreshold > 0 && netMerchandise >= freeThreshold;
+
+  const deliveryFee =
+    deliveryMode === "pickup"
+      ? 0
+      : qualifiesFreeDelivery
+        ? 0
+        : (selectedZone?.fee ?? 1500);
+
+  const orderTotal = Math.max(0, netMerchandise + deliveryFee);
+
 
   const handleApplyPromo = () => {
     setPromoError(null);
@@ -215,8 +246,12 @@ export function StoreCartAndModals() {
       customerPhone,
       customerEmail,
       deliveryAddress: finalAddress,
-      deliveryCity: deliveryCity.trim() || store.settings.address,
+      deliveryCity:
+        deliveryMode === "home"
+          ? deliveryCity.trim() || selectedZone?.name || store.settings.address
+          : store.settings.address,
       paymentMethod,
+
       paymentReference,
       notes,
       deliveryFee,
@@ -691,7 +726,12 @@ export function StoreCartAndModals() {
                           Livraison
                         </span>
                         <span className="mt-0.5 text-[11px] text-slate-500">
-                          {formatCurrency(1500, store.currency)}
+                          {qualifiesFreeDelivery
+                            ? "Offerte !"
+                            : formatCurrency(
+                                selectedZone?.fee ?? 1500,
+                                store.currency
+                              )}
                         </span>
                       </button>
 
@@ -713,7 +753,43 @@ export function StoreCartAndModals() {
                         </span>
                       </button>
                     </div>
+
+                    {/* Sélecteur de zone / ville de livraison */}
+                    {deliveryMode === "home" && (
+                      <div className="pt-1">
+                        <label className="block text-xs font-bold text-slate-700">
+                          Choisissez votre zone / ville de livraison *
+                        </label>
+                        <select
+                          value={selectedZone?.id ?? ""}
+                          onChange={(e) => {
+                            const nextId = e.target.value;
+                            setSelectedZoneId(nextId);
+                            const matched = deliveryZones.find(
+                              (z) => z.id === nextId
+                            );
+                            if (matched) {
+                              setDeliveryCity(matched.name);
+                            }
+                          }}
+                          className="mt-1 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 focus:border-slate-900 focus:outline-none"
+                        >
+                          {deliveryZones.map((zone) => (
+                            <option key={zone.id} value={zone.id}>
+                              {zone.name} —{" "}
+                              {qualifiesFreeDelivery
+                                ? "Gratuit"
+                                : formatCurrency(zone.fee, store.currency)}
+                              {zone.estimatedDelay
+                                ? ` (${zone.estimatedDelay})`
+                                : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
+
 
                   {/* Coordonnées client (taille 16px sur mobile pour éviter le zoom forcé) */}
                   <div className="space-y-3">
@@ -979,7 +1055,30 @@ export function StoreCartAndModals() {
             {/* Pied fixe du tiroir avec code promo & calcul automatique du total */}
             {checkoutStep !== "done" && cart.length > 0 && (
               <div className="border-t border-slate-200 bg-white p-5">
+                {/* Barre motivante livraison gratuite */}
+                {deliveryMode === "home" && freeThreshold && freeThreshold > 0 && (
+                  <div className="mb-3 rounded-xl border border-emerald-200/80 bg-emerald-50/70 px-3 py-2 text-[11px]">
+                    {qualifiesFreeDelivery ? (
+                      <p className="font-bold text-emerald-800">
+                        Livraison offerte débloquée sur votre commande !
+                      </p>
+                    ) : (
+                      <p className="font-medium text-emerald-900">
+                        Ajoutez encore{" "}
+                        <strong>
+                          {formatCurrency(
+                            freeThreshold - netMerchandise,
+                            store.currency
+                          )}
+                        </strong>{" "}
+                        pour profiter de la livraison gratuite !
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {/* Champ Code Promo */}
+
                 <div className="mb-3.5">
                   {activePromo ? (
                     <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs">

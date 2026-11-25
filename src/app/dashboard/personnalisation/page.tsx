@@ -6,10 +6,13 @@ import {
   Check,
   ExternalLink,
   LayoutTemplate,
+  MapPin,
   Palette,
   Phone,
+  Plus,
   Save,
   Smartphone,
+  Trash2,
   Truck,
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -20,7 +23,21 @@ import { SingleImageUploadField } from "@/components/ui/image-upload-field";
 import { DashboardPageHeader } from "@/components/dashboard/page-header";
 
 import { usePlatform } from "@/lib/platform-store";
-import type { StoreTemplateId } from "@/types/domain";
+import type { DeliveryZone, StoreTemplateId } from "@/types/domain";
+
+const BENIN_ZONES_PRESET: DeliveryZone[] = [
+  { id: "z-bj-1", name: "Cotonou Centre (Ganhi, Cadjèhoun, Fidjrossè)", fee: 1000, estimatedDelay: "1h - 2h" },
+  { id: "z-bj-2", name: "Abomey-Calavi / Akpakpa / Godomey", fee: 1500, estimatedDelay: "2h - 4h" },
+  { id: "z-bj-3", name: "Porto-Novo / Ouidah / Sèmè-Podji", fee: 2500, estimatedDelay: "24h" },
+  { id: "z-bj-4", name: "Parakou / Bohicon / Autres villes", fee: 4000, estimatedDelay: "24h - 48h" },
+];
+
+const SENEGAL_ZONES_PRESET: DeliveryZone[] = [
+  { id: "z-sn-1", name: "Dakar Centre (Plateau, Almadies, Mermoz)", fee: 1500, estimatedDelay: "2h - 4h" },
+  { id: "z-sn-2", name: "Banlieue (Pikine, Guédiawaye, Rufisque)", fee: 2500, estimatedDelay: "Même jour" },
+  { id: "z-sn-3", name: "Thiès, Mbour & Régions", fee: 4000, estimatedDelay: "24h - 48h" },
+];
+
 
 const TEMPLATES: { id: StoreTemplateId; name: string; desc: string }[] = [
   {
@@ -66,7 +83,13 @@ export default function DashboardPersonnalisationPage() {
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
   const [deliveryInfo, setDeliveryInfo] = useState("");
+  const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
+  const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState("");
+  const [newZoneName, setNewZoneName] = useState("");
+  const [newZoneFee, setNewZoneFee] = useState("1000");
+  const [newZoneDelay, setNewZoneDelay] = useState("24h");
   const [termsOfSale, setTermsOfSale] = useState("");
+
   const [mobileMoneyNumber, setMobileMoneyNumber] = useState("");
   const [mobileMoneyInstructions, setMobileMoneyInstructions] = useState("");
   const [instagram, setInstagram] = useState("");
@@ -92,7 +115,14 @@ export default function DashboardPersonnalisationPage() {
     setEmail(activeStore.settings.email);
     setAddress(activeStore.settings.address);
     setDeliveryInfo(activeStore.settings.deliveryInfo);
+    setDeliveryZones(activeStore.settings.deliveryZones ?? []);
+    setFreeDeliveryThreshold(
+      activeStore.settings.freeDeliveryThreshold
+        ? String(activeStore.settings.freeDeliveryThreshold)
+        : ""
+    );
     setTermsOfSale(activeStore.settings.termsOfSale);
+
     setMobileMoneyNumber(activeStore.settings.mobileMoneyNumber ?? "");
     setMobileMoneyInstructions(
       activeStore.settings.mobileMoneyInstructions ?? ""
@@ -125,7 +155,12 @@ export default function DashboardPersonnalisationPage() {
         email,
         address,
         deliveryInfo,
+        deliveryZones,
+        freeDeliveryThreshold: freeDeliveryThreshold.trim()
+          ? Number(freeDeliveryThreshold)
+          : null,
         termsOfSale,
+
         mobileMoneyNumber,
         mobileMoneyInstructions: mobileMoneyInstructions.trim() || undefined,
         socials: {
@@ -421,10 +456,171 @@ export default function DashboardPersonnalisationPage() {
                   Livraison, conditions & réseaux sociaux
                 </h2>
               </CardHeader>
-              <CardContent className="space-y-4 p-5">
+              <CardContent className="space-y-5 p-5">
+                {/* Zones & Tarifs de livraison par ville/quartier */}
+                <div className="space-y-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="flex items-center gap-1.5 text-sm font-bold text-[#102A43]">
+                        <MapPin className="h-4 w-4 text-[#10B981]" />
+                        Zones & Tarifs de livraison ({activeStore.currency})
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Définissez un tarif exact par quartier ou ville (1 000, 1 500, 2 500, 4 000 FCFA…).
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setDeliveryZones(BENIN_ZONES_PRESET)}
+                        className="rounded-lg border border-[#102A43]/20 bg-white px-2.5 py-1 text-[11px] font-bold text-[#102A43] hover:border-[#10B981] cursor-pointer"
+                      >
+                        Modèle Bénin
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeliveryZones(SENEGAL_ZONES_PRESET)}
+                        className="rounded-lg border border-[#102A43]/20 bg-white px-2.5 py-1 text-[11px] font-bold text-[#102A43] hover:border-[#10B981] cursor-pointer"
+                      >
+                        Modèle Sénégal
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Liste des zones existantes */}
+                  {deliveryZones.length > 0 && (
+                    <div className="space-y-2">
+                      {deliveryZones.map((zone) => (
+                        <div
+                          key={zone.id}
+                          className="flex flex-wrap items-center gap-2 rounded-lg border border-[#E2E8F0] bg-white p-2.5 text-xs"
+                        >
+                          <input
+                            value={zone.name}
+                            onChange={(e) =>
+                              setDeliveryZones((prev) =>
+                                prev.map((z) =>
+                                  z.id === zone.id
+                                    ? { ...z, name: e.target.value }
+                                    : z
+                                )
+                              )
+                            }
+                            className="h-8 flex-1 min-w-[160px] rounded-md border border-[#E2E8F0] px-2.5 font-semibold text-[#102A43]"
+                            placeholder="Nom de la zone"
+                          />
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              min={0}
+                              value={zone.fee}
+                              onChange={(e) =>
+                                setDeliveryZones((prev) =>
+                                  prev.map((z) =>
+                                    z.id === zone.id
+                                      ? { ...z, fee: Number(e.target.value) || 0 }
+                                      : z
+                                  )
+                                )
+                              }
+                              className="h-8 w-24 rounded-md border border-[#E2E8F0] px-2 font-bold text-[#102A43]"
+                            />
+                            <span className="text-[11px] font-semibold text-slate-500">
+                              {activeStore.currency}
+                            </span>
+                          </div>
+                          <input
+                            value={zone.estimatedDelay ?? ""}
+                            onChange={(e) =>
+                              setDeliveryZones((prev) =>
+                                prev.map((z) =>
+                                  z.id === zone.id
+                                    ? { ...z, estimatedDelay: e.target.value }
+                                    : z
+                                )
+                              )
+                            }
+                            className="h-8 w-24 rounded-md border border-[#E2E8F0] px-2 text-slate-600"
+                            placeholder="Délai"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setDeliveryZones((prev) =>
+                                prev.filter((z) => z.id !== zone.id)
+                              )
+                            }
+                            className="rounded-md p-1.5 text-rose-500 hover:bg-rose-50 cursor-pointer"
+                            title="Supprimer cette zone"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Ajout rapide d'une nouvelle zone */}
+                  <div className="grid gap-2 pt-1 sm:grid-cols-12">
+                    <input
+                      value={newZoneName}
+                      onChange={(e) => setNewZoneName(e.target.value)}
+                      placeholder="Ex: Cotonou Centre, Calavi, Parakou..."
+                      className="h-9 rounded-lg border border-[#CBD5E1] bg-white px-3 text-xs sm:col-span-5"
+                    />
+                    <input
+                      type="number"
+                      min={0}
+                      value={newZoneFee}
+                      onChange={(e) => setNewZoneFee(e.target.value)}
+                      placeholder="Tarif (FCFA)"
+                      className="h-9 rounded-lg border border-[#CBD5E1] bg-white px-3 text-xs font-bold sm:col-span-3"
+                    />
+                    <input
+                      value={newZoneDelay}
+                      onChange={(e) => setNewZoneDelay(e.target.value)}
+                      placeholder="Délai (ex: 24h)"
+                      className="h-9 rounded-lg border border-[#CBD5E1] bg-white px-3 text-xs sm:col-span-2"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!newZoneName.trim()) return;
+                        setDeliveryZones((prev) => [
+                          ...prev,
+                          {
+                            id: `zone-${Date.now()}`,
+                            name: newZoneName.trim(),
+                            fee: Math.max(0, Number(newZoneFee) || 0),
+                            estimatedDelay: newZoneDelay.trim() || undefined,
+                          },
+                        ]);
+                        setNewZoneName("");
+                        setNewZoneFee("1500");
+                      }}
+                      className="inline-flex h-9 items-center justify-center gap-1 rounded-lg bg-[#102A43] px-3 text-xs font-bold text-white hover:bg-[#1B3B5A] sm:col-span-2 cursor-pointer"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Ajouter
+                    </button>
+                  </div>
+
+                  {/* Seuil livraison gratuite */}
+                  <div className="border-t border-[#E2E8F0] pt-3">
+                    <Input
+                      label={`Livraison gratuite dès un montant d'achat (${activeStore.currency} — laisser vide pour désactiver)`}
+                      type="number"
+                      min={0}
+                      value={freeDeliveryThreshold}
+                      onChange={(e) => setFreeDeliveryThreshold(e.target.value)}
+                      placeholder="Ex : 35000"
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-1.5">
                   <label className="block text-sm font-medium text-[#102A43]">
-                    Informations de livraison
+                    Bandeau d&apos;information livraison (haut de la boutique)
                   </label>
                   <textarea
                     rows={2}
@@ -433,6 +629,7 @@ export default function DashboardPersonnalisationPage() {
                     className="w-full rounded-lg border border-[#E2E8F0] px-3.5 py-2 text-sm"
                   />
                 </div>
+
                 <div className="space-y-1.5">
                   <label className="block text-sm font-medium text-[#102A43]">
                     Conditions de vente

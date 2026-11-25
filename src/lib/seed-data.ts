@@ -82,8 +82,15 @@ export const INITIAL_STORES: Store[] = [
       email: "contact@atelierdakar.sn",
       address: "Sacré-Cœur 3, VDN, Dakar, Sénégal",
       deliveryInfo:
-        "Livraison en 24h à Dakar (1 500 FCFA) et 48-72h dans les régions et sous-région.",
+        "Livraison en 24h à Dakar (dès 1 500 FCFA) et 48-72h dans les régions.",
+      deliveryZones: [
+        { id: "dz-dk-1", name: "Dakar Centre (Plateau, Almadies, Sacré-Cœur)", fee: 1500, estimatedDelay: "2h - 4h" },
+        { id: "dz-dk-2", name: "Banlieue Dakar (Pikine, Guédiawaye, Rufisque)", fee: 2500, estimatedDelay: "Même jour" },
+        { id: "dz-dk-3", name: "Thiès, Mbour & Régions du Sénégal", fee: 4000, estimatedDelay: "24h - 48h" },
+      ],
+      freeDeliveryThreshold: 50000,
       termsOfSale:
+
         "Échange possible sous 7 jours dans l'emballage d'origine. Paiement à la livraison ou par Mobile Money.",
       socials: {
         instagram: "https://instagram.com/atelierdakar",
@@ -130,8 +137,16 @@ export const INITIAL_STORES: Store[] = [
       email: "ventes@cotonoutech.bj",
       address: "Avenue Steinmetz, Cotonou, Bénin",
       deliveryInfo:
-        "Livraison express le jour même à Cotonou et Calavi. Expédition vers Parakou et Porto-Novo.",
+        "Livraison express le jour même à Cotonou et Calavi (dès 1 000 FCFA). Expédition vers Porto-Novo et Parakou.",
+      deliveryZones: [
+        { id: "dz-bj-1", name: "Cotonou Centre (Ganhi, Cadjèhoun, Haie Vive, Fidjrossè)", fee: 1000, estimatedDelay: "1h - 2h" },
+        { id: "dz-bj-2", name: "Abomey-Calavi, Akpakpa & Godomey", fee: 1500, estimatedDelay: "2h - 4h" },
+        { id: "dz-bj-3", name: "Porto-Novo, Ouidah & Sèmè-Podji", fee: 2500, estimatedDelay: "24h" },
+        { id: "dz-bj-4", name: "Parakou, Bohicon & Autres villes du Bénin", fee: 4000, estimatedDelay: "24h - 48h" },
+      ],
+      freeDeliveryThreshold: 35000,
       termsOfSale:
+
         "Garantie 6 mois sur les accessoires et 12 mois sur les smartphones.",
       socials: {
         instagram: "https://instagram.com/cotonoutech",
