@@ -35,10 +35,12 @@ import type { StoreStatus, SubscriptionPlanCode } from "@/types/domain";
 type AdminTab =
   | "merchants"
   | "finance"
+  | "domains"
   | "plans"
   | "countries"
   | "audit"
   | "account";
+
 
 
 export default function AdminDashboardPage() {
@@ -55,8 +57,11 @@ export default function AdminDashboardPage() {
     auditLogs,
     adminAccount,
     subscriptionPayments,
+    customDomains,
     adminReviewSubscriptionPayment,
+    adminUpdateDomainStatus,
     adminUpdateStoreStatus,
+
     adminUpdateStorePlan,
     adminUpdatePlan,
     adminToggleModuleInPlan,
@@ -343,11 +348,13 @@ export default function AdminDashboardPage() {
             [
               ["merchants", "Commerçants & Boutiques", StoreIcon],
               ["finance", "Revenus & Finances", Wallet],
+              ["domains", "Domaines Premium", Globe],
               ["plans", "Abonnements & Modules", Layers],
               ["countries", "Pays & Paiements", Globe],
               ["audit", "Journal d'audit", Activity],
               ["account", "Identifiants Admin (Bénin)", KeyRound],
             ] as const
+
 
 
           ).map(([id, label, Icon]) => (
@@ -786,7 +793,89 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
+        {/* TAB DOMAINES PERSONNALISÉS PREMIUM (PHASE 3) */}
+        {tab === "domains" && (
+          <Card>
+            <CardHeader className="border-b border-[#E2E8F0]">
+              <h2 className="text-base font-bold text-[#102A43]">
+                Supervision des noms de domaine personnalisés (Premium)
+              </h2>
+              <p className="text-xs text-slate-500">
+                Vérifiez les pointages DNS / commandes de domaines et activez
+                leur statut SSL HTTPS en 1 clic.
+              </p>
+            </CardHeader>
+            <CardContent className="p-0">
+              {(customDomains ?? []).length === 0 ? (
+                <p className="p-8 text-center text-xs text-slate-500">
+                  Aucune demande de nom de domaine personnalisé pour le moment.
+                </p>
+              ) : (
+                <div className="divide-y divide-[#E2E8F0]">
+                  {(customDomains ?? []).map((dom) => (
+                    <div
+                      key={dom.id}
+                      className="flex flex-wrap items-center justify-between gap-4 px-5 py-4 text-xs"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-sm font-extrabold text-[#102A43]">
+                            {dom.domain}
+                          </span>
+                          <Badge variant="navy">
+                            {dom.requestType === "buy_new"
+                              ? "Achat via EcomSate"
+                              : "Connexion DNS"}
+                          </Badge>
+                        </div>
+                        <p className="mt-1 text-slate-500">
+                          Boutique :{" "}
+                          <strong className="text-[#102A43]">
+                            {dom.storeName}
+                          </strong>{" "}
+                          ({dom.merchantEmail}) · {formatDate(dom.createdAt)}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {dom.status === "pending_dns" ? (
+                          <>
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={() =>
+                                adminUpdateDomainStatus(dom.id, "active_ssl")
+                              }
+                            >
+                              <Check className="h-3.5 w-3.5" />
+                              Activer Domaine + SSL
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                adminUpdateDomainStatus(dom.id, "rejected")
+                              }
+                            >
+                              Refuser
+                            </Button>
+                          </>
+                        ) : dom.status === "active_ssl" ? (
+                          <Badge variant="success">Actif & SSL HTTPS</Badge>
+                        ) : (
+                          <Badge variant="danger">Refusé</Badge>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* TAB 2 : ABONNEMENTS & MODULES CENTRALISÉS */}
+
 
         {tab === "plans" && (
           <div className="space-y-6">

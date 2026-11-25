@@ -226,3 +226,17 @@ export interface PromoCode {
   createdAt: string;
 }
 
+export interface CustomDomainRequest {
+  id: string;
+  storeId: string;
+  storeName: string;
+  merchantEmail: string;
+  domain: string;
+  requestType: "connect_existing" | "buy_new";
+  status: "pending_dns" | "active_ssl" | "rejected";
+  dnsTarget: string;
+  createdAt: string;
+  verifiedAt?: string | null;
+}
+
+

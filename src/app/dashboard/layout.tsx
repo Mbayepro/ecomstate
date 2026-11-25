@@ -16,7 +16,9 @@ import {
   ExternalLink,
 
   FolderTree,
+  Globe,
   LayoutDashboard,
+
   LogOut,
   Menu,
   Package,
@@ -113,10 +115,16 @@ const NAV_GROUPS: NavGroup[] = [
         icon: QrCode,
       },
       {
+        href: "/dashboard/domaine",
+        label: "Nom de domaine",
+        icon: Globe,
+      },
+      {
         href: "/dashboard/abonnement",
         label: "Abonnement & Mobile Money",
         icon: CreditCard,
       },
+
 
     ],
   },

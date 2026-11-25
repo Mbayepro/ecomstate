@@ -5,7 +5,9 @@ import type {
   AuditLog,
   Category,
   CountryConfig,
+  CustomDomainRequest,
   Customer,
+
   InventoryMovement,
   ModulePermission,
   Order,
@@ -31,7 +33,12 @@ import {
   INITIAL_PRODUCTS,
   INITIAL_STORES,
 } from "@/lib/seed-data";
-import { DEFAULT_MODULES, DEFAULT_PLANS } from "@/lib/permissions";
+import {
+  canUseModule,
+  DEFAULT_MODULES,
+  DEFAULT_PLANS,
+} from "@/lib/permissions";
+
 import { ADESHINA_SECTORS, getBlueprintBySector } from "@/lib/adeshina-ai";
 
 import { generateOrderNumber, slugify } from "@/lib/utils";
@@ -117,7 +124,9 @@ interface PlatformState {
   orders: Order[];
   inventoryMovements: InventoryMovement[];
   promoCodes: PromoCode[];
+  customDomains: CustomDomainRequest[];
   plans: SubscriptionPlan[];
+
 
   modules: ModulePermission[];
   countries: CountryConfig[];
@@ -230,6 +239,17 @@ interface PlatformContextValue extends PlatformState {
   ) => { ok: boolean; error?: string };
   togglePromoCodeActive: (storeId: string, promoId: string) => void;
   deletePromoCode: (storeId: string, promoId: string) => void;
+  requestCustomDomain: (
+    storeId: string,
+    domain: string,
+    requestType: "connect_existing" | "buy_new"
+  ) => { ok: boolean; error?: string };
+  deleteCustomDomainRequest: (storeId: string, domainId: string) => void;
+  adminUpdateDomainStatus: (
+    domainId: string,
+    status: "active_ssl" | "rejected"
+  ) => void;
+
 
   // Public storefront checkout
   placeOrder: (input: PlaceOrderInput) => Order;
@@ -369,7 +389,22 @@ const DEFAULT_STATE: PlatformState = {
       createdAt: "2026-02-05T10:00:00.000Z",
     },
   ],
+  customDomains: [
+    {
+      id: "dom-atelier-dakar",
+      storeId: "store-atelier-dakar",
+      storeName: "Atelier Dakar Mode",
+      merchantEmail: "aminata@atelierdakar.sn",
+      domain: "atelierdakar.sn",
+      requestType: "connect_existing",
+      status: "active_ssl",
+      dnsTarget: "cname.vercel-dns.com",
+      createdAt: "2026-02-02T11:00:00.000Z",
+      verifiedAt: "2026-02-02T12:15:00.000Z",
+    },
+  ],
   plans: DEFAULT_PLANS,
+
 
   modules: DEFAULT_MODULES,
   countries: INITIAL_COUNTRIES,
@@ -443,7 +478,9 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
         orders: state.orders,
         inventoryMovements: state.inventoryMovements,
         promoCodes: state.promoCodes,
+        customDomains: state.customDomains,
         plans: state.plans,
+
 
         modules: state.modules,
         countries: state.countries,
@@ -464,7 +501,9 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
     state.orders,
     state.inventoryMovements,
     state.promoCodes,
+    state.customDomains,
     state.plans,
+
 
     state.modules,
     state.countries,
@@ -513,7 +552,12 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
           cloud.promoCodes as unknown as PromoCode[],
           prev.promoCodes as unknown as PromoCode[]
         ) as unknown as PromoCode[],
+        customDomains: mergeById(
+          cloud.customDomains as unknown as CustomDomainRequest[],
+          prev.customDomains as unknown as CustomDomainRequest[]
+        ) as unknown as CustomDomainRequest[],
         subscriptionPayments: mergeById(
+
 
           cloud.subscriptionPayments as unknown as SubscriptionPaymentRequest[],
           prev.subscriptionPayments as unknown as SubscriptionPaymentRequest[]
@@ -1705,6 +1749,171 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
     }));
   };
 
+  const requestCustomDomain = (
+    storeId: string,
+    domain: string,
+    requestType: "connect_existing" | "buy_new"
+  ): { ok: boolean; error?: string } => {
+    const store = state.stores.find((s) => s.id === storeId);
+    if (!store) return { ok: false, error: "Boutique introuvable." };
+
+    if (!canUseModule(store.planCode, "custom_domain", state.modules)) {
+      return {
+        ok: false,
+        error:
+          "Les domaines personnalisés sont réservés à la formule Premium (15 000 FCFA / mois).",
+      };
+    }
+
+    const cleanDomain = domain
+      .trim()
+      .toLowerCase()
+      .replace(/^https?:\/\//, "")
+      .replace(/^www\./, "")
+      .replace(/\/.*$/, "");
+
+    if (!/^[a-z0-9-]+(\.[a-z]{2,})+$/.test(cleanDomain)) {
+      return {
+        ok: false,
+        error:
+          "Format de nom de domaine invalide (ex : maboutique.com ou maboutique.bj).",
+      };
+    }
+
+    const exists = (state.customDomains ?? []).some(
+      (d) => d.domain.toLowerCase() === cleanDomain && d.status !== "rejected"
+    );
+    if (exists) {
+      return {
+        ok: false,
+        error: `Le domaine ${cleanDomain} est déjà enregistré ou en cours de vérification.`,
+      };
+    }
+
+    const now = new Date().toISOString();
+    const req: CustomDomainRequest = {
+      id: `dom-${Date.now()}`,
+      storeId: store.id,
+      storeName: store.name,
+      merchantEmail: store.ownerEmail,
+      domain: cleanDomain,
+      requestType,
+      status: "pending_dns",
+      dnsTarget: "cname.vercel-dns.com",
+      createdAt: now,
+      verifiedAt: null,
+    };
+
+    setState((prev) => ({
+      ...prev,
+      customDomains: [req, ...(prev.customDomains ?? [])],
+      notifications: [
+        {
+          id: `notif-dom-${Date.now()}`,
+          recipientRole: "super_admin",
+          storeId: store.id,
+          title: `Demande de domaine (${cleanDomain})`,
+          message: `${store.name} souhaite ${
+            requestType === "buy_new" ? "commander" : "connecter"
+          } le domaine ${cleanDomain}.`,
+          type: "subscription",
+          isRead: false,
+          createdAt: now,
+        },
+        ...(prev.notifications ?? []),
+      ],
+      auditLogs: [
+        {
+          id: `log-${Date.now()}`,
+          actorEmail: store.ownerEmail,
+          action: "CUSTOM_DOMAIN_REQUESTED",
+          targetType: "custom_domain",
+          targetId: req.id,
+          details: `Demande de domaine personnalisé ${cleanDomain} (${requestType}) pour ${store.name}`,
+          createdAt: now,
+        },
+        ...prev.auditLogs,
+      ],
+    }));
+
+    return { ok: true };
+  };
+
+  const deleteCustomDomainRequest = (storeId: string, domainId: string) => {
+    setState((prev) => ({
+      ...prev,
+      customDomains: (prev.customDomains ?? []).filter(
+        (d) => !(d.id === domainId && d.storeId === storeId)
+      ),
+    }));
+  };
+
+  const adminUpdateDomainStatus = (
+    domainId: string,
+    status: "active_ssl" | "rejected"
+  ) => {
+    const now = new Date().toISOString();
+    setState((prev) => {
+      const target = (prev.customDomains ?? []).find((d) => d.id === domainId);
+      if (!target) return prev;
+      return {
+        ...prev,
+        customDomains: (prev.customDomains ?? []).map((d) =>
+          d.id === domainId
+            ? {
+                ...d,
+                status,
+                verifiedAt: status === "active_ssl" ? now : null,
+              }
+            : d
+        ),
+        stores:
+          status === "active_ssl"
+            ? prev.stores.map((s) =>
+                s.id === target.storeId
+                  ? { ...s, customDomain: target.domain }
+                  : s
+              )
+            : prev.stores,
+        notifications: [
+          {
+            id: `notif-dom-rev-${Date.now()}`,
+            recipientRole: "merchant",
+            storeId: target.storeId,
+            title:
+              status === "active_ssl"
+                ? `Domaine ${target.domain} activé en HTTPS !`
+                : `Domaine ${target.domain} non vérifié`,
+            message:
+              status === "active_ssl"
+                ? `Votre nom de domaine personnalisé ${target.domain} est désormais connecté avec certificat SSL actif.`
+                : `La configuration DNS de ${target.domain} n'a pas pu être validée. Vérifiez vos enregistrements DNS.`,
+            type: "subscription",
+            isRead: false,
+            createdAt: now,
+          },
+          ...(prev.notifications ?? []),
+        ],
+        auditLogs: [
+          {
+            id: `log-${Date.now()}`,
+            actorEmail: prev.adminAccount?.email ?? "admin@ecomsate.bj",
+            action:
+              status === "active_ssl"
+                ? "CUSTOM_DOMAIN_ACTIVATED"
+                : "CUSTOM_DOMAIN_REJECTED",
+            targetType: "custom_domain",
+            targetId: domainId,
+            details: `Domaine ${target.domain} (${target.storeName}) passé au statut : ${status}`,
+            createdAt: now,
+          },
+          ...prev.auditLogs,
+        ],
+      };
+    });
+  };
+
+
 
 
 
@@ -1733,7 +1942,11 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
         savePromoCode,
         togglePromoCodeActive,
         deletePromoCode,
+        requestCustomDomain,
+        deleteCustomDomainRequest,
+        adminUpdateDomainStatus,
         placeOrder,
+
 
         submitSubscriptionPayment,
         adminReviewSubscriptionPayment,

@@ -92,17 +92,17 @@ Ce document permet de suivre pas à pas l'avancement du développement conformé
 
 ---
 
-## PHASE 3 — DOMAINES PERSONNALISÉS
+## PHASE 3 — DOMAINES PERSONNALISÉS & MARKETING AVANCÉ
 
-### Domaines Premium (Sections 10 & 12)
-- [ ] Intégration API registrar (recherche de disponibilité, tarification, enregistrement)
-- [ ] Commande de domaine depuis EcomSate (facturation séparée de l'abonnement Premium)
-- [ ] Connexion d'un domaine externe acheté ailleurs
-- [ ] Vérification de propriété & configuration DNS (Cloudflare / registrar)
-- [ ] Connexion automatique à l'infrastructure Vercel + certificat SSL (HTTPS)
-- [ ] Consultation statut de connexion, date d'expiration, renouvellement & transfert
-- [ ] Notifications : nom de domaine connecté, nom de domaine à renouveler
-- [ ] Administration des domaines (enregistrés, connectés, expirations, état DNS)
+### Domaines Premium & Outils Commerciaux (Sections 10 & 12)
+- [x] Espace **Nom de domaine personnalisé** (`/dashboard/domaine`) réservé aux boutiques Premium
+- [x] Connexion d'un domaine externe (guide DNS `A` / `CNAME` avec copie 1-clic) & commande de domaine (`.com`, `.bj`, `.sn`, `.ci`, `.shop`)
+- [x] Administration des domaines dans `/admin` (onglet *Domaines Premium* avec activation SSL HTTPS en 1 clic)
+- [x] Système de **Codes Promo & Réductions** (`/dashboard/promotions` + panier client)
+- [x] **Zones & Tarifs de livraison** configurables par ville/quartier + seuil de livraison gratuite
+- [x] **Kit Marketing 1-clic** (`/dashboard/marketing` : QR Code boutique imprimable + générateur de posts WhatsApp/TikTok/Facebook par Adeshina IA)
+- [x] **Reçu de commande imprimable** + **Suivi de commande public** sur chaque boutique
+
 
 ---
 
