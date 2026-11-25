@@ -18,6 +18,8 @@ import {
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { FormattedAiText } from "@/components/ui/formatted-ai-text";
+
 import { DashboardPageHeader } from "@/components/dashboard/page-header";
 import { getModuleLimit } from "@/lib/permissions";
 import {
@@ -290,8 +292,9 @@ export default function DashboardAdeshinaIAPage() {
                       </p>
                     )}
                     <p className="mt-1.5 leading-relaxed text-slate-700 whitespace-pre-line">
-                      {msg.body}
+                      <FormattedAiText text={msg.body} />
                     </p>
+
                     {msg.actionLabel && msg.actionHref && (
                       <Link
                         href={msg.actionHref}

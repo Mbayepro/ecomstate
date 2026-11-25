@@ -28,7 +28,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { FormattedAiText } from "@/components/ui/formatted-ai-text";
 import { AnimatedNumber, Reveal } from "@/components/ui/motion";
+
 import { DEFAULT_PLANS } from "@/lib/permissions";
 import {
   ADESHINA_SECTORS,
@@ -642,8 +644,11 @@ export default function HomePage() {
                         </span>
                       </div>
                     ) : (
-                      <div className="animate-tab-panel">{visitorAnswer}</div>
+                      <div className="animate-tab-panel">
+                        <FormattedAiText text={visitorAnswer} darkBg />
+                      </div>
                     )}
+
                   </div>
                 </div>
 

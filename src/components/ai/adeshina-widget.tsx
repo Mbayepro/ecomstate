@@ -19,7 +19,9 @@ import {
   getBlueprintBySector,
   type AdeshinaReply,
 } from "@/lib/adeshina-ai";
+import { FormattedAiText } from "@/components/ui/formatted-ai-text";
 import { formatCurrency } from "@/lib/utils";
+
 
 interface ChatTurn {
   id: string;
@@ -30,11 +32,13 @@ interface ChatTurn {
 }
 
 const QUICK_PROMPTS = [
-  "À quoi sert EcomSate et comment ça fonctionne ?",
-  "Aide-moi à créer ma boutique rapidement",
-  "Quels sont les tarifs et l'essai à 2 000 FCFA ?",
-  "Comment fonctionnent les commandes WhatsApp & Livraison ?",
+  "À quoi sert EcomSate ?",
+  "Comment ça marche en 3 étapes ?",
+  "Tarifs & essai à 2 000 FCFA",
+  "Commandes WhatsApp & Livraison",
+  "Mobile Money sans NINEA / RCCM",
 ];
+
 
 export function AdeshinaFloatingWidget() {
   const pathname = usePathname();
@@ -218,14 +222,19 @@ export function AdeshinaFloatingWidget() {
                     }`}
                   >
                     <div
-                      className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed whitespace-pre-line ${
+                      className={`max-w-[90%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed whitespace-pre-line ${
                         m.sender === "user"
                           ? "bg-[#102A43] text-white"
                           : "border border-[#E2E8F0] bg-white text-[#1E293B] shadow-2xs"
                       }`}
                     >
-                      {m.text}
+                      {m.sender === "user" ? (
+                        m.text
+                      ) : (
+                        <FormattedAiText text={m.text} />
+                      )}
                     </div>
+
                     {m.ctaLabel && m.ctaHref && (
                       <Link
                         href={m.ctaHref}
@@ -248,25 +257,23 @@ export function AdeshinaFloatingWidget() {
                   </div>
                 )}
 
-                <div className="pt-2">
-                  <p className="mb-1.5 text-[11px] font-semibold text-slate-400">
-                    Questions rapides :
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {QUICK_PROMPTS.map((q) => (
-                      <button
-                        key={q}
-                        type="button"
-                        onClick={() => sendMessage(q)}
-                        className="rounded-full border border-[#E2E8F0] bg-white px-3 py-1 text-left text-[11px] font-medium text-[#102A43] transition-colors hover:border-[#10B981] hover:text-[#10B981] cursor-pointer"
-                      >
-                        {q}
-                      </button>
-                    ))}
-                  </div>
-                </div>
                 <div ref={scrollEndRef} />
               </div>
+
+              {/* Barre horizontale compacte de suggestions rapides (ne pousse plus les réponses sur mobile) */}
+              <div className="flex gap-1.5 overflow-x-auto border-t border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 no-scrollbar">
+                {QUICK_PROMPTS.map((q) => (
+                  <button
+                    key={q}
+                    type="button"
+                    onClick={() => sendMessage(q)}
+                    className="shrink-0 rounded-full border border-[#CBD5E1] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#102A43] transition-colors hover:border-[#10B981] hover:text-[#10B981] cursor-pointer"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+
 
               <form
                 onSubmit={(e) => {

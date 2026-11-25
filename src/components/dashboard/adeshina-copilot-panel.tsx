@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { FormattedAiText } from "@/components/ui/formatted-ai-text";
+
 import {
   runAdeshinaMerchantCollaborator,
   type CopilotIntent,
@@ -233,8 +235,9 @@ export function AdeshinaCopilotPanel({
                 {customReply.title}
               </p>
               <p className="text-xs leading-relaxed text-slate-700 whitespace-pre-line">
-                {customReply.body}
+                <FormattedAiText text={customReply.body} />
               </p>
+
             </div>
             {customReply.actionLabel && customReply.actionHref && (
               <Link href={customReply.actionHref} className="shrink-0">

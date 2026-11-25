@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { FormattedAiText } from "@/components/ui/formatted-ai-text";
+
 import { usePlatform } from "@/lib/platform-store";
 import { getModuleLimit } from "@/lib/permissions";
 import {
@@ -272,8 +274,9 @@ export function AdeshinaCollaboratorDrawer({
                     {response.title}
                   </p>
                   <p className="mt-2 text-xs leading-relaxed text-slate-700 whitespace-pre-line">
-                    {response.body}
+                    <FormattedAiText text={response.body} />
                   </p>
+
                   {response.actionLabel && response.actionHref && (
                     <Link
                       href={response.actionHref}
