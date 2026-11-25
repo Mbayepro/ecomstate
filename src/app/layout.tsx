@@ -3,15 +3,39 @@ import "./globals.css";
 import { PlatformProvider } from "@/lib/platform-store";
 import { AdeshinaFloatingWidget } from "@/components/ai/adeshina-widget";
 
+const resolvedBaseUrl =
+  process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : process.env.NEXT_PUBLIC_APP_URL &&
+        !process.env.NEXT_PUBLIC_APP_URL.includes("localhost")
+      ? process.env.NEXT_PUBLIC_APP_URL
+      : "https://ecomstate.vercel.app";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(resolvedBaseUrl),
   title: {
     default:
       "EcomSate — Créez votre boutique en ligne et développez votre commerce",
     template: "%s | EcomSate",
   },
   description:
-    "Plateforme SaaS de création et de gestion de boutiques e-commerce propulsée par Adeshina IA, pensée pour les commerçants et entreprises d'Afrique francophone.",
+    "Plateforme SaaS e-commerce propulsée par Adeshina IA. Créez votre boutique en ligne professionnelle, gérez vos stocks et recevez vos commandes par WhatsApp et Mobile Money.",
+  openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    siteName: "EcomSate",
+    title: "EcomSate — Votre boutique. Votre marque. Votre commerce.",
+    description:
+      "Lancez votre boutique en ligne professionnelle en 2 minutes avec Adeshina IA. Commandes WhatsApp, paiement à la livraison et Mobile Money (0 % commission).",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "EcomSate — Votre boutique. Votre marque. Votre commerce.",
+    description:
+      "La plateforme e-commerce SaaS pensée pour les commerçants africains, propulsée par Adeshina IA.",
+  },
 };
+
 
 export default function RootLayout({
   children,
