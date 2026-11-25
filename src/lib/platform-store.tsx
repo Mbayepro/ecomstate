@@ -30,7 +30,8 @@ import {
   INITIAL_STORES,
 } from "@/lib/seed-data";
 import { DEFAULT_MODULES, DEFAULT_PLANS } from "@/lib/permissions";
-import { getBlueprintBySector } from "@/lib/adeshina-ai";
+import { ADESHINA_SECTORS, getBlueprintBySector } from "@/lib/adeshina-ai";
+
 import { generateOrderNumber, slugify } from "@/lib/utils";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
@@ -346,7 +347,23 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
             phone: "+229 95 78 21 32",
           };
         }
+        // Nettoyer les produits exemples auto-générés dans les vraies boutiques nouvellement créées (hors boutiques Démo)
+        if (Array.isArray(parsed.products)) {
+          const sampleNames = new Set(
+            ADESHINA_SECTORS.flatMap((sec) =>
+              sec.sampleProducts.map((sp) => sp.name.toLowerCase())
+            )
+          );
+          parsed.products = parsed.products.filter((p) => {
+            const isDemoStore =
+              p.storeId === "store-atelier-dakar" ||
+              p.storeId === "store-cotonou-tech";
+            if (isDemoStore) return true;
+            return !sampleNames.has(p.name.toLowerCase());
+          });
+        }
         setState((prev) => ({ ...prev, ...parsed }));
+
       }
     } catch {
       // Ignore storage errors
@@ -644,37 +661,9 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
               },
             ];
 
-        const generatedProducts: Product[] = blueprint
-          ? blueprint.sampleProducts.map((sp, idx) => ({
-              id: `prod-${storeId}-${idx + 1}`,
-              storeId,
-              categoryId:
-                generatedCategories[idx % generatedCategories.length]?.id ??
-                generatedCategories[0].id,
-              name: sp.name,
-              slug: slugify(sp.name) || `produit-${idx}`,
-              description: sp.description,
-              price: sp.price,
-              promoPrice: sp.promoPrice ?? null,
-              stock: 15,
-              lowStockThreshold: 5,
-              images: [sp.imageUrl],
-              variants: sp.variants
-                .split(",")
-                .map((v, vIdx) => {
-                  const [vName, vVal] = v.split(":").map((x) => x.trim());
-                  return {
-                    id: `var-${storeId}-${idx + 1}-${vIdx + 1}`,
-                    name: vName || "Option",
-                    value: vVal || "Standard",
-                    stock: 5,
-                  };
-                }),
-              isActive: true,
-              isPopular: idx === 0,
-              createdAt: now.toISOString(),
-            }))
-          : [];
+        // Une nouvelle boutique démarre toujours avec un catalogue vide (0 produit fictif)
+        const generatedProducts: Product[] = [];
+
 
 
         return {
@@ -800,37 +789,9 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
           },
         ];
 
-    const generatedProducts: Product[] = blueprint
-      ? blueprint.sampleProducts.map((sp, idx) => ({
-          id: `prod-${Date.now()}-${idx}`,
-          storeId,
-          categoryId:
-            generatedCategories[idx % generatedCategories.length]?.id ??
-            generatedCategories[0].id,
-          name: sp.name,
-          slug: slugify(sp.name) || `produit-${idx}`,
-          description: sp.description,
-          price: sp.price,
-          promoPrice: sp.promoPrice ?? null,
-          stock: 15,
-          lowStockThreshold: 5,
-          images: [sp.imageUrl],
-          variants: sp.variants
-            .split(",")
-            .map((v, vIdx) => {
-              const [vName, vVal] = v.split(":").map((x) => x.trim());
-              return {
-                id: `var-${Date.now()}-${idx}-${vIdx}`,
-                name: vName || "Option",
-                value: vVal || "Standard",
-                stock: 5,
-              };
-            }),
-          isActive: true,
-          isPopular: idx === 0,
-          createdAt: now.toISOString(),
-        }))
-      : [];
+    // Une nouvelle boutique démarre toujours avec un catalogue vide (0 produit fictif)
+    const generatedProducts: Product[] = [];
+
 
     setState((prev) => ({
       ...prev,

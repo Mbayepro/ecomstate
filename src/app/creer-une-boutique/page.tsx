@@ -145,10 +145,11 @@ export default function CreerUneBoutiquePage() {
                   </span>
                 </div>
                 <p className="mt-1.5 text-sm text-slate-600">
-                  Remplissez vos informations : Adeshina IA prépare
-                  automatiquement votre boutique, vos catégories et vos premiers
-                  produits.
+                  Remplissez vos informations : Adeshina IA configure
+                  automatiquement l&apos;apparence et les rayons de votre boutique,
+                  prête à accueillir vos propres produits.
                 </p>
+
 
                 {/* Encadré Adeshina IA Copilote */}
                 <div className="mt-5 rounded-xl border border-[#10B981]/30 bg-[#F8FAFC] p-4">
@@ -194,7 +195,8 @@ export default function CreerUneBoutiquePage() {
                           }
                           className="h-4 w-4 accent-[#10B981]"
                         />
-                        <span>Pré-remplir catégories & produits IA</span>
+                        <span>Pré-configurer le style & les catégories IA</span>
+
                       </label>
                     </div>
                   </div>
@@ -373,9 +375,10 @@ export default function CreerUneBoutiquePage() {
                     ))}
                   </div>
                   <p className="mt-3 text-[11px] text-slate-500">
-                    + {blueprint.sampleProducts.length} produits exemples avec
-                    photos, prix et variantes prêts à personnaliser.
+                    Catalogue initial vierge (0 produit fictif) : vous ajoutez
+                    uniquement vos propres articles réels.
                   </p>
+
                 </CardContent>
               </Card>
             )}
