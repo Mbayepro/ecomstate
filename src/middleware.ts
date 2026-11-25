@@ -7,7 +7,22 @@ export function middleware(request: NextRequest) {
   const hostname = request.headers.get("host") || "";
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "ecomsate.com";
 
+  // Si Supabase renvoie ?code=... sur la racine (Site URL fallback), rediriger automatiquement vers /auth/callback
+  if (
+    url.searchParams.has("code") &&
+    !url.pathname.startsWith("/auth/callback") &&
+    !url.pathname.startsWith("/_next")
+  ) {
+    const callbackUrl = request.nextUrl.clone();
+    callbackUrl.pathname = "/auth/callback";
+    if (!callbackUrl.searchParams.has("next")) {
+      callbackUrl.searchParams.set("next", "/dashboard");
+    }
+    return NextResponse.redirect(callbackUrl);
+  }
+
   // Ignore Next.js internals, OAuth callback & static assets
+
   if (
     url.pathname.startsWith("/_next") ||
     url.pathname.startsWith("/api") ||

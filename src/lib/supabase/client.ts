@@ -34,7 +34,7 @@ export async function signInWithGoogleOAuth(nextPath = "/dashboard"): Promise<{
     return {
       ok: false,
       error:
-        "Supabase n'est pas configuré dans .env.local (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY).",
+        "Supabase n'est pas configuré dans les variables d'environnement (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY).",
     };
   }
 
@@ -43,10 +43,15 @@ export async function signInWithGoogleOAuth(nextPath = "/dashboard"): Promise<{
       ? window.location.origin
       : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
+  const callbackUrl =
+    nextPath && nextPath !== "/dashboard"
+      ? `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}`
+      : `${origin}/auth/callback`;
+
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
+      redirectTo: callbackUrl,
       queryParams: {
         access_type: "offline",
         prompt: "select_account",
@@ -59,5 +64,6 @@ export async function signInWithGoogleOAuth(nextPath = "/dashboard"): Promise<{
   }
   return { ok: true };
 }
+
 
 
