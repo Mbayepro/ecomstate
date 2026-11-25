@@ -24,7 +24,9 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
+  QrCode,
   Search,
+
   Share2,
   ShieldCheck,
   ShoppingBag,
@@ -106,10 +108,16 @@ const NAV_GROUPS: NavGroup[] = [
         icon: Sparkles,
       },
       {
+        href: "/dashboard/marketing",
+        label: "Marketing & QR Code",
+        icon: QrCode,
+      },
+      {
         href: "/dashboard/abonnement",
         label: "Abonnement & Mobile Money",
         icon: CreditCard,
       },
+
     ],
   },
 
