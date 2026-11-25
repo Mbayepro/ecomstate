@@ -28,9 +28,28 @@ export default function ConnexionPage() {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     if (params.get("error") === "oauth_google_failed") {
-      setError(
-        "La connexion avec Google n'a pas pu aboutir. Vérifiez que le fournisseur Google est activé dans Supabase > Authentication > Providers."
-      );
+      const reason = (params.get("reason") || "").toLowerCase();
+      if (
+        reason.includes("provider is not enabled") ||
+        reason.includes("unsupported provider")
+      ) {
+        setError(
+          "Google n'est pas encore activé dans votre tableau de bord Supabase : allez dans Authentication > Sign In / Providers > Google et activez « Enable Sign in with Google »."
+        );
+      } else if (
+        reason.includes("code verifier") ||
+        reason.includes("aucun code oauth")
+      ) {
+        setError(
+          "L'URL de retour locale ou Vercel n'est pas autorisée dans Supabase : allez dans Supabase > Authentication > URL Configuration > Redirect URLs et ajoutez http://localhost:3000/auth/callback ainsi que https://ecomstate.vercel.app/auth/callback."
+        );
+      } else if (reason) {
+        setError(`Échec OAuth Google : ${params.get("reason")}`);
+      } else {
+        setError(
+          "La connexion avec Google n'a pas pu aboutir. Vérifiez Supabase > Authentication > Providers > Google et Redirect URLs."
+        );
+      }
     }
   }, []);
 
@@ -62,22 +81,19 @@ export default function ConnexionPage() {
       return;
     }
     router.push("/dashboard");
-
   };
 
-
   return (
-    <div className="bg-navy-architectural flex min-h-screen flex-col items-center justify-center bg-[#0B1F33] px-4 py-12">
+    <div className="bg-navy-architectural flex min-h-screen flex-col items-center justify-center bg-[#073B35] px-4 py-12">
       <div className="mb-8">
         <BrandLogo light />
       </div>
 
       <Card className="w-full max-w-md border-white/15 bg-white shadow-2xl">
         <CardContent className="p-7">
-
-          <h1 className="text-2xl font-bold text-[#102A43]">Connexion</h1>
+          <h1 className="text-2xl font-bold text-[#15232D]">Connexion</h1>
           <p className="mt-1.5 text-sm text-slate-600">
-            Accédez à votre espace commerçant EcomSate.
+            Accédez à votre espace commerçant ou membre d&apos;équipe EcomSate.
           </p>
 
           <div className="mt-6">
@@ -85,10 +101,10 @@ export default function ConnexionPage() {
               type="button"
               onClick={handleGoogleLogin}
               disabled={googleLoading}
-              className="flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-[#CBD5E1] bg-white px-4 text-sm font-semibold text-[#102A43] shadow-xs transition hover:border-[#102A43] hover:bg-[#F8FAFC] disabled:opacity-60 cursor-pointer"
+              className="flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-[#CBD5E1] bg-white px-4 text-sm font-semibold text-[#15232D] shadow-xs transition hover:border-[#073B35] hover:bg-[#F8FAFC] disabled:opacity-60 cursor-pointer"
             >
               {googleLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin text-[#102A43]" />
+                <Loader2 className="h-4 w-4 animate-spin text-[#073B35]" />
               ) : (
                 <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                   <path
@@ -126,9 +142,8 @@ export default function ConnexionPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-
             <Input
-              label="Adresse e-mail"
+              label="Adresse e-mail (Propriétaire ou Membre d'équipe)"
               type="email"
               required
               value={email}
@@ -158,7 +173,7 @@ export default function ConnexionPage() {
 
           <div className="mt-6 border-t border-[#E2E8F0] pt-5">
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Accès rapide démo (Phase 1)
+              Accès rapide démonstration
             </p>
             <div className="mt-3 grid gap-2">
               <button
@@ -167,13 +182,13 @@ export default function ConnexionPage() {
                   loginAsMerchant("aminata@atelierdakar.sn");
                   router.push("/dashboard");
                 }}
-                className="flex items-center justify-between rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-left text-xs hover:border-[#102A43] cursor-pointer"
+                className="flex items-center justify-between rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-left text-xs hover:border-[#00A884] cursor-pointer"
               >
-                <span className="inline-flex items-center gap-2 font-medium text-[#102A43]">
-                  <Store className="h-3.5 w-3.5 text-[#10B981]" />
-                  Atelier Dakar Mode (Sénégal)
+                <span className="inline-flex items-center gap-2 font-medium text-[#15232D]">
+                  <Store className="h-3.5 w-3.5 text-[#00A884]" />
+                  Atelier Dakar Mode (Propriétaire)
                 </span>
-                <span className="text-slate-500">Premium</span>
+                <span className="font-semibold text-[#073B35]">Premium</span>
               </button>
               <button
                 type="button"
@@ -181,13 +196,13 @@ export default function ConnexionPage() {
                   loginAsMerchant("koffi@cotonoutech.bj");
                   router.push("/dashboard");
                 }}
-                className="flex items-center justify-between rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-left text-xs hover:border-[#102A43] cursor-pointer"
+                className="flex items-center justify-between rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-left text-xs hover:border-[#00A884] cursor-pointer"
               >
-                <span className="inline-flex items-center gap-2 font-medium text-[#102A43]">
-                  <Store className="h-3.5 w-3.5 text-[#10B981]" />
-                  Cotonou Tech Store (Bénin)
+                <span className="inline-flex items-center gap-2 font-medium text-[#15232D]">
+                  <Store className="h-3.5 w-3.5 text-[#00A884]" />
+                  Cotonou Tech Store (Propriétaire)
                 </span>
-                <span className="text-slate-500">Essai</span>
+                <span className="font-semibold text-[#15232D]">Standard</span>
               </button>
               <button
                 type="button"
@@ -195,15 +210,14 @@ export default function ConnexionPage() {
                   loginAsAdmin(adminAccount?.email || "admin@ecomsate.bj");
                   router.push("/admin");
                 }}
-                className="flex items-center justify-between rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-left text-xs hover:border-[#102A43] cursor-pointer"
+                className="flex items-center justify-between rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-left text-xs hover:border-[#00A884] cursor-pointer"
               >
-                <span className="inline-flex items-center gap-2 font-medium text-[#102A43]">
-                  <ShieldCheck className="h-3.5 w-3.5 text-[#102A43]" />
-                  Administration générale ({adminAccount?.email || "admin@ecomsate.bj"})
+                <span className="inline-flex items-center gap-2 font-medium text-[#15232D]">
+                  <ShieldCheck className="h-3.5 w-3.5 text-[#073B35]" />
+                  Super Administration ({adminAccount?.email || "admin@ecomsate.bj"})
                 </span>
                 <span className="text-slate-500">Super Admin</span>
               </button>
-
             </div>
           </div>
 
@@ -211,7 +225,7 @@ export default function ConnexionPage() {
             Pas encore de boutique ?{" "}
             <Link
               href="/creer-une-boutique"
-              className="font-semibold text-[#10B981] hover:underline"
+              className="font-semibold text-[#00A884] hover:underline"
             >
               Créer ma boutique
             </Link>

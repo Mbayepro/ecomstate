@@ -2,7 +2,6 @@ import {
   canUseModule,
   getModuleLimit,
   ORDER_STATUS_META,
-  PAYMENT_METHOD_LABELS,
 } from "@/lib/permissions";
 import {
   askAdeshinaIA,
@@ -10,12 +9,15 @@ import {
 } from "@/lib/adeshina-ai";
 import { formatCurrency } from "@/lib/utils";
 import type {
+  AdCampaign,
   Category,
+  Courier,
   Customer,
   ModulePermission,
   Order,
   Product,
   Store,
+  StoreExpense,
 } from "@/types/domain";
 
 export interface MerchantDataContext {
@@ -25,31 +27,51 @@ export interface MerchantDataContext {
   orders: Order[];
   customers: Customer[];
   modules: ModulePermission[];
+  couriers?: Courier[];
+  expenses?: StoreExpense[];
+  adCampaigns?: AdCampaign[];
 }
 
 export interface RankedProductStat {
   product: Product;
   unitsSold: number;
   revenue: number;
+  netMargin: number;
 }
 
 /**
- * Calcule le classement réel des produits les plus vendus à partir des commandes non annulées.
- * N'invente aucune donnée : si aucune commande n'existe, retourne les produits marqués populaires avec 0 vente.
+ * Calcule le classement réel des produits les plus vendus et les plus rentables (Section 19.6)
  */
 export function getRealPopularProducts(
   products: Product[],
   orders: Order[]
 ): RankedProductStat[] {
-  const validOrders = orders.filter((o) => o.status !== "cancelled");
-  const salesMap = new Map<string, { units: number; revenue: number }>();
+  const validOrders = orders.filter(
+    (o) =>
+      o.status !== "cancelled" &&
+      o.status !== "returned" &&
+      o.status !== "delivery_failed"
+  );
+  const salesMap = new Map<
+    string,
+    { units: number; revenue: number; cost: number }
+  >();
 
   for (const ord of validOrders) {
     for (const item of ord.items) {
-      const prev = salesMap.get(item.productId) ?? { units: 0, revenue: 0 };
+      const prev = salesMap.get(item.productId) ?? {
+        units: 0,
+        revenue: 0,
+        cost: 0,
+      };
+      const prod = products.find((p) => p.id === item.productId);
+      const unitCost =
+        item.costPrice ??
+        (prod ? (prod.costPrice ?? 0) + (prod.additionalCost ?? 0) : 0);
       salesMap.set(item.productId, {
         units: prev.units + item.quantity,
         revenue: prev.revenue + item.totalPrice,
+        cost: prev.cost + unitCost * item.quantity,
       });
     }
   }
@@ -57,16 +79,22 @@ export function getRealPopularProducts(
   return products
     .map((product) => {
       const stat = salesMap.get(product.id);
+      const revenue = stat?.revenue ?? 0;
+      const cost = stat?.cost ?? 0;
       return {
         product,
         unitsSold: stat?.units ?? 0,
-        revenue: stat?.revenue ?? 0,
+        revenue,
+        netMargin: revenue - cost,
       };
     })
     .sort((a, b) => {
       if (b.unitsSold !== a.unitsSold) return b.unitsSold - a.unitsSold;
-      if (b.revenue !== a.revenue) return b.revenue - a.revenue;
-      return Number(Boolean(b.product.isPopular)) - Number(Boolean(a.product.isPopular));
+      if (b.netMargin !== a.netMargin) return b.netMargin - a.netMargin;
+      return (
+        Number(Boolean(b.product.isPopular)) -
+        Number(Boolean(a.product.isPopular))
+      );
     });
 }
 
@@ -75,6 +103,7 @@ export type CopilotIntent =
   | "popular_products"
   | "low_stock"
   | "summarize_orders"
+  | "profit_and_couriers"
   | "advise_merchant"
   | "free_question";
 
@@ -86,129 +115,177 @@ export interface CopilotResponse {
 }
 
 /**
- * Moteur collaborateur Adeshina IA pour l'espace commerçant.
- * Toutes les réponses chiffrées proviennent exclusivement des données réelles de la boutique active
- * et respectent les modules/permissions du plan actif.
+ * Moteur opérationnel Adeshina IA (Section 19) :
+ * Répond aux questions commerciales réelles (rentabilité produit, taux de retour, cash livreurs, ROAS, formulaire COD)
+ * sans jamais inventer de chiffre ni écraser la boutique sans validation.
  */
 export function runAdeshinaMerchantCollaborator(
   intent: CopilotIntent,
   ctx: MerchantDataContext,
   freeText?: string
 ): CopilotResponse {
-  const { store, products, categories, orders, customers, modules } = ctx;
+  const {
+    store,
+    products,
+    categories,
+    orders,
+    modules,
+    couriers = [],
+    expenses = [],
+    adCampaigns = [],
+  } = ctx;
   const cur = store.currency;
 
-  const validOrders = orders.filter((o) => o.status !== "cancelled");
-  const totalRevenue = validOrders.reduce((s, o) => s + o.totalAmount, 0);
-  const avgBasket =
-    validOrders.length > 0 ? Math.round(totalRevenue / validOrders.length) : 0;
+  const deliveredOrders = orders.filter((o) => o.status === "delivered");
+  const returnedOrders = orders.filter(
+    (o) => o.status === "returned" || o.status === "delivery_failed"
+  );
+  const deliveredRevenue = deliveredOrders.reduce(
+    (s, o) => s + o.totalAmount,
+    0
+  );
 
-  const hasAdvancedAnalytics = canUseModule(
-    store.planCode,
-    "advanced_analytics",
-    modules
-  );
-  const hasCustomDomain = canUseModule(
-    store.planCode,
-    "custom_domain",
-    modules
-  );
+  const deliveredCogs = deliveredOrders.reduce((sum, ord) => {
+    return (
+      sum +
+      ord.items.reduce((acc, it) => {
+        if (typeof it.costPrice === "number" && it.costPrice > 0) {
+          return acc + it.costPrice * it.quantity;
+        }
+        const p = products.find((pr) => pr.id === it.productId);
+        return (
+          acc +
+          (p ? (p.costPrice ?? 0) + (p.additionalCost ?? 0) : 0) * it.quantity
+        );
+      }, 0)
+    );
+  }, 0);
+
+  const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
+  const realNetProfit = deliveredRevenue - deliveredCogs - totalExpenses;
+
   const maxProducts = getModuleLimit(
     store.planCode,
     "products_catalog",
     modules
   );
+  const hasPremiumThemes = canUseModule(
+    store.planCode,
+    "premium_themes",
+    modules
+  );
 
-  // Détection d'intention automatique si question libre
   let resolvedIntent = intent;
   if (intent === "free_question" && freeText) {
     const q = freeText.toLowerCase();
     if (
+      q.includes("benefice") ||
+      q.includes("bénéfice") ||
+      q.includes("profit") ||
+      q.includes("marge") ||
+      q.includes("rentable") ||
+      q.includes("livreur") ||
+      q.includes("cash") ||
+      q.includes("retour") ||
+      q.includes("roas") ||
+      q.includes("pub")
+    ) {
+      resolvedIntent = "profit_and_couriers";
+    } else if (
       q.includes("vente") ||
       q.includes("chiffre") ||
-      q.includes("revenu") ||
-      q.includes("bilan")
+      q.includes("revenu")
     ) {
       resolvedIntent = "analyze_sales";
     } else if (
       q.includes("populaire") ||
       q.includes("meilleur") ||
-      q.includes("top") ||
       q.includes("vendu")
     ) {
       resolvedIntent = "popular_products";
     } else if (
       q.includes("stock") ||
       q.includes("rupture") ||
-      q.includes("alerte") ||
-      q.includes("inventaire")
+      q.includes("alerte")
     ) {
       resolvedIntent = "low_stock";
     } else if (
       q.includes("commande") ||
       q.includes("attente") ||
-      q.includes("livr") ||
       q.includes("statut")
     ) {
       resolvedIntent = "summarize_orders";
     } else if (
+      q.includes("formulaire") ||
+      q.includes("cod") ||
       q.includes("conseil") ||
-      q.includes("amélior") ||
-      q.includes("augmenter") ||
-      q.includes("astuce")
+      q.includes("amélior")
     ) {
       resolvedIntent = "advise_merchant";
     }
   }
 
   switch (resolvedIntent) {
-    case "analyze_sales": {
-      if (validOrders.length === 0) {
-        return {
-          title: "Analyse des ventes",
-          body: `Votre boutique **${store.name}** n'a pas encore enregistré de vente validée sur cette période.\n• Catalogue actuel : ${products.filter((p) => p.isActive).length} produit(s) actif(s)\n• Conseil immédiat : partagez le lien \`https://${store.subdomain}\` sur votre statut WhatsApp pour générer vos premières commandes.`,
-          actionLabel: "Voir mes produits",
-          actionHref: "/dashboard/produits",
-        };
-      }
+    case "profit_and_couriers": {
+      const cashWithCouriers = deliveredOrders
+        .filter((o) => o.codFinancialStatus === "collected_by_courier")
+        .reduce((s, o) => s + o.totalAmount, 0);
+      const totalAdSpent = adCampaigns.reduce((s, c) => s + c.spent, 0);
+      const roas =
+        totalAdSpent > 0 ? (deliveredRevenue / totalAdSpent).toFixed(2) : null;
 
-      // Canal de paiement principal réel
-      const byMethod = new Map<string, number>();
-      const byCity = new Map<string, number>();
-      for (const o of validOrders) {
-        byMethod.set(o.paymentMethod, (byMethod.get(o.paymentMethod) ?? 0) + 1);
-        byCity.set(o.deliveryCity, (byCity.get(o.deliveryCity) ?? 0) + 1);
-      }
-
-      const topMethodEntry = Array.from(byMethod.entries()).sort(
-        (a, b) => b[1] - a[1]
-      )[0];
-      const topCityEntry = Array.from(byCity.entries()).sort(
-        (a, b) => b[1] - a[1]
-      )[0];
-
-      const methodLabel = topMethodEntry
-        ? PAYMENT_METHOD_LABELS[
-            topMethodEntry[0] as keyof typeof PAYMENT_METHOD_LABELS
-          ]
-        : "—";
+      const ranked = getRealPopularProducts(products, deliveredOrders);
+      const mostProfitable = ranked.find((r) => r.unitsSold > 0);
 
       const lines = [
-        `• Chiffre d'affaires validé : ${formatCurrency(totalRevenue, cur)} (${validOrders.length} commande(s))`,
-        `• Panier moyen constaté : ${formatCurrency(avgBasket, cur)}`,
-        `• Mode de paiement préféré : ${methodLabel} (${topMethodEntry?.[1] ?? 0} cmd)`,
+        `• **CA réellement livré** : ${formatCurrency(deliveredRevenue, cur)} (${deliveredOrders.length} cmd livrée(s))`,
+        `• **Coût produits vendus** : ${formatCurrency(deliveredCogs, cur)} · **Dépenses** : ${formatCurrency(totalExpenses, cur)}`,
+        `• **Bénéfice net réel estimé** : **${formatCurrency(realNetProfit, cur)}**`,
+        `• **Cash à récupérer chez vos livreurs** : ${formatCurrency(cashWithCouriers, cur)} (${couriers.length} livreur(s) actif(s))`,
+        `• **Retours / Échecs de livraison** : ${returnedOrders.length} commande(s)`,
       ];
 
-      if (hasAdvancedAnalytics && topCityEntry) {
+      if (mostProfitable) {
         lines.push(
-          `• Ville la plus active (Module Analytics Premium) : ${topCityEntry[0]} (${topCityEntry[1]} cmd) · ${customers.length} client(s) fidélisé(s)`
+          `• **Produit le plus rentable** : ${mostProfitable.product.name} (+${formatCurrency(mostProfitable.netMargin, cur)} de marge brute)`
         );
+      }
+      if (roas) {
+        lines.push(`• **ROAS publicitaire sur ventes livrées** : ${roas}x`);
       }
 
       return {
-        title: "Analyse réelle des ventes",
+        title: "Diagnostic Bénéfice Réel, Livreurs COD & ROAS",
         body: lines.join("\n"),
-        actionLabel: "Ouvrir les commandes",
+        actionLabel: "Ouvrir Finances & Profit",
+        actionHref: "/dashboard/finances",
+      };
+    }
+
+    case "analyze_sales": {
+      if (orders.length === 0) {
+        return {
+          title: "Analyse des ventes COD",
+          body: `Votre boutique **${store.name}** n'a pas encore reçu de commande.\n• Produits actifs : ${products.filter((p) => p.isActive).length}\n• Vérifiez votre **Form Builder COD** et partagez le lien \`https://${store.subdomain}\`.`,
+          actionLabel: "Ouvrir le Form Builder COD",
+          actionHref: "/dashboard/form-builder",
+        };
+      }
+
+      const avgDelivered =
+        deliveredOrders.length > 0
+          ? Math.round(deliveredRevenue / deliveredOrders.length)
+          : 0;
+
+      return {
+        title: "Analyse réelle des ventes & livraisons",
+        body: [
+          `• **Commandes reçues au total** : ${orders.length}`,
+          `• **Revenu acquis (Commandes livrées)** : ${formatCurrency(deliveredRevenue, cur)} (${deliveredOrders.length} livrée(s))`,
+          `• **Panier moyen livré** : ${formatCurrency(avgDelivered, cur)}`,
+          `• **Bénéfice net estimé** : ${formatCurrency(realNetProfit, cur)}`,
+        ].join("\n"),
+        actionLabel: "Gérer les commandes",
         actionHref: "/dashboard/commandes",
       };
     }
@@ -218,30 +295,24 @@ export function runAdeshinaMerchantCollaborator(
       const soldOnes = ranked.filter((r) => r.unitsSold > 0);
 
       if (soldOnes.length === 0) {
-        const flagged = products.filter((p) => p.isPopular);
         return {
-          title: "Produits populaires",
-          body:
-            flagged.length > 0
-              ? `Aucune vente enregistrée sur la période, mais ${flagged.length} article(s) sont mis en avant dans votre vitrine : ${flagged
-                  .map((p) => p.name)
-                  .join(", ")}.`
-              : "Aucun article n'a encore été commandé sur cette période. Cochez « Mettre en avant (populaire) » sur vos meilleurs articles pour les valoriser en boutique.",
-          actionLabel: "Gérer le catalogue",
+          title: "Classement produits & marges",
+          body: "Aucune vente enregistrée pour le moment. Renseignez bien le **prix d'achat** sur chaque fiche produit pour suivre vos futures marges.",
+          actionLabel: "Gérer mes produits",
           actionHref: "/dashboard/produits",
         };
       }
 
-      const lines = soldOnes.slice(0, 3).map(
+      const lines = soldOnes.slice(0, 4).map(
         (item, idx) =>
-          `${idx + 1}. ${item.product.name} — ${item.unitsSold} vendu(s) (${formatCurrency(
+          `${idx + 1}. **${item.product.name}** — ${item.unitsSold} vendu(s) · CA ${formatCurrency(
             item.revenue,
             cur
-          )}) · Stock restant : ${item.product.stock}`
+          )} · Marge brute : **${formatCurrency(item.netMargin, cur)}**`
       );
 
       return {
-        title: "Top produits vendus",
+        title: "Produits les plus vendus & rentabilité",
         body: lines.join("\n"),
         actionLabel: "Voir le catalogue",
         actionHref: "/dashboard/produits",
@@ -256,12 +327,12 @@ export function runAdeshinaMerchantCollaborator(
 
       if (out.length === 0 && low.length === 0) {
         return {
-          title: "État des stocks excellent",
-          body: `Tous vos ${products.length} produit(s) sont au-dessus de leur seuil d'alerte (${products.reduce(
+          title: "Stocks sains",
+          body: `Aucun produit en rupture sur vos ${products.length} article(s) (${products.reduce(
             (s, p) => s + p.stock,
             0
-          )} unités disponibles au total).`,
-          actionLabel: "Vérifier l'inventaire",
+          )} unités disponibles).`,
+          actionLabel: "Voir les mouvements",
           actionHref: "/dashboard/stocks",
         };
       }
@@ -269,23 +340,23 @@ export function runAdeshinaMerchantCollaborator(
       const lines: string[] = [];
       if (out.length > 0) {
         lines.push(
-          `• En rupture immédiate (${out.length}) : ${out
+          `• **Rupture immédiate (${out.length})** : ${out
             .map((p) => p.name)
             .join(", ")}`
         );
       }
       if (low.length > 0) {
         lines.push(
-          `• Stock faible (${low.length}) : ${low
+          `• **Seuil critique (${low.length})** : ${low
             .map((p) => `${p.name} (${p.stock} rest.)`)
             .join(", ")}`
         );
       }
 
       return {
-        title: "Alertes de stock détectées",
+        title: "Alertes d'inventaire détectées",
         body: lines.join("\n"),
-        actionLabel: "Réapprovisionner maintenant",
+        actionLabel: "Réapprovisionner",
         actionHref: "/dashboard/stocks",
       };
     }
@@ -293,8 +364,8 @@ export function runAdeshinaMerchantCollaborator(
     case "summarize_orders": {
       if (orders.length === 0) {
         return {
-          title: "Résumé des commandes",
-          body: "Aucune commande enregistrée sur la période sélectionnée.",
+          title: "Suivi des 11 statuts COD",
+          body: "Aucune commande enregistrée.",
           actionLabel: "Voir ma vitrine",
           actionHref: `/s/${store.slug}`,
         };
@@ -306,21 +377,18 @@ export function runAdeshinaMerchantCollaborator(
       const countsByStatus = Object.entries(ORDER_STATUS_META)
         .map(([st, meta]) => {
           const c = orders.filter((o) => o.status === st).length;
-          return c > 0 ? `• ${meta.label} : ${c}` : null;
+          return c > 0 ? `• ${meta.label} : **${c}**` : null;
         })
         .filter(Boolean);
 
       if (waiting.length > 0) {
         countsByStatus.unshift(
-          `Priorité : ${waiting.length} commande(s) attendent votre confirmation (${waiting
-            .slice(0, 2)
-            .map((w) => w.customerName)
-            .join(", ")}).`
+          `Priorité immédiate : **${waiting.length} commande(s)** à confirmer par appel.`
         );
       }
 
       return {
-        title: `Résumé de vos ${orders.length} commande(s)`,
+        title: `État de vos ${orders.length} commande(s) COD`,
         body: countsByStatus.join("\n"),
         actionLabel: "Traiter les commandes",
         actionHref: "/dashboard/commandes",
@@ -329,52 +397,31 @@ export function runAdeshinaMerchantCollaborator(
 
     case "advise_merchant": {
       const tips: string[] = [];
-      const promoCount = products.filter((p) => Boolean(p.promoPrice)).length;
-      const hiddenCount = products.filter((p) => !p.isActive).length;
-
-      if (promoCount === 0 && products.length > 0) {
+      const withoutCost = products.filter((p) => !p.costPrice).length;
+      if (withoutCost > 0) {
         tips.push(
-          "• Ajoutez un prix promotionnel sur 1 ou 2 produits phares pour activer le filtre « Promotions » sur votre boutique."
+          `• Renseignez le **prix d'achat** sur vos ${withoutCost} produit(s) sans coût pour fiabiliser votre bénéfice net réel.`
         );
       }
-      if (categories.length < 2) {
+      tips.push(
+        "• Dans le **Form Builder COD**, activez les Offres Packs (1x, Duo -5%, Trio -10%) pour augmenter votre panier moyen."
+      );
+      if (!hasPremiumThemes) {
         tips.push(
-          "• Créez au moins 2 ou 3 catégories claires pour faciliter le filtrage sur mobile."
-        );
-      }
-      if (!store.settings.bannerUrl) {
-        tips.push(
-          "• Ajoutez une image de bannière dans Personnalisation pour renforcer la confiance dès l'arrivée du client."
-        );
-      }
-      if (hiddenCount > 0) {
-        tips.push(
-          `• Vous avez ${hiddenCount} produit(s) masqué(s) : pensez à les activer s'ils sont disponibles.`
-        );
-      }
-      if (!hasCustomDomain) {
-        tips.push(
-          "• Votre offre actuelle utilise le sous-domaine gratuit .ecomsate.com. L'offre Premium permet de connecter votre propre domaine (.com, .sn, .bj)."
-        );
-      } else if (!store.customDomain) {
-        tips.push(
-          "• Votre formule Premium inclut le domaine personnalisé : pensez à associer votre nom de domaine."
+          "• Votre plan Standard utilise le thème **Shrine Pro 1**. Le plan Premium débloque **Shrine Pro 3 Ultra-Conversion**, le multi-boutiques et le suivi ROAS."
         );
       }
       if (maxProducts !== null) {
         tips.push(
-          `• Capacité catalogue : ${products.length} / ${maxProducts} produits utilisés sur votre formule (${store.planCode}).`
+          `• Quota catalogue : ${products.length} / ${maxProducts} produits utilisés.`
         );
       }
 
       return {
-        title: "Conseils personnalisés Adeshina IA",
-        body:
-          tips.length > 0
-            ? tips.join("\n")
-            : "• Votre boutique est très bien configurée ! Continuez à partager votre lien sur WhatsApp et Instagram après chaque nouveauté.",
-        actionLabel: "Personnaliser ma boutique",
-        actionHref: "/dashboard/personnalisation",
+        title: "Recommandations d'optimisation COD",
+        body: tips.join("\n"),
+        actionLabel: "Optimiser mon Form Builder COD",
+        actionHref: "/dashboard/form-builder",
       };
     }
 

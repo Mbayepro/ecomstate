@@ -3,11 +3,10 @@
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import {
+  CheckCircle2,
   Mail,
   MapPin,
   Menu,
-  MessageCircle,
-  Phone,
   Search,
   ShieldCheck,
   ShoppingBag,
@@ -27,8 +26,12 @@ import {
 } from "@/lib/permissions";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
-
-
+/**
+ * Coque publique de la boutique client (Sections 9.16 & 18 du Cahier des charges) :
+ * - 100 % Paiement à la livraison (COD)
+ * - Zéro redirection WhatsApp de commande
+ * - Zéro numéro personnel du propriétaire exposé publiquement
+ */
 function StorefrontChrome({ children }: { children: React.ReactNode }) {
   const {
     store,
@@ -57,18 +60,16 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
       })
     : [];
 
-
   useEffect(() => {
-    document.title = `${store.name} — Boutique en ligne`;
+    document.title = `${store.name} — Boutique officielle`;
   }, [store.name]);
 
-  const primary = store.settings.primaryColor || "#102A43";
-  const secondary = store.settings.secondaryColor || "#10B981";
-  const cleanWa = store.settings.whatsappPhone.replace(/[^\d]/g, "");
+  const primary = store.settings.primaryColor || "#073B35";
+  const secondary = store.settings.secondaryColor || "#00A884";
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#F8FAFC] text-slate-900">
-      {/* Barre supérieure d'information livraison & WhatsApp */}
+    <div className="flex min-h-screen flex-col bg-[#F8FAFC] text-[#15232D]">
+      {/* Barre supérieure : Livraison COD & Suivi de commande en ligne */}
       <div
         className="px-4 py-2 text-xs text-white"
         style={{ backgroundColor: primary }}
@@ -78,35 +79,20 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
             <Truck className="h-3.5 w-3.5 shrink-0" />
             <span className="truncate">{store.settings.deliveryInfo}</span>
           </p>
-          <div className="flex shrink-0 items-center gap-4">
-            <button
-              type="button"
-              onClick={() => setTrackModalOpen(true)}
-              className="inline-flex items-center gap-1.5 font-semibold text-white hover:underline cursor-pointer"
-            >
-              <ShoppingBag className="h-3.5 w-3.5" />
-              Suivre ma commande
-            </button>
-            {cleanWa && (
-              <a
-                href={`https://wa.me/${cleanWa}`}
-                target="_blank"
-                rel="noreferrer"
-                className="hidden shrink-0 items-center gap-1.5 font-semibold text-white hover:underline sm:inline-flex"
-              >
-                <MessageCircle className="h-3.5 w-3.5" />
-                Service client WhatsApp
-              </a>
-            )}
-          </div>
-
+          <button
+            type="button"
+            onClick={() => setTrackModalOpen(true)}
+            className="inline-flex shrink-0 items-center gap-1.5 font-semibold text-white hover:underline cursor-pointer"
+          >
+            <ShoppingBag className="h-3.5 w-3.5" />
+            Suivre ma commande
+          </button>
         </div>
       </div>
 
-      {/* EN-TÊTE ÉLÉGANT AVEC LOGO, NAVIGATION, RECHERCHE VISIBLE & PANIER */}
+      {/* EN-TÊTE BOUTIQUE */}
       <header className="sticky top-0 z-30 border-b border-slate-200/90 bg-white/95 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
-          {/* Bouton Menu Mobile + Logo Boutique */}
           <div className="flex min-w-0 items-center gap-2.5">
             <button
               type="button"
@@ -136,53 +122,46 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
                 </span>
               )}
               <div className="min-w-0">
-                <p className="truncate text-base font-extrabold tracking-tight text-slate-900 sm:text-lg">
+                <p className="truncate text-base font-extrabold tracking-tight text-[#15232D] sm:text-lg">
                   {store.name}
                 </p>
                 <p className="hidden truncate text-[11px] text-slate-400 sm:block">
-                  {store.customDomain || store.subdomain}
+                  Paiement à la livraison
                 </p>
               </div>
             </Link>
           </div>
 
-          {/* Navigation Desktop simple et directe */}
           <nav className="hidden items-center gap-5 text-sm font-semibold text-slate-600 lg:flex">
             <Link
               href={`/s/${store.slug}`}
-              className="transition-colors hover:text-slate-950"
+              className="transition-colors hover:text-[#15232D]"
             >
               Accueil
             </Link>
             <a
               href={`/s/${store.slug}#catalogue`}
-              className="transition-colors hover:text-slate-950"
+              className="transition-colors hover:text-[#15232D]"
             >
               Catalogue
             </a>
-            <a
-              href={`/s/${store.slug}#nouveautes`}
-              className="transition-colors hover:text-slate-950"
+            <button
+              type="button"
+              onClick={() => setTrackModalOpen(true)}
+              className="transition-colors hover:text-[#15232D] cursor-pointer"
             >
-              Nouveautés
-            </a>
-            <a
-              href={`/s/${store.slug}#contact-boutique`}
-              className="transition-colors hover:text-slate-950"
-            >
-              Contact
-            </a>
+              Suivi de commande
+            </button>
           </nav>
 
-          {/* Barre de recherche visible Desktop + Actions Mobile */}
           <div className="flex items-center gap-2">
             <div className="relative hidden w-64 md:block lg:w-72">
               <Search className="pointer-events-none absolute left-3.5 top-2.5 h-4 w-4 text-slate-400" />
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Rechercher un produit..."
-                className="h-9.5 w-full rounded-full border border-slate-200 bg-slate-50 pl-10 pr-4 text-xs font-medium text-slate-900 placeholder:text-slate-400 transition-colors focus:border-slate-400 focus:bg-white focus:outline-none"
+                placeholder="Rechercher un article..."
+                className="h-9.5 w-full rounded-full border border-slate-200 bg-slate-50 pl-10 pr-4 text-xs font-medium text-[#15232D] placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:outline-none"
               />
             </div>
 
@@ -205,7 +184,7 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
               style={{ backgroundColor: secondary }}
             >
               <ShoppingBag className="h-4 w-4" />
-              <span className="hidden sm:inline">Panier</span>
+              <span className="hidden sm:inline">Panier COD</span>
               <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white/25 px-1.5 text-[11px] font-extrabold">
                 {cartCount}
               </span>
@@ -213,7 +192,6 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        {/* Barre de recherche dépliable sur Mobile */}
         {mobileSearchOpen && (
           <div className="border-t border-slate-100 bg-white px-4 py-2.5 md:hidden">
             <div className="relative">
@@ -232,12 +210,10 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
 
       {/* Menu latéral Mobile */}
       {mobileMenuOpen && (
-        <div className="animate-backdrop fixed inset-0 z-50 flex bg-slate-950/50 backdrop-blur-xs lg:hidden">
-          <div className="animate-page-enter flex h-full w-72 flex-col bg-white p-5 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex bg-slate-950/50 backdrop-blur-xs lg:hidden">
+          <div className="flex h-full w-72 flex-col bg-white p-5 shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <span className="font-extrabold text-slate-900">
-                {store.name}
-              </span>
+              <span className="font-extrabold text-[#15232D]">{store.name}</span>
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
@@ -252,7 +228,7 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
                 <Link
                   href={`/s/${store.slug}`}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block rounded-xl px-3 py-2.5 font-semibold text-slate-900 hover:bg-slate-50"
+                  className="block rounded-xl px-3 py-2.5 font-semibold text-[#15232D] hover:bg-slate-50"
                 >
                   Accueil de la boutique
                 </Link>
@@ -263,13 +239,16 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
                 >
                   Tout le catalogue
                 </a>
-                <a
-                  href={`/s/${store.slug}#nouveautes`}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block rounded-xl px-3 py-2.5 font-semibold text-slate-700 hover:bg-slate-50"
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setTrackModalOpen(true);
+                  }}
+                  className="block w-full rounded-xl px-3 py-2.5 text-left font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
                 >
-                  Nouveautés
-                </a>
+                  Suivre ma commande
+                </button>
               </div>
 
               {categories.length > 0 && (
@@ -283,7 +262,7 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
                         key={cat.id}
                         href={`/s/${store.slug}#catalogue`}
                         onClick={() => setMobileMenuOpen(false)}
-                        className="block rounded-xl px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                        className="block rounded-xl px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-[#15232D]"
                       >
                         {cat.name}
                       </a>
@@ -292,27 +271,14 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
                 </div>
               )}
             </div>
-
-            {cleanWa && (
-              <a
-                href={`https://wa.me/${cleanWa}`}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-[#25D366] py-3 text-xs font-bold text-white"
-              >
-                <MessageCircle className="h-4 w-4" />
-                Discuter sur WhatsApp
-              </a>
-            )}
           </div>
           <div className="flex-1" onClick={() => setMobileMenuOpen(false)} />
         </div>
       )}
 
-      {/* Contenu de la boutique */}
       <main className="flex-1">{children}</main>
 
-      {/* Bandeau de réassurance e-commerce */}
+      {/* Bandeau de réassurance COD */}
       <section className="mt-16 border-t border-slate-200 bg-white">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:grid-cols-3 sm:px-6 lg:px-8">
           <div className="flex items-start gap-3.5">
@@ -323,8 +289,8 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
               <Truck className="h-5 w-5" />
             </span>
             <div>
-              <p className="text-sm font-bold text-slate-900">
-                Livraison rapide & suivie
+              <p className="text-sm font-bold text-[#15232D]">
+                Livraison à domicile suivie
               </p>
               <p className="mt-0.5 text-xs text-slate-500">
                 {store.settings.deliveryInfo}
@@ -340,12 +306,12 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
               <ShieldCheck className="h-5 w-5" />
             </span>
             <div>
-              <p className="text-sm font-bold text-slate-900">
-                Paiement en toute confiance
+              <p className="text-sm font-bold text-[#15232D]">
+                Paiement 100 % à la livraison
               </p>
               <p className="mt-0.5 text-xs text-slate-500">
-                Paiement à la livraison, Mobile Money ou commande directe
-                WhatsApp.
+                Aucun prépaiement requis en ligne : vous réglez à la remise du
+                colis.
               </p>
             </div>
           </div>
@@ -355,27 +321,27 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white"
               style={{ backgroundColor: primary }}
             >
-              <MessageCircle className="h-5 w-5" />
+              <CheckCircle2 className="h-5 w-5" />
             </span>
             <div>
-              <p className="text-sm font-bold text-slate-900">
-                Assistance directe vendeur
+              <p className="text-sm font-bold text-[#15232D]">
+                Suivi de commande transparent
               </p>
               <p className="mt-0.5 text-xs text-slate-500">
-                Une question sur une taille ou un article ? Réponse rapide par
-                téléphone ou WhatsApp.
+                Consultez l&apos;étape exacte de préparation et de livraison
+                avec votre numéro de commande.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* PIED DE PAGE PROFESSIONNEL AVEC COORDONNÉES & RÉSEAUX SOCIAUX */}
+      {/* PIED DE PAGE (Zéro numéro personnel du propriétaire affiché publiquement) */}
       <footer
         id="contact-boutique"
-        className="border-t border-slate-200 bg-slate-950 pb-20 text-slate-300 sm:pb-0"
+        className="border-t border-slate-200 bg-[#15232D] pb-20 text-slate-300 sm:pb-0"
       >
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:grid-cols-2 sm:px-6 lg:grid-cols-4 lg:px-8">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:grid-cols-2 sm:px-6 lg:grid-cols-3 lg:px-8">
           <div className="space-y-3">
             <div className="flex items-center gap-2.5">
               {store.settings.logoUrl ? (
@@ -403,41 +369,12 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
 
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-white">
-              Navigation
+              Informations & Livraison
             </h3>
             <ul className="mt-3 space-y-2 text-xs text-slate-400">
-              <li>
-                <Link href={`/s/${store.slug}`} className="hover:text-white">
-                  Accueil
-                </Link>
-              </li>
-              <li>
-                <a
-                  href={`/s/${store.slug}#catalogue`}
-                  className="hover:text-white"
-                >
-                  Catalogue complet
-                </a>
-              </li>
-              <li>
-                <a
-                  href={`/s/${store.slug}#nouveautes`}
-                  className="hover:text-white"
-                >
-                  Nouveautés
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-white">
-              Coordonnées
-            </h3>
-            <ul className="mt-3 space-y-2 text-xs text-slate-400">
-              <li className="flex items-center gap-2">
-                <Phone className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
-                <span>{store.settings.whatsappPhone}</span>
+              <li className="flex items-start gap-2">
+                <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
+                <span>{store.settings.address}</span>
               </li>
               {store.settings.email && (
                 <li className="flex items-center gap-2">
@@ -445,16 +382,12 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
                   <span>{store.settings.email}</span>
                 </li>
               )}
-              <li className="flex items-start gap-2">
-                <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
-                <span>{store.settings.address}</span>
-              </li>
             </ul>
           </div>
 
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-white">
-              Conditions & Réseaux
+              Conditions & Garanties COD
             </h3>
             <p className="mt-3 text-xs leading-relaxed text-slate-400">
               {store.settings.termsOfSale}
@@ -494,9 +427,9 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        <div className="border-t border-white/10 py-4 text-center text-[11px] text-slate-500">
-          © {new Date().getFullYear()} {store.name} · Boutique propulsée par{" "}
-          <Link href="/" className="font-semibold text-slate-300 hover:underline">
+        <div className="border-t border-white/10 py-4 text-center text-[11px] text-slate-400">
+          © {new Date().getFullYear()} {store.name} · Propulsé par{" "}
+          <Link href="/" className="font-semibold text-white hover:underline">
             EcomSate
           </Link>
         </div>
@@ -506,15 +439,15 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
 
       {/* Modal Suivi de Commande Client */}
       {trackModalOpen && (
-        <div className="animate-backdrop fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
-          <div className="animate-modal-in w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
               <div>
-                <h3 className="text-base font-extrabold text-slate-900">
+                <h3 className="text-base font-extrabold text-[#15232D]">
                   Suivre ma commande
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Saisissez votre N° de commande (ex: CMD-...) ou téléphone
+                  Saisissez votre N° de commande ou votre téléphone de livraison
                 </p>
               </div>
               <button
@@ -531,21 +464,20 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
                 type="text"
                 value={trackQuery}
                 onChange={(e) => setTrackQuery(e.target.value)}
-                placeholder="Ex : CMD-1042 ou +229 97 00 00 00"
-                className="h-10.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-sm font-medium text-slate-900 focus:border-slate-900 focus:bg-white focus:outline-none"
+                placeholder="Ex : ES-261123-4821 ou téléphone"
+                className="h-10.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-sm font-medium text-[#15232D] focus:border-[#00A884] focus:bg-white focus:outline-none"
               />
             </div>
 
             <div className="mt-4 max-h-72 space-y-3 overflow-y-auto">
               {!trackQuery.trim() ? (
                 <p className="py-6 text-center text-xs text-slate-400">
-                  Entrez votre numéro de commande ou de téléphone ci-dessus pour
-                  consulter l&apos;avancement de votre livraison.
+                  Entrez votre référence ci-dessus pour consulter l&apos;état de
+                  préparation et de livraison.
                 </p>
               ) : trackedOrders.length === 0 ? (
                 <p className="py-6 text-center text-xs text-slate-500">
-                  Aucune commande trouvée dans {store.name} pour « {trackQuery}{" "}
-                  ».
+                  Aucune commande trouvée pour « {trackQuery} ».
                 </p>
               ) : (
                 trackedOrders.map((ord) => (
@@ -554,23 +486,22 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
                     className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-xs"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-mono font-bold text-slate-900">
+                      <span className="font-mono font-bold text-[#15232D]">
                         {ord.orderNumber}
                       </span>
                       <span
                         className="rounded-full px-2.5 py-0.5 text-[11px] font-bold text-white"
                         style={{ backgroundColor: secondary }}
                       >
-                        {ORDER_STATUS_META[ord.status].label}
+                        {ORDER_STATUS_META[ord.status]?.label ?? ord.status}
                       </span>
                     </div>
-                    <p className="mt-1 font-semibold text-slate-800">
+                    <p className="mt-1 font-semibold text-[#15232D]">
                       {ord.customerName} ·{" "}
-                      {formatCurrency(ord.totalAmount, store.currency)}
+                      {formatCurrency(ord.totalAmount, store.currency)} (COD)
                     </p>
                     <p className="mt-0.5 text-slate-500">
-                      Livraison : {ord.deliveryAddress}, {ord.deliveryCity} (
-                      {formatDate(ord.createdAt)})
+                      Livraison : {ord.deliveryAddress} ({formatDate(ord.createdAt)})
                     </p>
                   </div>
                 ))
@@ -582,7 +513,6 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-
 
 export function StorefrontClientShell({
   slug,
@@ -598,7 +528,7 @@ export function StorefrontClientShell({
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-[#F8FAFC] p-6 text-center">
         <StoreIcon className="h-12 w-12 text-slate-300" />
-        <h1 className="mt-4 text-2xl font-extrabold text-[#102A43]">
+        <h1 className="mt-4 text-2xl font-extrabold text-[#15232D]">
           Boutique introuvable
         </h1>
         <p className="mt-2 max-w-md text-sm text-slate-600">
@@ -607,7 +537,7 @@ export function StorefrontClientShell({
         </p>
         <Link
           href="/"
-          className="mt-6 rounded-xl bg-[#102A43] px-5 py-2.5 text-sm font-bold text-white"
+          className="mt-6 rounded-xl bg-[#073B35] px-5 py-2.5 text-sm font-bold text-white"
         >
           Découvrir EcomSate
         </Link>
@@ -620,18 +550,17 @@ export function StorefrontClientShell({
   if (store.status === "suspended" || subHealth.isExpired) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-[#F8FAFC] p-6 text-center">
-        <StoreIcon className="h-12 w-12 text-amber-500" />
-        <h1 className="mt-4 text-2xl font-extrabold text-[#102A43]">
+        <StoreIcon className="h-12 w-12 text-[#F4A340]" />
+        <h1 className="mt-4 text-2xl font-extrabold text-[#15232D]">
           {store.name} est temporairement indisponible
         </h1>
         <p className="mt-2 max-w-md text-sm text-slate-600">
           Cette boutique est actuellement suspendue ou en attente de
-          renouvellement d&apos;abonnement. Veuillez réessayer ultérieurement.
+          renouvellement d&apos;abonnement.
         </p>
       </div>
     );
   }
-
 
   return (
     <StorefrontProvider slug={slug}>

@@ -108,7 +108,7 @@ export default function DashboardDomainePage() {
       <Card className="border-[#E2E8F0] bg-white">
         <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">
           <div className="flex items-center gap-3.5">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#102A43] text-[#10B981]">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#073B35] text-[#00A884]">
               <Globe className="h-5 w-5" />
             </span>
             <div>
@@ -116,7 +116,7 @@ export default function DashboardDomainePage() {
                 Adresse principale active de votre boutique
               </p>
               <div className="mt-0.5 flex flex-wrap items-center gap-2">
-                <span className="font-mono text-base font-extrabold text-[#102A43]">
+                <span className="font-mono text-base font-extrabold text-[#073B35]">
                   https://{activeStore.customDomain || activeStore.subdomain}
                 </span>
                 <Badge variant="success">
@@ -129,7 +129,7 @@ export default function DashboardDomainePage() {
 
           <p className="text-xs text-slate-500">
             Sous-domaine gratuit inclus :{" "}
-            <code className="font-semibold text-[#102A43]">
+            <code className="font-semibold text-[#073B35]">
               {activeStore.subdomain}
             </code>
           </p>
@@ -138,17 +138,17 @@ export default function DashboardDomainePage() {
 
       {!isPremiumAllowed ? (
         /* Écran d'invitation Premium */
-        <Card className="border-2 border-[#102A43]/15 bg-white">
+        <Card className="border-2 border-[#073B35]/15 bg-white">
           <CardContent className="p-8 text-center">
-            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#102A43] text-[#10B981]">
+            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#073B35] text-[#00A884]">
               <Lock className="h-7 w-7" />
             </span>
-            <h2 className="mt-4 text-xl font-extrabold text-[#102A43]">
+            <h2 className="mt-4 text-xl font-extrabold text-[#073B35]">
               Connectez votre propre nom de domaine (.com, .bj, .sn, .ci)
             </h2>
             <p className="mx-auto mt-2 max-w-xl text-sm text-slate-600">
               Votre sous-domaine gratuit{" "}
-              <code className="font-semibold text-[#102A43]">
+              <code className="font-semibold text-[#073B35]">
                 {activeStore.subdomain}
               </code>{" "}
               est déjà actif. Pour utiliser votre propre nom de domaine
@@ -160,7 +160,7 @@ export default function DashboardDomainePage() {
               {DOMAIN_EXTENSIONS.map((item) => (
                 <span
                   key={item.ext}
-                  className="rounded-full border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-1 text-xs font-bold text-[#102A43]"
+                  className="rounded-full border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-1 text-xs font-bold text-[#073B35]"
                 >
                   {item.ext}
                 </span>
@@ -183,7 +183,7 @@ export default function DashboardDomainePage() {
           <Card className="border-[#E2E8F0] bg-white lg:col-span-7">
             <CardHeader className="border-b border-[#E2E8F0] px-5 py-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-sm font-extrabold text-[#102A43]">
+                <h2 className="text-sm font-extrabold text-[#073B35]">
                   Ajouter un nom de domaine personnalisé
                 </h2>
                 <div className="inline-flex rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-1 text-xs">
@@ -192,7 +192,7 @@ export default function DashboardDomainePage() {
                     onClick={() => setMode("connect_existing")}
                     className={`rounded-lg px-3 py-1 font-bold cursor-pointer ${
                       mode === "connect_existing"
-                        ? "bg-[#102A43] text-white"
+                        ? "bg-[#073B35] text-white"
                         : "text-slate-600"
                     }`}
                   >
@@ -203,7 +203,7 @@ export default function DashboardDomainePage() {
                     onClick={() => setMode("buy_new")}
                     className={`rounded-lg px-3 py-1 font-bold cursor-pointer ${
                       mode === "buy_new"
-                        ? "bg-[#102A43] text-white"
+                        ? "bg-[#073B35] text-white"
                         : "text-slate-600"
                     }`}
                   >
@@ -241,13 +241,13 @@ export default function DashboardDomainePage() {
                       />
                     </div>
                     <div className="sm:col-span-5">
-                      <label className="mb-1.5 block text-sm font-medium text-[#102A43]">
+                      <label className="mb-1.5 block text-sm font-medium text-[#073B35]">
                         Extension
                       </label>
                       <select
                         value={selectedExt}
                         onChange={(e) => setSelectedExt(e.target.value)}
-                        className="h-10.5 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 text-sm font-semibold text-[#102A43]"
+                        className="h-10.5 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 text-sm font-semibold text-[#073B35]"
                       >
                         {DOMAIN_EXTENSIONS.map((item) => (
                           <option key={item.ext} value={item.ext}>
@@ -266,7 +266,7 @@ export default function DashboardDomainePage() {
                 )}
                 {successMsg && (
                   <div className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-900">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#10B981]" />
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#00A884]" />
                     <span>{successMsg}</span>
                   </div>
                 )}
@@ -283,9 +283,9 @@ export default function DashboardDomainePage() {
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-[#E2E8F0] bg-white px-3.5 text-xs font-bold text-[#102A43] hover:bg-slate-50"
+                    className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-[#E2E8F0] bg-white px-3.5 text-xs font-bold text-[#073B35] hover:bg-slate-50"
                   >
-                    <MessageCircle className="h-4 w-4 text-[#10B981]" />
+                    <MessageCircle className="h-4 w-4 text-[#00A884]" />
                     Aide DNS WhatsApp
                   </a>
                 </div>
@@ -293,7 +293,7 @@ export default function DashboardDomainePage() {
 
               {/* Guide DNS */}
               <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-xs">
-                <p className="font-bold text-[#102A43]">
+                <p className="font-bold text-[#073B35]">
                   Configuration DNS à ajouter chez votre fournisseur (Namecheap,
                   OVH, LWS, Cloudflare…) :
                 </p>
@@ -318,21 +318,21 @@ export default function DashboardDomainePage() {
                     >
                       <div className="flex items-center gap-2 font-mono">
                         <Badge variant="navy">{rec.type}</Badge>
-                        <span className="font-bold text-[#102A43]">
+                        <span className="font-bold text-[#073B35]">
                           {rec.host}
                         </span>
                         <span className="text-slate-400">→</span>
-                        <span className="text-[#10B981] font-semibold">
+                        <span className="text-[#00A884] font-semibold">
                           {rec.val}
                         </span>
                       </div>
                       <button
                         type="button"
                         onClick={() => copyVal(rec.val, rec.key)}
-                        className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-[#102A43] cursor-pointer"
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-[#073B35] cursor-pointer"
                       >
                         {copiedKey === rec.key ? (
-                          <Check className="h-3.5 w-3.5 text-[#10B981]" />
+                          <Check className="h-3.5 w-3.5 text-[#00A884]" />
                         ) : (
                           <Copy className="h-3.5 w-3.5" />
                         )}
@@ -348,7 +348,7 @@ export default function DashboardDomainePage() {
           {/* Liste des domaines enregistrés */}
           <Card className="border-[#E2E8F0] bg-white lg:col-span-5">
             <CardHeader className="border-b border-[#E2E8F0] px-5 py-4">
-              <h2 className="text-sm font-extrabold text-[#102A43]">
+              <h2 className="text-sm font-extrabold text-[#073B35]">
                 Vos domaines ({storeDomains.length})
               </h2>
             </CardHeader>
@@ -365,7 +365,7 @@ export default function DashboardDomainePage() {
                       className="flex items-center justify-between gap-3 px-5 py-4 text-xs"
                     >
                       <div>
-                        <p className="font-mono text-sm font-extrabold text-[#102A43]">
+                        <p className="font-mono text-sm font-extrabold text-[#073B35]">
                           {dom.domain}
                         </p>
                         <p className="mt-0.5 text-slate-500">

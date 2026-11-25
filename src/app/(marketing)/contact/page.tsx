@@ -29,23 +29,23 @@ export default function ContactPage() {
             <Card>
               <CardContent className="space-y-5 p-6">
                 <div className="flex items-start gap-3">
-                  <Mail className="mt-0.5 h-5 w-5 text-[#10B981]" />
+                  <Mail className="mt-0.5 h-5 w-5 text-[#00A884]" />
                   <div>
-                    <p className="text-sm font-semibold text-[#102A43]">E-mail</p>
+                    <p className="text-sm font-semibold text-[#073B35]">E-mail</p>
                     <p className="text-sm text-slate-600">support@ecomsate.com</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <Phone className="mt-0.5 h-5 w-5 text-[#10B981]" />
+                  <Phone className="mt-0.5 h-5 w-5 text-[#00A884]" />
                   <div>
-                    <p className="text-sm font-semibold text-[#102A43]">
+                    <p className="text-sm font-semibold text-[#073B35]">
                       WhatsApp & Support Direct (Bénin)
                     </p>
                     <a
                       href="https://wa.me/22995782132?text=Bonjour%20EcomSate%2C%20je%20souhaite%20des%20informations%20sur%20la%20plateforme."
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-0.5 inline-block text-sm font-semibold text-[#10B981] hover:underline"
+                      className="mt-0.5 inline-block text-sm font-semibold text-[#00A884] hover:underline"
                     >
                       +229 95 78 21 32 (Discuter sur WhatsApp)
                     </a>
@@ -53,9 +53,9 @@ export default function ContactPage() {
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <MapPin className="mt-0.5 h-5 w-5 text-[#10B981]" />
+                  <MapPin className="mt-0.5 h-5 w-5 text-[#00A884]" />
                   <div>
-                    <p className="text-sm font-semibold text-[#102A43]">
+                    <p className="text-sm font-semibold text-[#073B35]">
                       Zones couvertes
                     </p>
                     <p className="text-sm text-slate-600">
@@ -72,8 +72,8 @@ export default function ContactPage() {
               <CardContent className="p-6">
                 {sent ? (
                   <div className="py-10 text-center">
-                    <CheckCircle2 className="mx-auto h-12 w-12 text-[#10B981]" />
-                    <h2 className="mt-4 text-xl font-bold text-[#102A43]">
+                    <CheckCircle2 className="mx-auto h-12 w-12 text-[#00A884]" />
+                    <h2 className="mt-4 text-xl font-bold text-[#073B35]">
                       Message envoyé
                     </h2>
                     <p className="mt-2 text-sm text-slate-600">
@@ -111,14 +111,14 @@ export default function ContactPage() {
                     />
 
                     <div className="space-y-1.5">
-                      <label className="block text-sm font-medium text-[#102A43]">
+                      <label className="block text-sm font-medium text-[#073B35]">
                         Message
                       </label>
                       <textarea
                         required
                         rows={4}
                         placeholder="Comment pouvons-nous vous aider ?"
-                        className="w-full rounded-lg border border-[#E2E8F0] bg-white px-3.5 py-2.5 text-sm text-[#1E293B] focus:border-[#102A43] focus:outline-none focus:ring-2 focus:ring-[#102A43]/15"
+                        className="w-full rounded-lg border border-[#E2E8F0] bg-white px-3.5 py-2.5 text-sm text-[#15232D] focus:border-[#073B35] focus:outline-none focus:ring-2 focus:ring-[#073B35]/15"
                       />
                     </div>
                     <Button type="submit" variant="primary" size="lg" className="w-full">

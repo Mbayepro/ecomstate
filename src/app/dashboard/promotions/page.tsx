@@ -162,7 +162,7 @@ export default function DashboardPromotionsPage() {
         {/* Formulaire de création */}
         <Card className="border-[#E2E8F0] bg-white lg:col-span-5">
           <CardHeader className="border-b border-[#E2E8F0] px-5 py-4">
-            <h2 className="text-sm font-extrabold text-[#102A43]">
+            <h2 className="text-sm font-extrabold text-[#073B35]">
               Créer un nouveau code promo
             </h2>
           </CardHeader>
@@ -183,9 +183,9 @@ export default function DashboardPromotionsPage() {
                       setDiscountValue(String(preset.value));
                       setMinOrderAmount(String(preset.min));
                     }}
-                    className="inline-flex items-center gap-1 rounded-full border border-[#E2E8F0] bg-[#F8FAFC] px-2.5 py-1 text-[11px] font-bold text-[#102A43] hover:border-[#10B981] hover:text-[#10B981] cursor-pointer"
+                    className="inline-flex items-center gap-1 rounded-full border border-[#E2E8F0] bg-[#F8FAFC] px-2.5 py-1 text-[11px] font-bold text-[#073B35] hover:border-[#00A884] hover:text-[#00A884] cursor-pointer"
                   >
-                    <Sparkles className="h-3 w-3 text-[#10B981]" />
+                    <Sparkles className="h-3 w-3 text-[#00A884]" />
                     {preset.code}
                   </button>
                 ))}
@@ -203,7 +203,7 @@ export default function DashboardPromotionsPage() {
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-[#102A43]">
+                  <label className="mb-1.5 block text-sm font-medium text-[#073B35]">
                     Type de remise
                   </label>
                   <select
@@ -211,7 +211,7 @@ export default function DashboardPromotionsPage() {
                     onChange={(e) =>
                       setDiscountType(e.target.value as "percent" | "fixed")
                     }
-                    className="h-10.5 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 text-sm font-medium text-[#102A43]"
+                    className="h-10.5 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 text-sm font-medium text-[#073B35]"
                   >
                     <option value="percent">Pourcentage (%)</option>
                     <option value="fixed">
@@ -278,7 +278,7 @@ export default function DashboardPromotionsPage() {
         {/* Liste des codes promo de la boutique */}
         <Card className="border-[#E2E8F0] bg-white lg:col-span-7">
           <CardHeader className="border-b border-[#E2E8F0] px-5 py-4">
-            <h2 className="text-sm font-extrabold text-[#102A43]">
+            <h2 className="text-sm font-extrabold text-[#073B35]">
               Vos codes promo ({storePromos.length})
             </h2>
           </CardHeader>
@@ -286,7 +286,7 @@ export default function DashboardPromotionsPage() {
             {storePromos.length === 0 ? (
               <div className="p-12 text-center">
                 <Tag className="mx-auto h-9 w-9 text-slate-300" />
-                <p className="mt-2.5 text-sm font-bold text-[#102A43]">
+                <p className="mt-2.5 text-sm font-bold text-[#073B35]">
                   Aucun code promo pour le moment
                 </p>
                 <p className="mt-1 text-xs text-slate-500">
@@ -304,7 +304,7 @@ export default function DashboardPromotionsPage() {
                   >
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-lg border border-[#102A43]/20 bg-[#F8FAFC] px-2.5 py-1 font-mono text-sm font-extrabold tracking-wide text-[#102A43]">
+                        <span className="rounded-lg border border-[#073B35]/20 bg-[#F8FAFC] px-2.5 py-1 font-mono text-sm font-extrabold tracking-wide text-[#073B35]">
                           {promo.code}
                         </span>
                         <Badge variant={promo.isActive ? "success" : "default"}>
@@ -326,7 +326,7 @@ export default function DashboardPromotionsPage() {
                           activeStore.currency
                         )}{" "}
                         · Utilisé{" "}
-                        <strong className="text-[#102A43]">
+                        <strong className="text-[#073B35]">
                           {promo.usedCount}
                           {promo.maxUses ? ` / ${promo.maxUses}` : ""}
                         </strong>{" "}
@@ -341,11 +341,11 @@ export default function DashboardPromotionsPage() {
                       <button
                         type="button"
                         onClick={() => copyCode(promo.code)}
-                        className="inline-flex items-center gap-1 rounded-lg border border-[#E2E8F0] bg-white px-2.5 py-1.5 text-xs font-semibold text-[#102A43] hover:bg-slate-50 cursor-pointer"
+                        className="inline-flex items-center gap-1 rounded-lg border border-[#E2E8F0] bg-white px-2.5 py-1.5 text-xs font-semibold text-[#073B35] hover:bg-slate-50 cursor-pointer"
                         title="Copier le code"
                       >
                         {copiedCode === promo.code ? (
-                          <Check className="h-3.5 w-3.5 text-[#10B981]" />
+                          <Check className="h-3.5 w-3.5 text-[#00A884]" />
                         ) : (
                           <Copy className="h-3.5 w-3.5 text-slate-500" />
                         )}
@@ -361,7 +361,7 @@ export default function DashboardPromotionsPage() {
                             promo.discountValue
                           )
                         }
-                        className="inline-flex items-center gap-1 rounded-lg border border-[#10B981]/30 bg-[#10B981]/10 px-2.5 py-1.5 text-xs font-bold text-[#059669] hover:bg-[#10B981] hover:text-white cursor-pointer"
+                        className="inline-flex items-center gap-1 rounded-lg border border-[#00A884]/30 bg-[#00A884]/10 px-2.5 py-1.5 text-xs font-bold text-[#008F6F] hover:bg-[#00A884] hover:text-white cursor-pointer"
                         title="Partager cette offre sur WhatsApp"
                       >
                         <MessageCircle className="h-3.5 w-3.5" />
@@ -373,7 +373,7 @@ export default function DashboardPromotionsPage() {
                         onClick={() =>
                           togglePromoCodeActive(activeStore.id, promo.id)
                         }
-                        className="rounded-lg border border-[#E2E8F0] bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-[#102A43] cursor-pointer"
+                        className="rounded-lg border border-[#E2E8F0] bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-[#073B35] cursor-pointer"
                       >
                         {promo.isActive ? "Pause" : "Activer"}
                       </button>

@@ -16,11 +16,11 @@ export function DashboardPageHeader({
     <div className="flex flex-col justify-between gap-4 border-b border-[#E2E8F0] pb-5 sm:flex-row sm:items-center">
       <div>
         {eyebrow && (
-          <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-[#00A884]">
             {eyebrow}
           </p>
         )}
-        <h1 className="mt-0.5 text-2xl font-extrabold tracking-tight text-[#102A43]">
+        <h1 className="mt-0.5 text-2xl font-extrabold tracking-tight text-[#15232D]">
           {title}
         </h1>
         {description && (
@@ -56,16 +56,16 @@ export function StatMetricCard({
     { iconBox: string; borderHover: string }
   > = {
     emerald: {
-      iconBox: "bg-[#10B981]/10 text-[#10B981]",
-      borderHover: "hover:border-[#10B981]/40",
+      iconBox: "bg-[#E7F7F2] text-[#00A884]",
+      borderHover: "hover:border-[#00A884]/45",
     },
     navy: {
-      iconBox: "bg-[#102A43]/8 text-[#102A43]",
-      borderHover: "hover:border-[#102A43]/30",
+      iconBox: "bg-[#073B35]/10 text-[#073B35]",
+      borderHover: "hover:border-[#073B35]/35",
     },
     amber: {
-      iconBox: "bg-amber-50 text-amber-600",
-      borderHover: "hover:border-amber-300",
+      iconBox: "bg-amber-50 text-[#F4A340]",
+      borderHover: "hover:border-[#F4A340]/50",
     },
     sky: {
       iconBox: "bg-sky-50 text-sky-600",
@@ -86,17 +86,17 @@ export function StatMetricCard({
   return (
     <div
       className={cn(
-        "group rounded-2xl border border-[#E2E8F0] bg-white shadow-2xs transition-all duration-200",
+        "card-motion group rounded-2xl border border-[#E2E8F0] bg-white shadow-2xs",
         t.borderHover,
         compact ? "p-4" : "p-5"
       )}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-xs font-medium text-slate-500">{label}</p>
+          <p className="truncate text-xs font-semibold text-slate-500">{label}</p>
           <div
             className={cn(
-              "mt-1.5 font-extrabold tracking-tight text-[#102A43]",
+              "mt-1.5 font-extrabold tracking-tight text-[#15232D]",
               compact ? "text-xl" : "text-2xl"
             )}
           >
@@ -105,8 +105,8 @@ export function StatMetricCard({
         </div>
         <span
           className={cn(
-            "flex shrink-0 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-105",
-            compact ? "h-8.5 w-8.5" : "h-10 w-10",
+            "flex shrink-0 items-center justify-center rounded-xl transition-all duration-300 group-hover:scale-110 group-hover:-rotate-3",
+            compact ? "h-8.5 w-8.5" : "h-10.5 w-10.5",
             t.iconBox
           )}
         >

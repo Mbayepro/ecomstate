@@ -176,8 +176,8 @@ export default function DashboardStatistiquesPage() {
                   onClick={() => setPeriod(val)}
                   className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
                     period === val
-                      ? "bg-[#102A43] text-white"
-                      : "text-slate-600 hover:text-[#102A43]"
+                      ? "bg-[#073B35] text-white"
+                      : "text-slate-600 hover:text-[#073B35]"
                   }`}
                 >
                   {label}
@@ -241,14 +241,14 @@ export default function DashboardStatistiquesPage() {
       <Card className="border-[#E2E8F0] bg-white">
         <CardHeader className="flex items-center justify-between border-b border-[#E2E8F0] px-5 py-4">
           <div>
-            <h2 className="text-sm font-extrabold text-[#102A43]">
+            <h2 className="text-sm font-extrabold text-[#073B35]">
               Progression du chiffre d&apos;affaires
             </h2>
             <p className="text-xs text-slate-500">
               Visualisation chronologique des ventes validées
             </p>
           </div>
-          <BarChart3 className="h-4.5 w-4.5 text-[#10B981]" />
+          <BarChart3 className="h-4.5 w-4.5 text-[#00A884]" />
         </CardHeader>
         <CardContent className="p-5">
           <SalesInteractiveChart
@@ -263,7 +263,7 @@ export default function DashboardStatistiquesPage() {
         {/* Par Catégorie */}
         <Card className="border-[#E2E8F0] bg-white">
           <CardHeader className="border-b border-[#E2E8F0] px-5 py-4">
-            <h2 className="text-sm font-extrabold text-[#102A43]">
+            <h2 className="text-sm font-extrabold text-[#073B35]">
               Ventes par catégorie
             </h2>
           </CardHeader>
@@ -279,7 +279,7 @@ export default function DashboardStatistiquesPage() {
                 return (
                   <div key={item.category.id} className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-[#102A43]">
+                      <span className="font-semibold text-[#073B35]">
                         {item.category.name}
                       </span>
                       <span className="text-slate-600">
@@ -291,7 +291,7 @@ export default function DashboardStatistiquesPage() {
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-slate-100">
                       <div
-                        className="h-full rounded-full bg-[#102A43]"
+                        className="h-full rounded-full bg-[#073B35]"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
@@ -305,7 +305,7 @@ export default function DashboardStatistiquesPage() {
         {/* Par Ville */}
         <Card className="border-[#E2E8F0] bg-white">
           <CardHeader className="border-b border-[#E2E8F0] px-5 py-4">
-            <h2 className="text-sm font-extrabold text-[#102A43]">
+            <h2 className="text-sm font-extrabold text-[#073B35]">
               Villes de livraison
             </h2>
           </CardHeader>
@@ -320,11 +320,11 @@ export default function DashboardStatistiquesPage() {
                   key={c.city}
                   className="flex items-center justify-between rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-2.5 text-xs"
                 >
-                  <span className="inline-flex items-center gap-1.5 font-semibold text-[#102A43]">
-                    <MapPin className="h-3.5 w-3.5 text-[#10B981]" />
+                  <span className="inline-flex items-center gap-1.5 font-semibold text-[#073B35]">
+                    <MapPin className="h-3.5 w-3.5 text-[#00A884]" />
                     {c.city}
                   </span>
-                  <span className="font-bold text-[#102A43]">
+                  <span className="font-bold text-[#073B35]">
                     {c.count} cmd ·{" "}
                     {formatCurrency(c.revenue, activeStore.currency)}
                   </span>
@@ -337,7 +337,7 @@ export default function DashboardStatistiquesPage() {
         {/* Par Moyen de paiement */}
         <Card className="border-[#E2E8F0] bg-white">
           <CardHeader className="border-b border-[#E2E8F0] px-5 py-4">
-            <h2 className="text-sm font-extrabold text-[#102A43]">
+            <h2 className="text-sm font-extrabold text-[#073B35]">
               Canaux d&apos;encaissement
             </h2>
           </CardHeader>
@@ -345,7 +345,7 @@ export default function DashboardStatistiquesPage() {
             {paymentStats.map((pm) => (
               <div key={pm.code} className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="truncate font-semibold text-[#102A43]">
+                  <span className="truncate font-semibold text-[#073B35]">
                     {pm.label}
                   </span>
                   <span className="shrink-0 text-slate-600">
@@ -354,7 +354,7 @@ export default function DashboardStatistiquesPage() {
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-slate-100">
                   <div
-                    className="h-full rounded-full bg-[#10B981]"
+                    className="h-full rounded-full bg-[#00A884]"
                     style={{ width: `${pm.pct}%` }}
                   />
                 </div>
@@ -367,7 +367,7 @@ export default function DashboardStatistiquesPage() {
       {/* Classement détaillé des produits */}
       <Card className="border-[#E2E8F0] bg-white">
         <CardHeader className="border-b border-[#E2E8F0] px-5 py-4">
-          <h2 className="text-sm font-extrabold text-[#102A43]">
+          <h2 className="text-sm font-extrabold text-[#073B35]">
             Performance par produit
           </h2>
         </CardHeader>
@@ -386,7 +386,7 @@ export default function DashboardStatistiquesPage() {
               <tbody className="divide-y divide-[#E2E8F0]">
                 {rankedProducts.map((r) => (
                   <tr key={r.product.id} className="hover:bg-[#F8FAFC]">
-                    <td className="px-5 py-3.5 font-semibold text-[#102A43]">
+                    <td className="px-5 py-3.5 font-semibold text-[#073B35]">
                       {r.product.name}
                     </td>
                     <td className="px-4 py-3.5 text-slate-600">
@@ -395,10 +395,10 @@ export default function DashboardStatistiquesPage() {
                         activeStore.currency
                       )}
                     </td>
-                    <td className="px-4 py-3.5 font-bold text-[#102A43]">
+                    <td className="px-4 py-3.5 font-bold text-[#073B35]">
                       {r.unitsSold}
                     </td>
-                    <td className="px-4 py-3.5 font-bold text-[#10B981]">
+                    <td className="px-4 py-3.5 font-bold text-[#00A884]">
                       {formatCurrency(r.revenue, activeStore.currency)}
                     </td>
                     <td className="px-5 py-3.5 text-right">

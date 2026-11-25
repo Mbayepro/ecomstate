@@ -65,6 +65,92 @@ export function Reveal({
 }
 
 /**
+ * Carte avec halo lumineux qui suit la souris + légère inclinaison 3D.
+ */
+export function SpotlightCard({
+  children,
+  className,
+  tilt = true,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  tilt?: boolean;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    el.style.setProperty("--mx", `${x}px`);
+    el.style.setProperty("--my", `${y}px`);
+    if (tilt) {
+      const rx = (y / rect.height - 0.5) * -5;
+      const ry = (x / rect.width - 0.5) * 5;
+      el.style.setProperty("--rx", `${rx.toFixed(2)}deg`);
+      el.style.setProperty("--ry", `${ry.toFixed(2)}deg`);
+    }
+  };
+
+  const handleLeave = () => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.setProperty("--rx", "0deg");
+    el.style.setProperty("--ry", "0deg");
+  };
+
+  return (
+    <div
+      ref={ref}
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+      className={cn("spotlight-card", className)}
+    >
+      {children}
+    </div>
+  );
+}
+
+/**
+ * Barre fine de progression de lecture en haut de page.
+ */
+export function ScrollProgress() {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    let raf = 0;
+    const update = () => {
+      const doc = document.documentElement;
+      const max = doc.scrollHeight - doc.clientHeight;
+      setProgress(max > 0 ? Math.min(1, window.scrollY / max) : 0);
+    };
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
+
+  return (
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[3px]">
+      <div
+        className="scroll-progress-bar h-full"
+        style={{ transform: `scaleX(${progress})` }}
+      />
+    </div>
+  );
+}
+
+/**
  * Compteur numérique fluide pour les KPIs du dashboard et les statistiques.
  */
 export function AnimatedNumber({

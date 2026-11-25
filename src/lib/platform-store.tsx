@@ -2,43 +2,64 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import type {
+  AdCampaign,
   AuditLog,
+  AutomationRule,
   Category,
+  CodFinancialStatus,
+  CodFormConfig,
+  CodFormField,
+  CodFormStyle,
   CountryConfig,
+  Courier,
   CustomDomainRequest,
   Customer,
-
+  ExpenseCategory,
   InventoryMovement,
   ModulePermission,
   Order,
+  OrderHistoryEntry,
   OrderStatus,
   PaymentMethodCode,
   Product,
   PromoCode,
   Store,
-
+  StoreExpense,
+  StoreSectionBlock,
   StoreSettings,
   StoreStatus,
+  StoreTemplateId,
   SubscriptionPlan,
   SubscriptionPlanCode,
+  TeamMember,
+  TeamMemberRole,
   UserRole,
 } from "@/types/domain";
 import {
   INITIAL_AUDIT_LOGS,
+  INITIAL_AUTOMATIONS,
+  INITIAL_CAMPAIGNS,
   INITIAL_CATEGORIES,
   INITIAL_COUNTRIES,
+  INITIAL_COURIERS,
   INITIAL_CUSTOMERS,
+  INITIAL_EXPENSES,
   INITIAL_INVENTORY_MOVEMENTS,
   INITIAL_ORDERS,
   INITIAL_PRODUCTS,
   INITIAL_STORES,
+  INITIAL_TEAM_MEMBERS,
 } from "@/lib/seed-data";
 import {
   canUseModule,
   DEFAULT_MODULES,
   DEFAULT_PLANS,
 } from "@/lib/permissions";
-
+import { createInitialCodFormConfig } from "@/lib/cod-form-presets";
+import {
+  createDefaultShrineSections,
+  ECOMSATE_THEMES,
+} from "@/lib/shrine-themes";
 import { ADESHINA_SECTORS, getBlueprintBySector } from "@/lib/adeshina-ai";
 
 import { generateOrderNumber, slugify } from "@/lib/utils";
@@ -67,6 +88,7 @@ export interface AuthSession {
   email: string;
   fullName: string;
   role: UserRole;
+  teamRole?: TeamMemberRole;
   activeStoreId: string | null;
 }
 
@@ -125,6 +147,12 @@ interface PlatformState {
   inventoryMovements: InventoryMovement[];
   promoCodes: PromoCode[];
   customDomains: CustomDomainRequest[];
+  codForms: CodFormConfig[];
+  couriers: Courier[];
+  expenses: StoreExpense[];
+  adCampaigns: AdCampaign[];
+  automations: AutomationRule[];
+  teamMembers: TeamMember[];
   plans: SubscriptionPlan[];
 
 
@@ -143,28 +171,36 @@ interface RegisterMerchantInput {
   password: string;
   sectorId?: string;
   useAdeshinaSetup?: boolean;
+  templateId?: StoreTemplateId;
+  niche?: string;
 }
 
 interface PlaceOrderInput {
   storeId: string;
   customerName: string;
   customerPhone: string;
+  secondaryPhone?: string;
   customerEmail?: string;
   deliveryAddress: string;
   deliveryCity: string;
+  commune?: string;
+  district?: string;
+  landmark?: string;
+  customFields?: Record<string, string>;
   paymentMethod: PaymentMethodCode;
   paymentReference?: string;
   notes?: string;
+  internalNotes?: string;
   deliveryFee: number;
   promoCode?: string;
   discountAmount?: number;
   items: {
-
     productId: string;
     productName: string;
     variantLabel?: string;
     quantity: number;
     unitPrice: number;
+    costPrice?: number;
     imageUrl?: string;
   }[];
 }
@@ -193,7 +229,14 @@ interface PlatformContextValue extends PlatformState {
     store?: Store;
     error?: string;
   };
+  createAdditionalStore: (input: {
+    storeName: string;
+    countryCode: string;
+    niche?: string;
+    templateId?: StoreTemplateId;
+  }) => { ok: boolean; store?: Store; error?: string };
   switchActiveStore: (storeId: string) => void;
+  switchActiveTeamRole: (teamRole: TeamMemberRole) => void;
   // Merchant CRUD (strictly scoped by storeId)
   saveCategory: (
     storeId: string,
@@ -217,13 +260,117 @@ interface PlatformContextValue extends PlatformState {
   updateOrderStatus: (
     storeId: string,
     orderId: string,
-    status: OrderStatus
+    status: OrderStatus,
+    note?: string
+  ) => void;
+  updateOrderInternalNotes: (
+    storeId: string,
+    orderId: string,
+    internalNotes: string
+  ) => void;
+  updateCustomerNotes: (
+    storeId: string,
+    customerId: string,
+    internalNotes: string
   ) => void;
   updateStoreSettings: (
     storeId: string,
     patch: Partial<StoreSettings>,
     storeName?: string
   ) => void;
+  // Store Builder & Shrine Pro Themes
+  updateStoreBuilderSections: (
+    storeId: string,
+    sections: StoreSectionBlock[],
+    publish?: boolean
+  ) => void;
+  applyStoreTheme: (
+    storeId: string,
+    themeId: StoreTemplateId
+  ) => { ok: boolean; error?: string };
+  // Form Builder COD
+  getStoreCodForm: (storeId: string) => CodFormConfig;
+  saveCodFormDraft: (
+    storeId: string,
+    fields: CodFormField[],
+    style: CodFormStyle,
+    presetId?: string
+  ) => void;
+  publishCodForm: (storeId: string, label?: string) => void;
+  restoreCodFormVersion: (storeId: string, version: number) => void;
+  // Couriers & COD Financial Reconciliation
+  saveCourier: (
+    storeId: string,
+    data: {
+      id?: string;
+      name: string;
+      phone: string;
+      zone: string;
+      isActive: boolean;
+      discrepancyNote?: string;
+    }
+  ) => { ok: boolean; error?: string };
+  deleteCourier: (storeId: string, courierId: string) => void;
+  assignOrderCourier: (
+    storeId: string,
+    orderId: string,
+    courierId: string | null
+  ) => void;
+  updateOrderCodFinancialStatus: (
+    storeId: string,
+    orderId: string,
+    codFinancialStatus: CodFinancialStatus
+  ) => void;
+  recordCourierRemittance: (
+    storeId: string,
+    courierId: string,
+    amount: number,
+    markDeliveredOrdersRemitted?: boolean
+  ) => void;
+  // Expenses & Profit
+  saveExpense: (
+    storeId: string,
+    data: {
+      id?: string;
+      category: ExpenseCategory;
+      label: string;
+      amount: number;
+      date: string;
+      notes?: string;
+    }
+  ) => void;
+  deleteExpense: (storeId: string, expenseId: string) => void;
+  // Ad Campaigns & Automations & Team
+  saveAdCampaign: (
+    storeId: string,
+    data: Omit<AdCampaign, "id" | "storeId"> & { id?: string }
+  ) => void;
+  toggleAdCampaign: (storeId: string, campaignId: string) => void;
+  deleteAdCampaign: (storeId: string, campaignId: string) => void;
+  saveAutomation: (
+    storeId: string,
+    data: {
+      id?: string;
+      name: string;
+      trigger: string;
+      condition: string;
+      action: string;
+      enabled: boolean;
+    }
+  ) => void;
+  toggleAutomation: (storeId: string, automationId: string) => void;
+  testAutomation: (storeId: string, automationId: string) => void;
+  saveTeamMember: (
+    storeId: string,
+    data: {
+      id?: string;
+      fullName: string;
+      email: string;
+      role: TeamMemberRole;
+      permissions: string[];
+    }
+  ) => { ok: boolean; error?: string };
+  deleteTeamMember: (storeId: string, memberId: string) => void;
   savePromoCode: (
     storeId: string,
     data: {
@@ -403,6 +550,15 @@ const DEFAULT_STATE: PlatformState = {
       verifiedAt: "2026-02-02T12:15:00.000Z",
     },
   ],
+  codForms: [
+    createInitialCodFormConfig("store-atelier-dakar", "mode", "#00A884"),
+    createInitialCodFormConfig("store-cotonou-tech", "electronique", "#00A884"),
+  ],
+  couriers: INITIAL_COURIERS,
+  expenses: INITIAL_EXPENSES,
+  adCampaigns: INITIAL_CAMPAIGNS,
+  automations: INITIAL_AUTOMATIONS,
+  teamMembers: INITIAL_TEAM_MEMBERS,
   plans: DEFAULT_PLANS,
 
 
@@ -431,6 +587,53 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
             phone: "+229 95 78 21 32",
           };
         }
+        // Mise à niveau automatique des plans vers Standard & Premium officiels
+        parsed.plans = DEFAULT_PLANS;
+        parsed.modules = DEFAULT_MODULES;
+
+        if (Array.isArray(parsed.stores)) {
+          const legacyNavy = new Set([
+            "#102a43",
+            "#0b1f33",
+            "#0f172a",
+            "#1e293b",
+            "#15232d",
+            "#1b3b5a",
+          ]);
+          parsed.stores = parsed.stores.map((st) => {
+            const rawPrimary = (st.settings?.primaryColor || "").toLowerCase();
+            const rawSecondary = (st.settings?.secondaryColor || "").toLowerCase();
+            const builderSections =
+              st.settings?.builderSections && st.settings.builderSections.length > 0
+                ? st.settings.builderSections
+                : createDefaultShrineSections(
+                  st.name,
+                  st.planCode === "premium" ? "shrine_pro_3" : "shrine_pro_1"
+                );
+            return {
+              ...st,
+              settings: {
+                ...st.settings,
+                primaryColor:
+                  !rawPrimary || legacyNavy.has(rawPrimary)
+                    ? "#073B35"
+                    : st.settings.primaryColor,
+                secondaryColor:
+                  !rawSecondary || rawSecondary === "#10b981" || rawSecondary === "#059669"
+                    ? "#00A884"
+                    : st.settings.secondaryColor,
+                template:
+                  st.id === "store-atelier-dakar"
+                    ? "shrine_pro_3"
+                    : st.id === "store-cotonou-tech"
+                      ? "shrine_pro_1"
+                      : st.settings.template || "shrine_pro_1",
+                builderSections,
+              },
+            };
+          });
+        }
+
         // Nettoyer les produits exemples auto-générés dans les vraies boutiques nouvellement créées (hors boutiques Démo)
         if (Array.isArray(parsed.products)) {
           const sampleNames = new Set(
@@ -446,7 +649,16 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
             return !sampleNames.has(p.name.toLowerCase());
           });
         }
-        setState((prev) => ({ ...prev, ...parsed }));
+        setState((prev) => ({
+          ...prev,
+          ...parsed,
+          codForms: mergeById(parsed.codForms, prev.codForms),
+          couriers: mergeById(parsed.couriers, prev.couriers),
+          expenses: mergeById(parsed.expenses, prev.expenses),
+          adCampaigns: mergeById(parsed.adCampaigns, prev.adCampaigns),
+          automations: mergeById(parsed.automations, prev.automations),
+          teamMembers: mergeById(parsed.teamMembers, prev.teamMembers),
+        }));
 
       }
     } catch {
@@ -479,6 +691,12 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
         inventoryMovements: state.inventoryMovements,
         promoCodes: state.promoCodes,
         customDomains: state.customDomains,
+        codForms: state.codForms,
+        couriers: state.couriers,
+        expenses: state.expenses,
+        adCampaigns: state.adCampaigns,
+        automations: state.automations,
+        teamMembers: state.teamMembers,
         plans: state.plans,
 
 
@@ -502,6 +720,12 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
     state.inventoryMovements,
     state.promoCodes,
     state.customDomains,
+    state.codForms,
+    state.couriers,
+    state.expenses,
+    state.adCampaigns,
+    state.automations,
+    state.teamMembers,
     state.plans,
 
 
@@ -524,10 +748,34 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
         adminAccount:
           (cloud.adminAccount as AdminAccountConfig | undefined) ??
           prev.adminAccount,
-        stores: mergeById(
-          cloud.stores as unknown as Store[],
-          prev.stores as unknown as Store[]
-        ) as unknown as Store[],
+        stores: (
+          mergeById(
+            cloud.stores as unknown as Store[],
+            prev.stores as unknown as Store[]
+          ) as unknown as Store[]
+        ).map((st) => {
+          const rawPrimary = (st.settings?.primaryColor || "").toLowerCase();
+          const rawSecondary = (st.settings?.secondaryColor || "").toLowerCase();
+          const isLegacyNavy =
+            rawPrimary === "#102a43" ||
+            rawPrimary === "#0b1f33" ||
+            rawPrimary === "#0f172a" ||
+            rawPrimary === "#1e293b" ||
+            rawPrimary === "#15232d" ||
+            rawPrimary === "#1b3b5a";
+          return {
+            ...st,
+            settings: {
+              ...st.settings,
+              primaryColor:
+                !rawPrimary || isLegacyNavy ? "#073B35" : st.settings.primaryColor,
+              secondaryColor:
+                !rawSecondary || rawSecondary === "#10b981" || rawSecondary === "#059669"
+                  ? "#00A884"
+                  : st.settings.secondaryColor,
+            },
+          };
+        }),
         categories: mergeById(
           cloud.categories as unknown as Category[],
           prev.categories as unknown as Category[]
@@ -556,6 +804,30 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
           cloud.customDomains as unknown as CustomDomainRequest[],
           prev.customDomains as unknown as CustomDomainRequest[]
         ) as unknown as CustomDomainRequest[],
+        codForms: mergeById(
+          cloud.codForms as unknown as CodFormConfig[],
+          prev.codForms as unknown as CodFormConfig[]
+        ) as unknown as CodFormConfig[],
+        couriers: mergeById(
+          cloud.couriers as unknown as Courier[],
+          prev.couriers as unknown as Courier[]
+        ) as unknown as Courier[],
+        expenses: mergeById(
+          cloud.expenses as unknown as StoreExpense[],
+          prev.expenses as unknown as StoreExpense[]
+        ) as unknown as StoreExpense[],
+        adCampaigns: mergeById(
+          cloud.adCampaigns as unknown as AdCampaign[],
+          prev.adCampaigns as unknown as AdCampaign[]
+        ) as unknown as AdCampaign[],
+        automations: mergeById(
+          cloud.automations as unknown as AutomationRule[],
+          prev.automations as unknown as AutomationRule[]
+        ) as unknown as AutomationRule[],
+        teamMembers: mergeById(
+          cloud.teamMembers as unknown as TeamMember[],
+          prev.teamMembers as unknown as TeamMember[]
+        ) as unknown as TeamMember[],
         subscriptionPayments: mergeById(
 
 
@@ -590,17 +862,29 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
 
   const loginAsMerchant = (email: string, password?: string) => {
     const normalized = email.trim().toLowerCase();
-    const found = state.stores.find(
+    const foundOwnerStore = state.stores.find(
       (s) => s.ownerEmail.toLowerCase() === normalized
     );
+    const foundTeamMember = !foundOwnerStore
+      ? (state.teamMembers ?? []).find(
+        (m) => m.email.toLowerCase() === normalized
+      )
+      : undefined;
+    const found =
+      foundOwnerStore ??
+      (foundTeamMember
+        ? state.stores.find((s) => s.id === foundTeamMember.storeId)
+        : undefined);
+
     if (!found) {
       return {
         ok: false,
         error:
-          "Aucun compte commerçant trouvé avec cet e-mail. Vérifiez votre adresse ou créez votre boutique.",
+          "Aucun compte commerçant ou membre d'équipe trouvé avec cet e-mail. Vérifiez votre adresse ou créez votre boutique.",
       };
     }
     if (
+      foundOwnerStore &&
       typeof password === "string" &&
       password !== "••••••••" &&
       found.ownerPassword &&
@@ -620,13 +904,18 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
       });
     }
 
+    const resolvedTeamRole: TeamMemberRole = foundTeamMember
+      ? foundTeamMember.role
+      : "owner";
+
     setState((prev) => ({
       ...prev,
       session: {
-        userId: found.ownerId,
-        email: found.ownerEmail,
-        fullName: found.ownerName,
+        userId: foundTeamMember ? foundTeamMember.id : found.ownerId,
+        email: foundTeamMember ? foundTeamMember.email : found.ownerEmail,
+        fullName: foundTeamMember ? foundTeamMember.fullName : found.ownerName,
         role: "merchant",
+        teamRole: resolvedTeamRole,
         activeStoreId: found.id,
       },
     }));
@@ -700,10 +989,10 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
         session:
           prev.session?.role === "super_admin"
             ? {
-                ...prev.session,
-                email: updated.email,
-                fullName: updated.fullName,
-              }
+              ...prev.session,
+              email: updated.email,
+              fullName: updated.fullName,
+            }
             : prev.session,
         auditLogs: [
           {
@@ -840,22 +1129,22 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
           countryCode,
           currency: country?.currency ?? "FCFA",
           status: "trial",
-          planCode: "trial",
+          planCode: "standard",
           trialEndsAt: trialEnd.toISOString(),
           subscriptionEndsAt: null,
           createdAt: now.toISOString(),
           settings: {
-            primaryColor: blueprint?.primaryColor ?? "#102A43",
-            secondaryColor: blueprint?.secondaryColor ?? "#10B981",
-            template: blueprint?.template ?? "minimal",
+            primaryColor: blueprint?.primaryColor ?? "#073B35",
+            secondaryColor: blueprint?.secondaryColor ?? "#00A884",
+            template: blueprint?.template ?? "shrine_pro_1",
             description:
               blueprint?.description ??
-              `Bienvenue chez ${storeName}. Découvrez nos produits et commandez facilement en ligne.`,
+              `Bienvenue chez ${storeName}. Commandez en ligne et payez uniquement à la livraison.`,
             whatsappPhone: phone.replace(/\s+/g, ""),
             email,
             address: country?.name ?? "Afrique de l'Ouest",
-            deliveryInfo: "Livraison rapide sous 24h à 48h.",
-            termsOfSale: "Paiement à la livraison ou par Mobile Money.",
+            deliveryInfo: "Livraison rapide sous 24h à 48h. Paiement 100 % à la livraison.",
+            termsOfSale: "Paiement exclusivement à la livraison à la réception du colis.",
             socials: {},
             homeSections: {
               showHero: true,
@@ -863,38 +1152,44 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
               showPopular: true,
               showPromotions: true,
             },
-            mobileMoneyNumber: phone,
+            builderSections: createDefaultShrineSections(storeName, "shrine_pro_1"),
+            publishedVersion: 1,
+            isPublished: true,
           },
         };
 
         const generatedCategories: Category[] = blueprint
           ? blueprint.categories.map((cat, idx) => ({
-              id: `cat-${storeId}-${idx + 1}`,
-              storeId,
-              name: cat.name,
-              slug: slugify(cat.name) || `cat-${idx}`,
-              description: cat.description,
-            }))
+            id: `cat-${storeId}-${idx + 1}`,
+            storeId,
+            name: cat.name,
+            slug: slugify(cat.name) || `cat-${idx}`,
+            description: cat.description,
+          }))
           : [
-              {
-                id: `cat-${storeId}-1`,
-                storeId,
-                name: "Nouveautés",
-                slug: "nouveautes",
-                description: "Vos premiers articles en ligne",
-              },
-            ];
+            {
+              id: `cat-${storeId}-1`,
+              storeId,
+              name: "Nouveautés",
+              slug: "nouveautes",
+              description: "Vos premiers articles en ligne",
+            },
+          ];
 
         // Une nouvelle boutique démarre toujours avec un catalogue vide (0 produit fictif)
         const generatedProducts: Product[] = [];
-
-
+        const initialCodForm = createInitialCodFormConfig(
+          storeId,
+          blueprint?.codPresetId ?? "mobile_fast",
+          "#00A884"
+        );
 
         return {
           ...prev,
           stores: [newStore, ...prev.stores],
           categories: [...generatedCategories, ...prev.categories],
           products: [...generatedProducts, ...prev.products],
+          codForms: [initialCodForm, ...(prev.codForms ?? [])],
           session: {
             userId: user.id,
             email,
@@ -955,6 +1250,9 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
       ? getBlueprintBySector(input.sectorId || "mode", input.storeName)
       : null;
 
+    const chosenTemplate: StoreTemplateId =
+      input.templateId ?? blueprint?.template ?? "shrine_pro_1";
+
     const newStore: Store = {
       id: storeId,
       ownerId,
@@ -963,29 +1261,29 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
       ownerPhone: input.phone.trim(),
       ownerPassword: input.password,
       name: input.storeName.trim(),
-
       slug: finalSlug,
       subdomain: `${finalSlug}.ecomsate.com`,
       customDomain: null,
       countryCode: input.countryCode,
       currency: country?.currency ?? "FCFA",
+      niche: input.niche ?? blueprint?.sectorLabel,
       status: "trial",
-      planCode: "trial",
+      planCode: "standard",
       trialEndsAt: trialEnd.toISOString(),
       subscriptionEndsAt: null,
       createdAt: now.toISOString(),
       settings: {
-        primaryColor: blueprint?.primaryColor ?? "#102A43",
-        secondaryColor: blueprint?.secondaryColor ?? "#10B981",
-        template: blueprint?.template ?? "minimal",
+        primaryColor: blueprint?.primaryColor ?? "#073B35",
+        secondaryColor: blueprint?.secondaryColor ?? "#00A884",
+        template: chosenTemplate,
         description:
           blueprint?.description ??
-          `Bienvenue chez ${input.storeName.trim()}. Découvrez nos produits et commandez facilement en ligne.`,
+          `Bienvenue chez ${input.storeName.trim()}. Commandez facilement et payez à la livraison.`,
         whatsappPhone: input.phone.replace(/\s+/g, ""),
         email: input.email.trim().toLowerCase(),
         address: country?.name ?? "Afrique de l'Ouest",
-        deliveryInfo: "Livraison rapide sous 24h à 48h.",
-        termsOfSale: "Paiement à la livraison ou par Mobile Money.",
+        deliveryInfo: "Livraison rapide sous 24h à 48h. Paiement à la livraison.",
+        termsOfSale: "Paiement exclusivement à la livraison à la réception du colis.",
         socials: {},
         homeSections: {
           showHero: true,
@@ -993,37 +1291,47 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
           showPopular: true,
           showPromotions: true,
         },
-        mobileMoneyNumber: input.phone.trim(),
+        builderSections: createDefaultShrineSections(
+          input.storeName.trim(),
+          chosenTemplate
+        ),
+        publishedVersion: 1,
+        isPublished: true,
       },
     };
 
     const generatedCategories: Category[] = blueprint
       ? blueprint.categories.map((cat, idx) => ({
-          id: `cat-${Date.now()}-${idx}`,
-          storeId,
-          name: cat.name,
-          slug: slugify(cat.name) || `cat-${idx}`,
-          description: cat.description,
-        }))
+        id: `cat-${Date.now()}-${idx}`,
+        storeId,
+        name: cat.name,
+        slug: slugify(cat.name) || `cat-${idx}`,
+        description: cat.description,
+      }))
       : [
-          {
-            id: `cat-${Date.now()}`,
-            storeId,
-            name: "Nouveautés",
-            slug: "nouveautes",
-            description: "Vos premiers articles en ligne",
-          },
-        ];
+        {
+          id: `cat-${Date.now()}`,
+          storeId,
+          name: "Nouveautés",
+          slug: "nouveautes",
+          description: "Vos premiers articles en ligne",
+        },
+      ];
 
-    // Une nouvelle boutique démarre toujours avec un catalogue vide (0 produit fictif)
+    // Une nouvelle boutique démarre toujours avec un catalogue vide (0 produit fictif, 0 fausse commande)
     const generatedProducts: Product[] = [];
-
+    const initialCodForm = createInitialCodFormConfig(
+      storeId,
+      blueprint?.codPresetId ?? "mobile_fast",
+      "#00A884"
+    );
 
     setState((prev) => ({
       ...prev,
       stores: [newStore, ...prev.stores],
       categories: [...generatedCategories, ...prev.categories],
       products: [...generatedProducts, ...prev.products],
+      codForms: [initialCodForm, ...(prev.codForms ?? [])],
       session: {
         userId: ownerId,
         email: newStore.ownerEmail,
@@ -1038,9 +1346,8 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
           action: blueprint ? "STORE_CREATED_WITH_ADESHINA_IA" : "STORE_CREATED",
           targetType: "store",
           targetId: storeId,
-          details: `Création automatique de ${newStore.subdomain}${
-            blueprint ? ` avec Adeshina IA (${blueprint.sectorLabel})` : ""
-          }`,
+          details: `Création automatique de ${newStore.subdomain}${blueprint ? ` avec Adeshina IA (${blueprint.sectorLabel})` : ""
+            }`,
           createdAt: now.toISOString(),
         },
         ...prev.auditLogs,
@@ -1073,23 +1380,37 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
       ...prev,
       session: prev.session
         ? {
-            ...prev.session,
-            activeStoreId: target.id,
-            ...(prev.session.role === "merchant"
-              ? {
-                  userId: target.ownerId,
-                  email: target.ownerEmail,
-                  fullName: target.ownerName,
-                }
-              : {}),
-          }
+          ...prev.session,
+          activeStoreId: target.id,
+          teamRole: prev.session.teamRole ?? "owner",
+          ...(prev.session.role === "merchant"
+            ? {
+              userId: target.ownerId,
+              email: target.ownerEmail,
+              fullName: target.ownerName,
+            }
+            : {}),
+        }
         : {
-            userId: target.ownerId,
-            email: target.ownerEmail,
-            fullName: target.ownerName,
-            role: "merchant",
-            activeStoreId: target.id,
-          },
+          userId: target.ownerId,
+          email: target.ownerEmail,
+          fullName: target.ownerName,
+          role: "merchant",
+          teamRole: "owner",
+          activeStoreId: target.id,
+        },
+    }));
+  };
+
+  const switchActiveTeamRole = (teamRole: TeamMemberRole) => {
+    setState((prev) => ({
+      ...prev,
+      session: prev.session
+        ? {
+          ...prev.session,
+          teamRole,
+        }
+        : prev.session,
     }));
   };
 
@@ -1190,6 +1511,7 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
       );
       if (!target) return prev;
       const nextStock = Math.max(0, target.stock + delta);
+      const nowIso = new Date().toISOString();
       const movement: InventoryMovement = {
         id: `mov-${Date.now()}`,
         storeId,
@@ -1197,8 +1519,34 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
         productName: target.name,
         change: delta,
         reason,
-        createdAt: new Date().toISOString(),
+        createdAt: nowIso,
       };
+      const hitLowStock =
+        nextStock <= target.lowStockThreshold &&
+        target.stock > target.lowStockThreshold;
+      const updatedAutomations = hitLowStock
+        ? (prev.automations ?? []).map((a) =>
+          a.storeId === storeId &&
+            a.enabled &&
+            a.trigger.toLowerCase().includes("stock")
+            ? { ...a, runsCount: a.runsCount + 1, lastRunAt: nowIso }
+            : a
+        )
+        : prev.automations;
+      const autoNotifs: AppNotification[] = hitLowStock
+        ? [
+          {
+            id: `notif-stock-${Date.now()}`,
+            recipientRole: "merchant",
+            storeId,
+            title: `[Automatisation] Stock critique : ${target.name}`,
+            message: `Il ne reste plus que ${nextStock} unité(s) en stock pour ${target.name}.`,
+            type: "stock",
+            isRead: false,
+            createdAt: nowIso,
+          },
+        ]
+        : [];
       return {
         ...prev,
         products: prev.products.map((p) =>
@@ -1207,6 +1555,8 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
             : p
         ),
         inventoryMovements: [movement, ...prev.inventoryMovements],
+        automations: updatedAutomations,
+        notifications: [...autoNotifs, ...(prev.notifications ?? [])],
       };
     });
   };
@@ -1214,12 +1564,143 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
   const updateOrderStatus = (
     storeId: string,
     orderId: string,
-    status: OrderStatus
+    status: OrderStatus,
+    note?: string
+  ) => {
+    const nowIso = new Date().toISOString();
+    setState((prev) => {
+      const target = prev.orders.find(
+        (o) => o.id === orderId && o.storeId === storeId
+      );
+      if (!target || target.status === status) return prev;
+
+      const actor = prev.session?.fullName || "Commerçant";
+      const entry: OrderHistoryEntry = {
+        id: `hist-${Date.now()}`,
+        actor,
+        date: nowIso,
+        fromStatus: target.status,
+        toStatus: status,
+        note,
+      };
+
+      // Réintégration stock si retour ou annulation depuis un état non annulé/retourné
+      const wasCancelledOrReturned =
+        target.status === "cancelled" || target.status === "returned";
+      const nowCancelledOrReturned =
+        status === "cancelled" || status === "returned";
+
+      let updatedProducts = prev.products;
+      const newMovements: InventoryMovement[] = [];
+      if (!wasCancelledOrReturned && nowCancelledOrReturned) {
+        updatedProducts = prev.products.map((prod) => {
+          if (prod.storeId !== storeId) return prod;
+          const qty = target.items
+            .filter((i) => i.productId === prod.id)
+            .reduce((acc, i) => acc + i.quantity, 0);
+          if (qty === 0) return prod;
+          newMovements.push({
+            id: `mov-ret-${Date.now()}-${prod.id}`,
+            storeId,
+            productId: prod.id,
+            productName: prod.name,
+            change: +qty,
+            reason: `${status === "returned" ? "Retour" : "Annulation"} commande ${target.orderNumber}`,
+            createdAt: nowIso,
+          });
+          return { ...prod, stock: prod.stock + qty };
+        });
+      }
+
+      // Mise à jour automatique du statut financier COD cohérent
+      let nextCodFinancial: CodFinancialStatus =
+        target.codFinancialStatus ?? "expected";
+      if (status === "delivered" && nextCodFinancial === "expected") {
+        nextCodFinancial = target.courierId
+          ? "collected_by_courier"
+          : "remitted";
+      } else if (nowCancelledOrReturned) {
+        nextCodFinancial = "uncollected";
+      }
+
+      // Mise à jour du compteur de retours client si retournée
+      const updatedCustomers =
+        status === "returned" && target.status !== "returned"
+          ? prev.customers.map((c) => {
+            if (
+              c.storeId === storeId &&
+              c.phone.replace(/\s+/g, "") ===
+              target.customerPhone.replace(/\s+/g, "")
+            ) {
+              const nextReturns = (c.returnsCount ?? 0) + 1;
+              return {
+                ...c,
+                returnsCount: nextReturns,
+                segment: nextReturns >= 2 ? "at_risk" : c.segment,
+              };
+            }
+            return c;
+          })
+          : prev.customers;
+
+      // Exécution automatique des règles d'automatisation liées à la livraison / cash COD
+      const isDeliveredCourierCash =
+        status === "delivered" && nextCodFinancial === "collected_by_courier";
+      const updatedAutomations = isDeliveredCourierCash
+        ? (prev.automations ?? []).map((a) =>
+          a.storeId === storeId &&
+            a.enabled &&
+            (a.trigger.toLowerCase().includes("livr") ||
+              a.name.toLowerCase().includes("livreur"))
+            ? { ...a, runsCount: a.runsCount + 1, lastRunAt: nowIso }
+            : a
+        )
+        : prev.automations;
+
+      return {
+        ...prev,
+        products: updatedProducts,
+        customers: updatedCustomers,
+        inventoryMovements: [...newMovements, ...prev.inventoryMovements],
+        automations: updatedAutomations,
+        orders: prev.orders.map((o) =>
+          o.id === orderId && o.storeId === storeId
+            ? {
+              ...o,
+              status,
+              codFinancialStatus: nextCodFinancial,
+              history: [...(o.history ?? []), entry],
+            }
+            : o
+        ),
+      };
+    });
+  };
+
+  const updateOrderInternalNotes = (
+    storeId: string,
+    orderId: string,
+    internalNotes: string
   ) => {
     setState((prev) => ({
       ...prev,
       orders: prev.orders.map((o) =>
-        o.id === orderId && o.storeId === storeId ? { ...o, status } : o
+        o.id === orderId && o.storeId === storeId ? { ...o, internalNotes } : o
+      ),
+    }));
+  };
+
+  const updateCustomerNotes = (
+    storeId: string,
+    customerId: string,
+    internalNotes: string
+  ) => {
+    setState((prev) => ({
+      ...prev,
+      customers: prev.customers.map((c) =>
+        c.id === customerId && c.storeId === storeId
+          ? { ...c, internalNotes }
+          : c
       ),
     }));
   };
@@ -1234,13 +1715,640 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
       stores: prev.stores.map((s) =>
         s.id === storeId
           ? {
-              ...s,
-              ...(storeName ? { name: storeName } : {}),
-              settings: { ...s.settings, ...patch },
-            }
+            ...s,
+            ...(storeName ? { name: storeName } : {}),
+            settings: { ...s.settings, ...patch },
+          }
           : s
       ),
     }));
+  };
+
+  const updateStoreBuilderSections = (
+    storeId: string,
+    sections: StoreSectionBlock[],
+    publish = true
+  ) => {
+    setState((prev) => ({
+      ...prev,
+      stores: prev.stores.map((s) =>
+        s.id === storeId
+          ? {
+            ...s,
+            settings: {
+              ...s.settings,
+              builderSections: sections.map((sec, idx) => ({
+                ...sec,
+                order: idx + 1,
+              })),
+              publishedVersion: publish
+                ? (s.settings.publishedVersion ?? 1) + 1
+                : s.settings.publishedVersion,
+              isPublished: publish ? true : s.settings.isPublished,
+            },
+          }
+          : s
+      ),
+    }));
+  };
+
+  const applyStoreTheme = (
+    storeId: string,
+    themeId: StoreTemplateId
+  ): { ok: boolean; error?: string } => {
+    const store = state.stores.find((s) => s.id === storeId);
+    if (!store) return { ok: false, error: "Boutique introuvable." };
+    const def = ECOMSATE_THEMES.find((t) => t.id === themeId);
+    if (
+      def?.tier === "premium" &&
+      !canUseModule(store.planCode, "premium_themes", state.modules)
+    ) {
+      return {
+        ok: false,
+        error:
+          "Ce thème avancé (Shrine Pro 3 / Niche Premium) est inclus dans la formule Premium.",
+      };
+    }
+
+    setState((prev) => ({
+      ...prev,
+      stores: prev.stores.map((s) =>
+        s.id === storeId
+          ? {
+            ...s,
+            settings: {
+              ...s.settings,
+              template: themeId,
+              primaryColor: def?.defaultPrimary ?? s.settings.primaryColor,
+              secondaryColor:
+                def?.defaultSecondary ?? s.settings.secondaryColor,
+              builderSections: createDefaultShrineSections(s.name, themeId),
+              publishedVersion: (s.settings.publishedVersion ?? 1) + 1,
+            },
+          }
+          : s
+      ),
+    }));
+    return { ok: true };
+  };
+
+  const getStoreCodForm = (storeId: string): CodFormConfig => {
+    const found = (state.codForms ?? []).find((f) => f.storeId === storeId);
+    if (found) return found;
+    return createInitialCodFormConfig(storeId, "mobile_fast", "#00A884");
+  };
+
+  const saveCodFormDraft = (
+    storeId: string,
+    fields: CodFormField[],
+    style: CodFormStyle,
+    presetId?: string
+  ) => {
+    const now = new Date().toISOString();
+    setState((prev) => {
+      const existing = (prev.codForms ?? []).find((f) => f.storeId === storeId);
+      const ordered = fields.map((f, idx) => ({ ...f, order: idx + 1 }));
+      if (existing) {
+        return {
+          ...prev,
+          codForms: prev.codForms.map((f) =>
+            f.storeId === storeId
+              ? {
+                ...f,
+                presetId: presetId ?? f.presetId,
+                draftFields: ordered,
+                draftStyle: style,
+                updatedAt: now,
+              }
+              : f
+          ),
+        };
+      }
+      const created = createInitialCodFormConfig(
+        storeId,
+        presetId ?? "mobile_fast",
+        style.buttonBg
+      );
+      return {
+        ...prev,
+        codForms: [
+          {
+            ...created,
+            draftFields: ordered,
+            draftStyle: style,
+            updatedAt: now,
+          },
+          ...(prev.codForms ?? []),
+        ],
+      };
+    });
+  };
+
+  const publishCodForm = (storeId: string, label?: string) => {
+    const now = new Date().toISOString();
+    setState((prev) => {
+      const existing =
+        (prev.codForms ?? []).find((f) => f.storeId === storeId) ??
+        createInitialCodFormConfig(storeId);
+      const nextVersion = existing.version + 1;
+      const publishedFields = existing.draftFields.map((f, idx) => ({
+        ...f,
+        order: idx + 1,
+      }));
+      const publishedStyle = { ...existing.draftStyle };
+      const updated: CodFormConfig = {
+        ...existing,
+        publishedFields,
+        publishedStyle,
+        version: nextVersion,
+        updatedAt: now,
+        versionsHistory: [
+          {
+            version: nextVersion,
+            savedAt: now,
+            label: label || `Version publiée #${nextVersion}`,
+            fields: publishedFields,
+            style: publishedStyle,
+          },
+          ...(existing.versionsHistory ?? []).slice(0, 9),
+        ],
+      };
+      const others = (prev.codForms ?? []).filter((f) => f.storeId !== storeId);
+      return {
+        ...prev,
+        codForms: [updated, ...others],
+      };
+    });
+  };
+
+  const restoreCodFormVersion = (storeId: string, version: number) => {
+    setState((prev) => ({
+      ...prev,
+      codForms: (prev.codForms ?? []).map((f) => {
+        if (f.storeId !== storeId) return f;
+        const snap = f.versionsHistory.find((v) => v.version === version);
+        if (!snap) return f;
+        return {
+          ...f,
+          draftFields: snap.fields.map((fl, i) => ({ ...fl, order: i + 1 })),
+          draftStyle: { ...snap.style },
+          updatedAt: new Date().toISOString(),
+        };
+      }),
+    }));
+  };
+
+  const saveCourier = (
+    storeId: string,
+    data: {
+      id?: string;
+      name: string;
+      phone: string;
+      zone: string;
+      isActive: boolean;
+      discrepancyNote?: string;
+    }
+  ): { ok: boolean; error?: string } => {
+    const store = state.stores.find((s) => s.id === storeId);
+    if (!store) return { ok: false, error: "Boutique introuvable." };
+    const storePlan = state.plans.find((p) => p.code === store.planCode);
+    const maxCouriers = storePlan?.maxCouriers ?? 5;
+    const currentCount = (state.couriers ?? []).filter(
+      (c) => c.storeId === storeId
+    ).length;
+
+    if (!data.id && maxCouriers !== null && currentCount >= maxCouriers) {
+      return {
+        ok: false,
+        error: `Limite de ${maxCouriers} livreurs atteinte sur votre formule actuelle. Passez au plan Premium pour des livreurs illimités.`,
+      };
+    }
+
+    setState((prev) => {
+      const list = prev.couriers ?? [];
+      if (data.id) {
+        return {
+          ...prev,
+          couriers: list.map((c) =>
+            c.id === data.id && c.storeId === storeId ? { ...c, ...data } : c
+          ),
+        };
+      }
+      const created: Courier = {
+        id: `cour-${Date.now()}`,
+        storeId,
+        name: data.name.trim(),
+        phone: data.phone.trim(),
+        zone: data.zone.trim(),
+        isActive: data.isActive,
+        amountRemitted: 0,
+        discrepancyNote: data.discrepancyNote,
+        createdAt: new Date().toISOString(),
+      };
+      return { ...prev, couriers: [created, ...list] };
+    });
+    return { ok: true };
+  };
+
+  const deleteCourier = (storeId: string, courierId: string) => {
+    setState((prev) => ({
+      ...prev,
+      couriers: (prev.couriers ?? []).filter(
+        (c) => !(c.id === courierId && c.storeId === storeId)
+      ),
+    }));
+  };
+
+  const assignOrderCourier = (
+    storeId: string,
+    orderId: string,
+    courierId: string | null
+  ) => {
+    const nowIso = new Date().toISOString();
+    setState((prev) => {
+      const courier = courierId
+        ? (prev.couriers ?? []).find(
+          (c) => c.id === courierId && c.storeId === storeId
+        )
+        : null;
+      return {
+        ...prev,
+        orders: prev.orders.map((o) => {
+          if (o.id !== orderId || o.storeId !== storeId) return o;
+          const nextStatus: OrderStatus =
+            courier &&
+              (o.status === "new" ||
+                o.status === "pending_confirmation" ||
+                o.status === "confirmed" ||
+                o.status === "preparing" ||
+                o.status === "ready_to_ship")
+              ? "assigned_courier"
+              : o.status;
+          const entry: OrderHistoryEntry = {
+            id: `hist-${Date.now()}`,
+            actor: prev.session?.fullName || "Commerçant",
+            date: nowIso,
+            fromStatus: o.status,
+            toStatus: nextStatus,
+            note: courier
+              ? `Assignée au livreur ${courier.name}`
+              : "Livreur retiré",
+          };
+          return {
+            ...o,
+            courierId: courier?.id ?? null,
+            courierName: courier?.name ?? undefined,
+            status: nextStatus,
+            history: [...(o.history ?? []), entry],
+          };
+        }),
+      };
+    });
+  };
+
+  const updateOrderCodFinancialStatus = (
+    storeId: string,
+    orderId: string,
+    codFinancialStatus: CodFinancialStatus
+  ) => {
+    setState((prev) => ({
+      ...prev,
+      orders: prev.orders.map((o) =>
+        o.id === orderId && o.storeId === storeId
+          ? { ...o, codFinancialStatus }
+          : o
+      ),
+    }));
+  };
+
+  const recordCourierRemittance = (
+    storeId: string,
+    courierId: string,
+    amount: number,
+    markDeliveredOrdersRemitted = true
+  ) => {
+    if (amount <= 0) return;
+    const nowIso = new Date().toISOString();
+    setState((prev) => ({
+      ...prev,
+      couriers: (prev.couriers ?? []).map((c) =>
+        c.id === courierId && c.storeId === storeId
+          ? {
+            ...c,
+            amountRemitted: c.amountRemitted + amount,
+            lastRemittanceAt: nowIso,
+          }
+          : c
+      ),
+      orders: markDeliveredOrdersRemitted
+        ? prev.orders.map((o) =>
+          o.storeId === storeId &&
+            o.courierId === courierId &&
+            o.status === "delivered" &&
+            o.codFinancialStatus === "collected_by_courier"
+            ? { ...o, codFinancialStatus: "remitted" }
+            : o
+        )
+        : prev.orders,
+    }));
+  };
+
+  const saveExpense = (
+    storeId: string,
+    data: {
+      id?: string;
+      category: ExpenseCategory;
+      label: string;
+      amount: number;
+      date: string;
+      notes?: string;
+    }
+  ) => {
+    setState((prev) => {
+      const list = prev.expenses ?? [];
+      if (data.id) {
+        return {
+          ...prev,
+          expenses: list.map((e) =>
+            e.id === data.id && e.storeId === storeId ? { ...e, ...data } : e
+          ),
+        };
+      }
+      const created: StoreExpense = {
+        id: `exp-${Date.now()}`,
+        storeId,
+        category: data.category,
+        label: data.label.trim(),
+        amount: Math.max(0, data.amount),
+        date: data.date || new Date().toISOString(),
+        notes: data.notes?.trim() || undefined,
+      };
+      return { ...prev, expenses: [created, ...list] };
+    });
+  };
+
+  const deleteExpense = (storeId: string, expenseId: string) => {
+    setState((prev) => ({
+      ...prev,
+      expenses: (prev.expenses ?? []).filter(
+        (e) => !(e.id === expenseId && e.storeId === storeId)
+      ),
+    }));
+  };
+
+  const saveAdCampaign = (
+    storeId: string,
+    data: Omit<AdCampaign, "id" | "storeId"> & { id?: string }
+  ) => {
+    setState((prev) => {
+      const list = prev.adCampaigns ?? [];
+      if (data.id) {
+        return {
+          ...prev,
+          adCampaigns: list.map((c) =>
+            c.id === data.id && c.storeId === storeId ? { ...c, ...data } : c
+          ),
+        };
+      }
+      const created: AdCampaign = {
+        ...data,
+        id: `camp-${Date.now()}`,
+        storeId,
+      };
+      return { ...prev, adCampaigns: [created, ...list] };
+    });
+  };
+
+  const toggleAdCampaign = (storeId: string, campaignId: string) => {
+    setState((prev) => ({
+      ...prev,
+      adCampaigns: (prev.adCampaigns ?? []).map((c) =>
+        c.id === campaignId && c.storeId === storeId
+          ? { ...c, status: c.status === "active" ? "paused" : "active" }
+          : c
+      ),
+    }));
+  };
+
+  const deleteAdCampaign = (storeId: string, campaignId: string) => {
+    setState((prev) => ({
+      ...prev,
+      adCampaigns: (prev.adCampaigns ?? []).filter(
+        (c) => !(c.id === campaignId && c.storeId === storeId)
+      ),
+    }));
+  };
+
+  const saveAutomation = (
+    storeId: string,
+    data: {
+      id?: string;
+      name: string;
+      trigger: string;
+      condition: string;
+      action: string;
+      enabled: boolean;
+    }
+  ) => {
+    setState((prev) => {
+      const list = prev.automations ?? [];
+      if (data.id) {
+        return {
+          ...prev,
+          automations: list.map((a) =>
+            a.id === data.id && a.storeId === storeId ? { ...a, ...data } : a
+          ),
+        };
+      }
+      const created: AutomationRule = {
+        id: `auto-${Date.now()}`,
+        storeId,
+        name: data.name.trim(),
+        trigger: data.trigger.trim(),
+        condition: data.condition.trim(),
+        action: data.action.trim(),
+        enabled: data.enabled,
+        runsCount: 0,
+      };
+      return { ...prev, automations: [created, ...list] };
+    });
+  };
+
+  const toggleAutomation = (storeId: string, automationId: string) => {
+    setState((prev) => ({
+      ...prev,
+      automations: (prev.automations ?? []).map((a) =>
+        a.id === automationId && a.storeId === storeId
+          ? { ...a, enabled: !a.enabled }
+          : a
+      ),
+    }));
+  };
+
+  const testAutomation = (storeId: string, automationId: string) => {
+    const now = new Date().toISOString();
+    setState((prev) => ({
+      ...prev,
+      automations: (prev.automations ?? []).map((a) =>
+        a.id === automationId && a.storeId === storeId
+          ? { ...a, runsCount: a.runsCount + 1, lastRunAt: now }
+          : a
+      ),
+    }));
+  };
+
+  const saveTeamMember = (
+    storeId: string,
+    data: {
+      id?: string;
+      fullName: string;
+      email: string;
+      role: TeamMemberRole;
+      permissions: string[];
+    }
+  ): { ok: boolean; error?: string } => {
+    const store = state.stores.find((s) => s.id === storeId);
+    if (!store) return { ok: false, error: "Boutique introuvable." };
+    if (!canUseModule(store.planCode, "multi_stores", state.modules)) {
+      return {
+        ok: false,
+        error:
+          "La gestion d'équipe multi-rôles est réservée à la formule Premium.",
+      };
+    }
+
+    setState((prev) => {
+      const list = prev.teamMembers ?? [];
+      if (data.id) {
+        return {
+          ...prev,
+          teamMembers: list.map((m) =>
+            m.id === data.id && m.storeId === storeId ? { ...m, ...data } : m
+          ),
+        };
+      }
+      const created: TeamMember = {
+        id: `team-${Date.now()}`,
+        storeId,
+        fullName: data.fullName.trim(),
+        email: data.email.trim().toLowerCase(),
+        role: data.role,
+        permissions: data.permissions,
+        createdAt: new Date().toISOString(),
+      };
+      return { ...prev, teamMembers: [created, ...list] };
+    });
+    return { ok: true };
+  };
+
+  const deleteTeamMember = (storeId: string, memberId: string) => {
+    setState((prev) => ({
+      ...prev,
+      teamMembers: (prev.teamMembers ?? []).filter(
+        (m) => !(m.id === memberId && m.storeId === storeId && m.role !== "owner")
+      ),
+    }));
+  };
+
+  const createAdditionalStore = (input: {
+    storeName: string;
+    countryCode: string;
+    niche?: string;
+    templateId?: StoreTemplateId;
+  }): { ok: boolean; store?: Store; error?: string } => {
+    if (!activeStore) return { ok: false, error: "Aucune session active." };
+    if (!canUseModule(activeStore.planCode, "multi_stores", state.modules)) {
+      return {
+        ok: false,
+        error:
+          "Le multi-boutiques est réservé à la formule Premium (jusqu'à 5 boutiques isolées).",
+      };
+    }
+    const ownedStores = state.stores.filter(
+      (s) => s.ownerEmail.toLowerCase() === activeStore.ownerEmail.toLowerCase()
+    );
+    if (ownedStores.length >= 5) {
+      return {
+        ok: false,
+        error: "Vous avez atteint la limite maximale de 5 boutiques Premium.",
+      };
+    }
+
+    const baseSlug = slugify(input.storeName) || "nouvelle-boutique";
+    const exists = state.stores.some((s) => s.slug === baseSlug);
+    const finalSlug = exists
+      ? `${baseSlug}-${Math.floor(100 + Math.random() * 899)}`
+      : baseSlug;
+
+    const country = state.countries.find((c) => c.code === input.countryCode);
+    const nowIso = new Date().toISOString();
+    const storeId = `store-${Date.now()}`;
+    const tpl = input.templateId ?? "shrine_pro_3";
+
+    const newStore: Store = {
+      id: storeId,
+      ownerId: activeStore.ownerId,
+      ownerName: activeStore.ownerName,
+      ownerEmail: activeStore.ownerEmail,
+      ownerPhone: activeStore.ownerPhone,
+      ownerPassword: activeStore.ownerPassword,
+      name: input.storeName.trim(),
+      slug: finalSlug,
+      subdomain: `${finalSlug}.ecomsate.com`,
+      customDomain: null,
+      countryCode: input.countryCode,
+      currency: country?.currency ?? "FCFA",
+      niche: input.niche || "Généraliste",
+      status: "active",
+      planCode: "premium",
+      trialEndsAt: null,
+      subscriptionEndsAt: activeStore.subscriptionEndsAt,
+      createdAt: nowIso,
+      settings: {
+        primaryColor: "#073B35",
+        secondaryColor: "#00A884",
+        template: tpl,
+        description: `Bienvenue chez ${input.storeName.trim()}. Paiement 100 % à la livraison.`,
+        whatsappPhone: activeStore.ownerPhone.replace(/\s+/g, ""),
+        email: activeStore.ownerEmail,
+        address: country?.name ?? "Afrique de l'Ouest",
+        deliveryInfo: "Livraison rapide à domicile — Paiement à la réception.",
+        termsOfSale: "Paiement exclusivement à la livraison.",
+        socials: {},
+        homeSections: {
+          showHero: true,
+          showCategories: true,
+          showPopular: true,
+          showPromotions: true,
+        },
+        builderSections: createDefaultShrineSections(input.storeName.trim(), tpl),
+        publishedVersion: 1,
+        isPublished: true,
+      },
+    };
+
+    const initialCodForm = createInitialCodFormConfig(storeId, "mobile_fast", "#00A884");
+
+    setState((prev) => ({
+      ...prev,
+      stores: [newStore, ...prev.stores],
+      categories: [
+        {
+          id: `cat-${storeId}-1`,
+          storeId,
+          name: "Catalogue",
+          slug: "catalogue",
+          description: "Articles principaux",
+        },
+        ...prev.categories,
+      ],
+      codForms: [initialCodForm, ...(prev.codForms ?? [])],
+      session: prev.session
+        ? { ...prev.session, activeStoreId: storeId }
+        : prev.session,
+    }));
+
+    return { ok: true, store: newStore };
   };
 
   const placeOrder = (input: PlaceOrderInput): Order => {
@@ -1259,32 +2367,64 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
     const nowIso = new Date().toISOString();
     const orderNumber = generateOrderNumber();
 
+    // Détection automatique de doublon potentiel (même téléphone + même produit en < 24h)
+    const cleanPhone = input.customerPhone.replace(/\s+/g, "");
+    const firstProdId = input.items[0]?.productId;
+    const isDuplicateWarning = state.orders.some((existing) => {
+      if (existing.storeId !== input.storeId) return false;
+      if (existing.customerPhone.replace(/\s+/g, "") !== cleanPhone) return false;
+      const ageMs = Date.now() - new Date(existing.createdAt).getTime();
+      if (ageMs > 24 * 60 * 60 * 1000) return false;
+      return existing.items.some((it) => it.productId === firstProdId);
+    });
+
     const newOrder: Order = {
       id: `ord-${Date.now()}`,
       storeId: input.storeId,
       orderNumber,
       customerName: input.customerName.trim(),
       customerPhone: input.customerPhone.trim(),
+      secondaryPhone: input.secondaryPhone?.trim() || undefined,
       customerEmail: input.customerEmail?.trim() || undefined,
       deliveryAddress: input.deliveryAddress.trim(),
       deliveryCity: input.deliveryCity.trim(),
-      paymentMethod: input.paymentMethod,
-      paymentReference: input.paymentReference?.trim() || undefined,
-      status:
-        input.paymentMethod === "manual_mobile_money"
-          ? "pending_confirmation"
-          : "new",
+      commune: input.commune?.trim() || undefined,
+      district: input.district?.trim() || undefined,
+      landmark: input.landmark?.trim() || undefined,
+      customFields: input.customFields,
+      paymentMethod: "cash_on_delivery",
+      codFinancialStatus: "expected",
+      status: "new",
       subtotal,
       deliveryFee: input.deliveryFee,
       promoCode: input.promoCode?.trim().toUpperCase() || undefined,
       discountAmount: discountAmount > 0 ? discountAmount : undefined,
       totalAmount,
-
-      items: input.items.map((i) => ({
-        ...i,
-        totalPrice: i.unitPrice * i.quantity,
-      })),
+      items: input.items.map((i) => {
+        const prod = state.products.find((p) => p.id === i.productId);
+        const unitCost =
+          i.costPrice ??
+          (prod ? (prod.costPrice ?? 0) + (prod.additionalCost ?? 0) : 0);
+        return {
+          ...i,
+          costPrice: unitCost,
+          totalPrice: i.unitPrice * i.quantity,
+        };
+      }),
       notes: input.notes?.trim() || undefined,
+      internalNotes: input.internalNotes?.trim() || undefined,
+      isDuplicateWarning,
+      history: [
+        {
+          id: `hist-${Date.now()}`,
+          actor: "Formulaire COD",
+          date: nowIso,
+          toStatus: "new",
+          note: isDuplicateWarning
+            ? "Commande enregistrée (Doublon potentiel détecté sous 24h)"
+            : "Commande COD enregistrée",
+        },
+      ],
       createdAt: nowIso,
     };
 
@@ -1314,7 +2454,7 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
         (c) =>
           c.storeId === input.storeId &&
           c.phone.replace(/\s+/g, "") ===
-            input.customerPhone.replace(/\s+/g, "")
+          input.customerPhone.replace(/\s+/g, "")
       );
 
       let updatedCustomers: Customer[];
@@ -1322,12 +2462,12 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
         updatedCustomers = prev.customers.map((c) =>
           c.id === existingCustomer.id
             ? {
-                ...c,
-                ordersCount: c.ordersCount + 1,
-                totalSpent: c.totalSpent + totalAmount,
-                address: input.deliveryAddress.trim(),
-                city: input.deliveryCity.trim(),
-              }
+              ...c,
+              ordersCount: c.ordersCount + 1,
+              totalSpent: c.totalSpent + totalAmount,
+              address: input.deliveryAddress.trim(),
+              city: input.deliveryCity.trim(),
+            }
             : c
         );
       } else {
@@ -1346,19 +2486,44 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
         updatedCustomers = [newCust, ...prev.customers];
       }
 
+      // Exécution automatique temps réel des règles d'automatisation (Section 17.2)
+      const lowStockTriggered = updatedProducts.some(
+        (p) =>
+          p.storeId === input.storeId &&
+          input.items.some((i) => i.productId === p.id) &&
+          p.stock <= p.lowStockThreshold
+      );
+      const updatedAutomations = (prev.automations ?? []).map((a) => {
+        if (a.storeId !== input.storeId || !a.enabled) return a;
+        const trig = a.trigger.toLowerCase();
+        const cond = a.condition.toLowerCase();
+        const matchesDup =
+          isDuplicateWarning &&
+          (trig.includes("nouvelle commande") || a.name.toLowerCase().includes("doublon")) &&
+          cond.includes("24h");
+        const matchesStock = lowStockTriggered && trig.includes("stock");
+        const matchesNewOrder =
+          trig.includes("nouvelle commande") && !cond.includes("24h");
+        if (matchesDup || matchesStock || matchesNewOrder) {
+          return { ...a, runsCount: a.runsCount + 1, lastRunAt: nowIso };
+        }
+        return a;
+      });
+
       return {
         ...prev,
         orders: [newOrder, ...prev.orders],
         products: updatedProducts,
         customers: updatedCustomers,
         inventoryMovements: [...newMovements, ...prev.inventoryMovements],
+        automations: updatedAutomations,
         promoCodes: newOrder.promoCode
           ? (prev.promoCodes ?? []).map((pc) =>
-              pc.storeId === input.storeId &&
+            pc.storeId === input.storeId &&
               pc.code.toUpperCase() === newOrder.promoCode
-                ? { ...pc, usedCount: pc.usedCount + 1 }
-                : pc
-            )
+              ? { ...pc, usedCount: pc.usedCount + 1 }
+              : pc
+          )
           : prev.promoCodes,
         notifications: [
 
@@ -1577,15 +2742,15 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
         stores:
           decision === "approved"
             ? prev.stores.map((s) =>
-                s.id === target.storeId
-                  ? {
-                      ...s,
-                      status: "active",
-                      planCode: target.planCode,
-                      subscriptionEndsAt: nextExpiry.toISOString(),
-                    }
-                  : s
-              )
+              s.id === target.storeId
+                ? {
+                  ...s,
+                  status: "active",
+                  planCode: target.planCode,
+                  subscriptionEndsAt: nextExpiry.toISOString(),
+                }
+                : s
+            )
             : prev.stores,
         notifications: [
           {
@@ -1616,11 +2781,10 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
                 : "SUBSCRIPTION_PAYMENT_REJECTED",
             targetType: "store",
             targetId: target.storeId,
-            details: `${
-              decision === "approved"
-                ? "Validation & activation"
-                : "Rejet"
-            } du paiement Mobile Money (${target.operator} · Réf ${target.transactionReference}) pour ${target.storeName}`,
+            details: `${decision === "approved"
+              ? "Validation & activation"
+              : "Rejet"
+              } du paiement Mobile Money (${target.operator} · Réf ${target.transactionReference}) pour ${target.storeName}`,
             createdAt: now.toISOString(),
           },
           ...prev.auditLogs,
@@ -1696,15 +2860,15 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
           promoCodes: list.map((p) =>
             p.id === data.id && p.storeId === storeId
               ? {
-                  ...p,
-                  code: cleanCode,
-                  discountType: data.discountType,
-                  discountValue: Math.max(1, data.discountValue),
-                  minOrderAmount: Math.max(0, data.minOrderAmount),
-                  maxUses: data.maxUses,
-                  expiresAt: data.expiresAt || null,
-                  isActive: data.isActive,
-                }
+                ...p,
+                code: cleanCode,
+                discountType: data.discountType,
+                discountValue: Math.max(1, data.discountValue),
+                minOrderAmount: Math.max(0, data.minOrderAmount),
+                maxUses: data.maxUses,
+                expiresAt: data.expiresAt || null,
+                isActive: data.isActive,
+              }
               : p
           ),
         };
@@ -1813,9 +2977,8 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
           recipientRole: "super_admin",
           storeId: store.id,
           title: `Demande de domaine (${cleanDomain})`,
-          message: `${store.name} souhaite ${
-            requestType === "buy_new" ? "commander" : "connecter"
-          } le domaine ${cleanDomain}.`,
+          message: `${store.name} souhaite ${requestType === "buy_new" ? "commander" : "connecter"
+            } le domaine ${cleanDomain}.`,
           type: "subscription",
           isRead: false,
           createdAt: now,
@@ -1861,19 +3024,19 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
         customDomains: (prev.customDomains ?? []).map((d) =>
           d.id === domainId
             ? {
-                ...d,
-                status,
-                verifiedAt: status === "active_ssl" ? now : null,
-              }
+              ...d,
+              status,
+              verifiedAt: status === "active_ssl" ? now : null,
+            }
             : d
         ),
         stores:
           status === "active_ssl"
             ? prev.stores.map((s) =>
-                s.id === target.storeId
-                  ? { ...s, customDomain: target.domain }
-                  : s
-              )
+              s.id === target.storeId
+                ? { ...s, customDomain: target.domain }
+                : s
+            )
             : prev.stores,
         notifications: [
           {
@@ -1930,7 +3093,9 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
         logout,
 
         registerMerchant,
+        createAdditionalStore,
         switchActiveStore,
+        switchActiveTeamRole,
         saveCategory,
         deleteCategory,
         saveProduct,
@@ -1938,7 +3103,30 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
         toggleProductActive,
         adjustStock,
         updateOrderStatus,
+        updateOrderInternalNotes,
+        updateCustomerNotes,
         updateStoreSettings,
+        updateStoreBuilderSections,
+        applyStoreTheme,
+        getStoreCodForm,
+        saveCodFormDraft,
+        publishCodForm,
+        restoreCodFormVersion,
+        saveCourier,
+        deleteCourier,
+        assignOrderCourier,
+        updateOrderCodFinancialStatus,
+        recordCourierRemittance,
+        saveExpense,
+        deleteExpense,
+        saveAdCampaign,
+        toggleAdCampaign,
+        deleteAdCampaign,
+        saveAutomation,
+        toggleAutomation,
+        testAutomation,
+        saveTeamMember,
+        deleteTeamMember,
         savePromoCode,
         togglePromoCodeActive,
         deletePromoCode,

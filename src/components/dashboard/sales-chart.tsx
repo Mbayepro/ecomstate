@@ -86,7 +86,7 @@ export function SalesInteractiveChart({
     return (
       <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-dashed border-[#E2E8F0] bg-[#F8FAFC]/60 p-6 text-center">
         <BarChart3 className="h-8 w-8 text-slate-300" />
-        <p className="mt-2.5 text-sm font-semibold text-[#102A43]">
+        <p className="mt-2.5 text-sm font-semibold text-[#073B35]">
           Aucune vente validée sur cette période
         </p>
         <p className="mt-1 max-w-xs text-xs text-slate-500">
@@ -137,10 +137,10 @@ export function SalesInteractiveChart({
             <span className="text-xs font-medium capitalize text-slate-500">
               {selectedBucket.fullDate}
             </span>
-            <span className="text-sm font-extrabold text-[#102A43]">
+            <span className="text-sm font-extrabold text-[#073B35]">
               {formatCurrency(selectedBucket.revenue, currency)}
             </span>
-            <span className="rounded-full bg-[#10B981]/12 px-2 py-0.5 text-[11px] font-semibold text-[#10B981]">
+            <span className="rounded-full bg-[#00A884]/12 px-2 py-0.5 text-[11px] font-semibold text-[#00A884]">
               {selectedBucket.ordersCount} commande
               {selectedBucket.ordersCount > 1 ? "s" : ""}
             </span>
@@ -157,8 +157,8 @@ export function SalesInteractiveChart({
             onClick={() => setChartType("area")}
             className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold transition-colors cursor-pointer ${
               chartType === "area"
-                ? "bg-[#102A43] text-white"
-                : "text-slate-500 hover:text-[#102A43]"
+                ? "bg-[#073B35] text-white"
+                : "text-slate-500 hover:text-[#073B35]"
             }`}
           >
             <TrendingUp className="h-3.5 w-3.5" />
@@ -169,8 +169,8 @@ export function SalesInteractiveChart({
             onClick={() => setChartType("bars")}
             className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold transition-colors cursor-pointer ${
               chartType === "bars"
-                ? "bg-[#102A43] text-white"
-                : "text-slate-500 hover:text-[#102A43]"
+                ? "bg-[#073B35] text-white"
+                : "text-slate-500 hover:text-[#073B35]"
             }`}
           >
             <BarChart3 className="h-3.5 w-3.5" />
@@ -209,14 +209,14 @@ export function SalesInteractiveChart({
             })}
 
             {/* Remplissage discret sous la courbe */}
-            {areaPath && <path d={areaPath} fill="#10B981" fillOpacity="0.1" />}
+            {areaPath && <path d={areaPath} fill="#00A884" fillOpacity="0.1" />}
 
             {/* Ligne principale */}
             {points.length > 1 && (
               <path
                 d={linePath}
                 fill="none"
-                stroke="#10B981"
+                stroke="#00A884"
                 strokeWidth="2.75"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -230,7 +230,7 @@ export function SalesInteractiveChart({
                 x2={points[activeIdx].x}
                 y1={padTop}
                 y2={padTop + usableH}
-                stroke="#102A43"
+                stroke="#073B35"
                 strokeOpacity="0.2"
                 strokeWidth="1.5"
               />
@@ -259,7 +259,7 @@ export function SalesInteractiveChart({
                       cx={pt.x}
                       cy={pt.y}
                       r={9}
-                      fill="#10B981"
+                      fill="#00A884"
                       fillOpacity="0.18"
                     />
                   )}
@@ -267,8 +267,8 @@ export function SalesInteractiveChart({
                     cx={pt.x}
                     cy={pt.y}
                     r={isSelected ? 5 : 4}
-                    fill={isSelected ? "#102A43" : "#FFFFFF"}
-                    stroke="#10B981"
+                    fill={isSelected ? "#073B35" : "#FFFFFF"}
+                    stroke="#00A884"
                     strokeWidth="2.5"
                   />
                   <text
@@ -309,7 +309,7 @@ export function SalesInteractiveChart({
                     style={{
                       height: `${pct}%`,
                       animationDelay: `${idx * 50}ms`,
-                      backgroundColor: isSelected ? "#102A43" : "#10B981",
+                      backgroundColor: isSelected ? "#073B35" : "#00A884",
                     }}
                   />
                 </div>

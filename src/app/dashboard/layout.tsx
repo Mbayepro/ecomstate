@@ -8,18 +8,20 @@ import {
   BarChart3,
   Bell,
   Bot,
-
   Boxes,
+  Calculator,
   Check,
   Copy,
   CreditCard,
   ExternalLink,
-
   FolderTree,
+  FormInput,
   Globe,
+  Layers,
   LayoutDashboard,
-
+  LifeBuoy,
   LogOut,
+  Megaphone,
   Menu,
   Package,
   Palette,
@@ -28,114 +30,295 @@ import {
   Plus,
   QrCode,
   Search,
-
-  Share2,
   ShieldCheck,
   ShoppingBag,
   Sparkles,
   Tag,
+  Truck,
   Users,
-
   X,
 } from "lucide-react";
 import { BrandLogo, BrandLogoMark } from "@/components/ui/brand-logo";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AdeshinaCollaboratorDrawer } from "@/components/dashboard/adeshina-drawer";
 import { usePlatform } from "@/lib/platform-store";
-import { getStoreSubscriptionHealth } from "@/lib/permissions";
+import {
+  canTeamRoleAccessPath,
+  getStoreSubscriptionHealth,
+  TEAM_ROLE_LABELS,
+} from "@/lib/permissions";
 import { cn, formatCurrency } from "@/lib/utils";
-
 
 interface NavGroup {
   title: string;
+  collapsible?: boolean;
   items: {
     href: string;
     label: string;
+    hint: string;
     icon: React.ComponentType<{ className?: string }>;
     badgeType?: "orders" | "stock";
   }[];
 }
 
+const PAGE_UTILITY_GUIDE: Record<
+  string,
+  { title: string; utility: string }
+> = {
+  "/dashboard": {
+    title: "Accueil de votre boutique",
+    utility:
+      "Voyez en un coup d'œil vos commandes à confirmer aujourd'hui, vos ventes réellement livrées et votre bénéfice net.",
+  },
+  "/dashboard/commandes": {
+    title: "Commandes clients",
+    utility:
+      "Appelez vos clients pour confirmer leurs commandes, assignez un livreur et imprimez le bon de livraison COD.",
+  },
+  "/dashboard/produits": {
+    title: "Catalogue produits",
+    utility:
+      "Ajoutez vos articles avec leur prix de vente et leur coût d'achat pour calculer automatiquement votre marge.",
+  },
+  "/dashboard/clients": {
+    title: "Fichier clients",
+    utility:
+      "Retrouvez tous vos acheteurs, repérez vos clients fidèles et identifiez ceux qui refusent souvent les livraisons.",
+  },
+  "/dashboard/livreurs": {
+    title: "Livreurs & Cash COD",
+    utility:
+      "Suivez combien d'argent liquide chaque livreur détient sur le terrain et enregistrez ses versements à votre caisse.",
+  },
+  "/dashboard/finances": {
+    title: "Mes bénéfices & Dépenses",
+    utility:
+      "Connaissez votre vrai gain net (uniquement sur les commandes livrées) après déduction du coût produits et de vos dépenses.",
+  },
+  "/dashboard/store-builder": {
+    title: "Apparence de ma boutique",
+    utility:
+      "Choisissez votre thème (Shrine Pro) et personnalisez les sections de la vitrine que voient vos clients.",
+  },
+  "/dashboard/form-builder": {
+    title: "Formulaire de commande COD",
+    utility:
+      "Choisissez les champs demandés au client (téléphone, ville, quartier) et activez des offres packs (1x, Duo, Trio).",
+  },
+  "/dashboard/personnalisation": {
+    title: "Paramètres & Frais de livraison",
+    utility:
+      "Modifiez le nom de votre boutique, la devise, les frais de livraison et le message affiché après une commande.",
+  },
+  "/dashboard/adeshina-ia": {
+    title: "Assistant Adeshina IA",
+    utility:
+      "Posez une question simple sur vos chiffres, générez une fiche produit en 1 clic ou adaptez votre formulaire COD.",
+  },
+  "/dashboard/stocks": {
+    title: "Suivi des stocks",
+    utility:
+      "Repérez immédiatement les produits bientôt épuisés et ajoutez du stock en un clic.",
+  },
+  "/dashboard/categories": {
+    title: "Catégories de produits",
+    utility:
+      "Classez vos articles par rayons (ex : Soins, Chaussures, Montres) pour aider vos clients à trouver ce qu'ils cherchent.",
+  },
+  "/dashboard/promotions": {
+    title: "Codes promo",
+    utility:
+      "Créez des codes de réduction (en % ou en FCFA) pour encourager vos clients à commander.",
+  },
+  "/dashboard/croissance": {
+    title: "Publicités & Automatisations",
+    utility:
+      "Mesurez la rentabilité de vos publicités Facebook/TikTok et activez des règles automatiques sur vos commandes.",
+  },
+  "/dashboard/statistiques": {
+    title: "Statistiques détaillées",
+    utility:
+      "Analysez vos meilleures villes de livraison et l'évolution détaillée de votre activité.",
+  },
+  "/dashboard/equipe": {
+    title: "Équipe & Multi-boutiques",
+    utility:
+      "Donnez un accès adapté à vos confirmateurs ou livreurs, et gérez plusieurs boutiques depuis un seul compte.",
+  },
+  "/dashboard/marketing": {
+    title: "Partage & QR Code",
+    utility:
+      "Copiez le lien de votre boutique ou téléchargez son QR Code pour vos publications WhatsApp, TikTok et Facebook.",
+  },
+  "/dashboard/domaine": {
+    title: "Nom de domaine",
+    utility:
+      "Personnalisez l'adresse web de votre boutique ou connectez votre propre nom de domaine (.com, .sn, .ci...).",
+  },
+  "/dashboard/abonnement": {
+    title: "Mon abonnement",
+    utility:
+      "Consultez votre formule actuelle (Standard ou Premium) et vos avantages débloqués.",
+  },
+  "/dashboard/support": {
+    title: "Support, Guide & Tickets",
+    utility:
+      "Consultez le guide de démarrage rapide ou ouvrez un ticket d'assistance auprès de l'équipe EcomSate.",
+  },
+  "/dashboard/parametres": {
+    title: "Mon compte",
+    utility:
+      "Consultez et mettez à jour les informations générales de votre compte commerçant.",
+  },
+};
+
 const NAV_GROUPS: NavGroup[] = [
   {
-    title: "Activité",
+    title: "Mon activité",
     items: [
-      { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
+      {
+        href: "/dashboard",
+        label: "Accueil",
+        hint: "Résumé du jour",
+        icon: LayoutDashboard,
+      },
       {
         href: "/dashboard/commandes",
         label: "Commandes",
+        hint: "Confirmer & livrer",
         icon: ShoppingBag,
         badgeType: "orders",
       },
-      { href: "/dashboard/clients", label: "Clients", icon: Users },
       {
-        href: "/dashboard/statistiques",
-        label: "Statistiques",
-        icon: BarChart3,
+        href: "/dashboard/produits",
+        label: "Produits",
+        hint: "Prix & catalogue",
+        icon: Package,
+      },
+      {
+        href: "/dashboard/livreurs",
+        label: "Livreurs",
+        hint: "Argent COD encaissé",
+        icon: Truck,
+      },
+      {
+        href: "/dashboard/finances",
+        label: "Mes bénéfices",
+        hint: "Gain net & dépenses",
+        icon: Calculator,
+      },
+      {
+        href: "/dashboard/clients",
+        label: "Clients",
+        hint: "Acheteurs & retours",
+        icon: Users,
       },
     ],
   },
   {
-    title: "Catalogue",
+    title: "Ma boutique",
     items: [
-      { href: "/dashboard/produits", label: "Produits", icon: Package },
-      { href: "/dashboard/categories", label: "Catégories", icon: FolderTree },
+      {
+        href: "/dashboard/store-builder",
+        label: "Apparence",
+        hint: "Thème Shrine & design",
+        icon: Layers,
+      },
+      {
+        href: "/dashboard/form-builder",
+        label: "Formulaire COD",
+        hint: "Champs & offres packs",
+        icon: FormInput,
+      },
+      {
+        href: "/dashboard/personnalisation",
+        label: "Paramètres boutique",
+        hint: "Frais & coordonnées",
+        icon: Palette,
+      },
+    ],
+  },
+  {
+    title: "Plus d'outils",
+    collapsible: true,
+    items: [
+      {
+        href: "/dashboard/adeshina-ia",
+        label: "Adeshina IA",
+        hint: "Assistant & conseils",
+        icon: Sparkles,
+      },
       {
         href: "/dashboard/stocks",
         label: "Stocks",
+        hint: "Ruptures & alertes",
         icon: Boxes,
         badgeType: "stock",
       },
       {
+        href: "/dashboard/categories",
+        label: "Catégories",
+        hint: "Rayons produits",
+        icon: FolderTree,
+      },
+      {
         href: "/dashboard/promotions",
-        label: "Codes Promo",
+        label: "Codes promo",
+        hint: "Remises clients",
         icon: Tag,
       },
-    ],
-  },
-
-  {
-    title: "Boutique & IA",
-    items: [
       {
-        href: "/dashboard/personnalisation",
-        label: "Personnalisation",
-        icon: Palette,
+        href: "/dashboard/croissance",
+        label: "Pubs & Automatisations",
+        hint: "ROAS & règles auto",
+        icon: Megaphone,
       },
       {
-        href: "/dashboard/adeshina-ia",
-        label: "Adeshina IA",
-        icon: Sparkles,
+        href: "/dashboard/statistiques",
+        label: "Statistiques",
+        hint: "Villes & tendances",
+        icon: BarChart3,
+      },
+      {
+        href: "/dashboard/equipe",
+        label: "Équipe & boutiques",
+        hint: "Rôles & multi-boutique",
+        icon: Users,
       },
       {
         href: "/dashboard/marketing",
-        label: "Marketing & QR Code",
+        label: "Partage & QR code",
+        hint: "Lien réseaux sociaux",
         icon: QrCode,
       },
       {
         href: "/dashboard/domaine",
         label: "Nom de domaine",
+        hint: "Adresse web .com",
         icon: Globe,
       },
       {
         href: "/dashboard/abonnement",
-        label: "Abonnement & Mobile Money",
+        label: "Mon abonnement",
+        hint: "Standard ou Premium",
         icon: CreditCard,
       },
-
-
+      {
+        href: "/dashboard/support",
+        label: "Aide & Support",
+        hint: "Guide & tickets",
+        icon: LifeBuoy,
+      },
     ],
   },
-
 ];
 
 const MOBILE_BOTTOM_TABS = [
   { href: "/dashboard", label: "Accueil", icon: LayoutDashboard },
   { href: "/dashboard/commandes", label: "Commandes", icon: ShoppingBag },
   { href: "/dashboard/produits", label: "Produits", icon: Package },
-  { href: "/dashboard/stocks", label: "Stocks", icon: Boxes },
+  { href: "/dashboard/finances", label: "Bénéfices", icon: Calculator },
 ];
 
 export default function DashboardLayout({
@@ -152,6 +335,7 @@ export default function DashboardLayout({
   const [notifOpen, setNotifOpen] = useState(false);
   const [quickQuery, setQuickQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const {
     activeStore,
@@ -163,10 +347,13 @@ export default function DashboardLayout({
     markNotificationRead,
     markAllNotificationsRead,
     switchActiveStore,
+    switchActiveTeamRole,
     logout,
     session,
   } = usePlatform();
 
+  const activeTeamRole = session?.teamRole ?? "owner";
+  const hasRouteAccess = canTeamRoleAccessPath(activeTeamRole, pathname);
 
   const pendingOrdersCount = useMemo(() => {
     if (!activeStore) return 0;
@@ -184,7 +371,6 @@ export default function DashboardLayout({
     ).length;
   }, [products, activeStore]);
 
-  // Recherche rapide globale isolée à la boutique active
   const searchResults = useMemo(() => {
     if (!activeStore || !quickQuery.trim()) return null;
     const q = quickQuery.toLowerCase();
@@ -217,11 +403,11 @@ export default function DashboardLayout({
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-[#F8FAFC] p-6 text-center">
         <BrandLogo />
-        <h1 className="mt-6 text-2xl font-bold text-[#102A43]">
+        <h1 className="mt-6 text-2xl font-bold text-[#15232D]">
           Connectez-vous à votre espace commerçant
         </h1>
         <p className="mt-2 max-w-md text-sm text-slate-600">
-          Vous devez être connecté pour accéder à votre tableau de bord.
+          Vous devez être connecté pour accéder à votre centre de contrôle.
         </p>
         <div className="mt-6 flex gap-3">
           <Link href="/connexion">
@@ -237,19 +423,9 @@ export default function DashboardLayout({
 
   const copyStoreUrl = () => {
     const url = `${window.location.origin}/s/${activeStore.slug}`;
-    navigator.clipboard?.writeText(url).catch(() => {});
+    navigator.clipboard?.writeText(url).catch(() => { });
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
-
-  const shareOnWhatsapp = () => {
-    const url = `${window.location.origin}/s/${activeStore.slug}`;
-    const text = `Découvrez notre boutique en ligne ${activeStore.name} et commandez facilement : ${url}`;
-    window.open(
-      `https://wa.me/?text=${encodeURIComponent(text)}`,
-      "_blank",
-      "noopener,noreferrer"
-    );
   };
 
   const isDemoStore =
@@ -262,26 +438,23 @@ export default function DashboardLayout({
   );
   const unreadNotifCount = storeNotifications.filter((n) => !n.isRead).length;
 
-
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC] text-[#1E293B]">
-      {/* Backdrop mobile */}
+    <div className="flex min-h-screen bg-[#F8FAFC] text-[#15232D]">
       {sidebarOpen && (
         <div
-          className="animate-backdrop fixed inset-0 z-40 bg-[#102A43]/40 backdrop-blur-xs lg:hidden"
+          className="fixed inset-0 z-40 bg-[#15232D]/45 backdrop-blur-xs lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* SIDEBAR LUMINEUSE, ÉLÉGANTE ET COMPACTE */}
+      {/* SIDEBAR OFFICIELLE ECOMSATE */}
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-[#E2E8F0] bg-white transition-all duration-200 ease-out lg:sticky lg:top-0 lg:h-screen lg:translate-x-0",
-          collapsed ? "lg:w-18" : "w-64 lg:w-60",
+          collapsed ? "lg:w-18" : "w-66 lg:w-62",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* Logo & bouton réduction */}
         <div className="flex h-15 shrink-0 items-center justify-between border-b border-[#E2E8F0] px-4">
           {!collapsed && <BrandLogo href="/" />}
           {collapsed && (
@@ -297,8 +470,7 @@ export default function DashboardLayout({
           <button
             type="button"
             onClick={() => setCollapsed((v) => !v)}
-            className="hidden rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#102A43] lg:inline-flex cursor-pointer"
-            title={collapsed ? "Déplier le menu" : "Réduire le menu"}
+            className="hidden rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#15232D] lg:inline-flex cursor-pointer"
           >
             {collapsed ? (
               <PanelLeftOpen className="h-4 w-4" />
@@ -310,13 +482,12 @@ export default function DashboardLayout({
             type="button"
             onClick={() => setSidebarOpen(false)}
             className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 lg:hidden cursor-pointer"
-            aria-label="Fermer"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Sélecteur de boutique compact */}
+        {/* Sélecteur Multi-boutiques */}
         {!collapsed && (
           <div className="border-b border-[#E2E8F0] p-3">
             <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-2.5">
@@ -325,17 +496,17 @@ export default function DashboardLayout({
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-extrabold text-white"
                   style={{
                     backgroundColor:
-                      activeStore.settings.primaryColor || "#102A43",
+                      activeStore.settings.primaryColor || "#073B35",
                   }}
                 >
                   {activeStore.name.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-bold text-[#102A43]">
+                  <p className="truncate text-xs font-bold text-[#15232D]">
                     {activeStore.name}
                   </p>
                   <p className="truncate text-[11px] text-slate-500">
-                    {activeStore.customDomain || activeStore.subdomain}
+                    Plan {activeStore.planCode}
                   </p>
                 </div>
               </div>
@@ -344,7 +515,7 @@ export default function DashboardLayout({
                 value={activeStore.id}
                 onChange={(e) => switchActiveStore(e.target.value)}
                 aria-label="Boutique active"
-                className="mt-2 w-full rounded-lg border border-[#E2E8F0] bg-white px-2 py-1 text-[11px] font-semibold text-[#102A43] focus:border-[#102A43] focus:outline-none cursor-pointer"
+                className="mt-2 w-full rounded-lg border border-[#E2E8F0] bg-white px-2 py-1 text-[11px] font-semibold text-[#15232D] focus:border-[#00A884] focus:outline-none cursor-pointer"
               >
                 {stores.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -356,123 +527,131 @@ export default function DashboardLayout({
           </div>
         )}
 
-        {/* Liens de navigation épurés */}
         <nav className="flex-1 space-y-4 overflow-y-auto px-3 py-3.5">
-          {NAV_GROUPS.map((group) => (
-            <div key={group.title}>
-              {!collapsed && (
-                <p className="mb-1 px-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                  {group.title}
-                </p>
-              )}
-              <div className="space-y-0.5">
-                {group.items.map((item) => {
-                  const Icon = item.icon;
-                  const active =
-                    item.href === "/dashboard"
-                      ? pathname === "/dashboard"
-                      : pathname.startsWith(item.href);
-
-                  const badgeCount =
-                    item.badgeType === "orders"
-                      ? pendingOrdersCount
-                      : item.badgeType === "stock"
-                      ? stockAlertsCount
-                      : 0;
-
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setSidebarOpen(false)}
-                      title={collapsed ? item.label : undefined}
-                      className={cn(
-                        "group relative flex items-center justify-between rounded-xl px-2.5 py-2 text-[13px] font-semibold transition-colors",
-                        active
-                          ? "bg-[#102A43] text-white shadow-2xs"
-                          : "text-slate-600 hover:bg-slate-100/80 hover:text-[#102A43]",
-                        collapsed && "justify-center px-0"
-                      )}
+          {NAV_GROUPS.map((group) => {
+            const visibleItems = group.items.filter((it) =>
+              canTeamRoleAccessPath(activeTeamRole, it.href)
+            );
+            if (visibleItems.length === 0) return null;
+            const groupHasActive = visibleItems.some((it) =>
+              pathname.startsWith(it.href)
+            );
+            const expanded =
+              !group.collapsible || moreOpen || groupHasActive || collapsed;
+            return (
+              <div key={group.title}>
+                {!collapsed &&
+                  (group.collapsible ? (
+                    <button
+                      type="button"
+                      onClick={() => setMoreOpen((v) => !v)}
+                      className="mb-1 flex w-full items-center justify-between rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-[#073B35] cursor-pointer"
                     >
-                      <span className="flex items-center gap-2.5">
-                        <Icon
-                          className={cn(
-                            "h-4.5 w-4.5 shrink-0",
-                            active
-                              ? "text-[#10B981]"
-                              : "text-slate-400 group-hover:text-[#102A43]"
-                          )}
-                        />
-                        {!collapsed && <span>{item.label}</span>}
-                      </span>
+                      <span>{group.title}</span>
+                      <span>{expanded ? "−" : "+"}</span>
+                    </button>
+                  ) : (
+                    <p className="mb-1 px-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                      {group.title}
+                    </p>
+                  ))}
+                {expanded && (
+                  <div className="space-y-0.5">
+                    {visibleItems.map((item) => {
+                      const Icon = item.icon;
+                      const active =
+                        item.href === "/dashboard"
+                          ? pathname === "/dashboard"
+                          : pathname.startsWith(item.href);
 
-                      {!collapsed && badgeCount > 0 && (
-                        <span
+                      const badgeCount =
+                        item.badgeType === "orders"
+                          ? pendingOrdersCount
+                          : item.badgeType === "stock"
+                            ? stockAlertsCount
+                            : 0;
+
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setSidebarOpen(false)}
+                          title={collapsed ? item.label : undefined}
                           className={cn(
-                            "flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold",
+                            "group relative flex items-center justify-between rounded-xl px-2.5 py-2 text-[13px] font-semibold transition-colors",
                             active
-                              ? "bg-[#10B981] text-white"
-                              : item.badgeType === "stock"
-                              ? "bg-amber-100 text-amber-800"
-                              : "bg-[#10B981]/15 text-[#10B981]"
+                              ? "bg-[#073B35] text-white shadow-2xs"
+                              : "text-slate-600 hover:bg-[#E7F7F2]/60 hover:text-[#073B35]",
+                            collapsed && "justify-center px-0"
                           )}
                         >
-                          {badgeCount}
-                        </span>
-                      )}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+                          <span className="flex items-center gap-2.5">
+                            <Icon
+                              className={cn(
+                                "h-4.5 w-4.5 shrink-0",
+                                active
+                                  ? "text-[#00A884]"
+                                  : "text-slate-400 group-hover:text-[#00A884]"
+                              )}
+                            />
+                            {!collapsed && (
+                              <span className="flex flex-col leading-tight">
+                                <span>{item.label}</span>
+                                <span
+                                  className={cn(
+                                    "text-[10px] font-normal",
+                                    active
+                                      ? "text-[#E7F7F2]/80"
+                                      : "text-slate-400"
+                                  )}
+                                >
+                                  {item.hint}
+                                </span>
+                              </span>
+                            )}
+                          </span>
 
-          {/* Accès direct Collaborateur Adeshina IA */}
-          <div className="pt-1">
-            <button
-              type="button"
-              onClick={() => {
-                setSidebarOpen(false);
-                setCopilotOpen(true);
-              }}
-              className={cn(
-                "flex w-full items-center gap-2.5 rounded-xl border border-[#10B981]/30 bg-[#10B981]/[0.07] px-3 py-2.5 text-left text-xs font-bold text-[#102A43] transition-colors hover:bg-[#10B981]/15 cursor-pointer",
-                collapsed && "justify-center px-0"
-              )}
-              title="Collaborateur Adeshina IA"
-            >
-              <Sparkles className="h-4 w-4 shrink-0 text-[#10B981]" />
-              {!collapsed && (
-                <div className="min-w-0 flex-1">
-                  <p className="truncate">Adeshina IA</p>
-                  <p className="truncate text-[10px] font-normal text-slate-500">
-                    Analyser & conseiller
-                  </p>
-                </div>
-              )}
-            </button>
-          </div>
+                          {!collapsed && badgeCount > 0 && (
+                            <span
+                              className={cn(
+                                "flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold",
+                                active
+                                  ? "bg-[#00A884] text-white"
+                                  : item.badgeType === "stock"
+                                    ? "bg-amber-100 text-amber-800"
+                                    : "bg-[#E7F7F2] text-[#073B35]"
+                              )}
+                            >
+                              {badgeCount}
+                            </span>
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
-        {/* Pied de sidebar */}
         <div className="space-y-1.5 border-t border-[#E2E8F0] p-3">
           {!collapsed && (
             <div className="flex items-center justify-between px-2 pb-1 text-[11px] text-slate-500">
               <span>Formule {activeStore.planCode}</span>
-              {isDemoStore && <Badge variant="info">Démo</Badge>}
+              {isDemoStore && <Badge variant="success">Démo</Badge>}
             </div>
           )}
 
           <Link
             href={`/s/${activeStore.slug}`}
             target="_blank"
-            title="Voir ma boutique publique"
             className={cn(
-              "flex items-center justify-between rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-xs font-semibold text-[#102A43] transition-colors hover:border-[#102A43]/30 hover:bg-white",
+              "flex items-center justify-between rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-xs font-semibold text-[#15232D] hover:border-[#00A884]/40 hover:bg-white",
               collapsed && "justify-center px-0"
             )}
           >
-            {!collapsed && <span>Voir ma boutique</span>}
+            {!collapsed && <span>Voir ma vitrine COD</span>}
             <ExternalLink className="h-3.5 w-3.5 text-slate-500" />
           </Link>
 
@@ -480,7 +659,7 @@ export default function DashboardLayout({
             <div className="flex items-center justify-between pt-1 text-xs">
               <Link
                 href="/admin"
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-slate-500 hover:bg-slate-100 hover:text-[#102A43]"
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-slate-500 hover:bg-slate-100 hover:text-[#15232D]"
               >
                 <ShieldCheck className="h-3.5 w-3.5" />
                 Admin
@@ -501,21 +680,18 @@ export default function DashboardLayout({
         </div>
       </aside>
 
-      {/* ZONE PRINCIPALE LUMINEUSE */}
+      {/* ZONE PRINCIPALE */}
       <div className="flex min-w-0 flex-1 flex-col pb-18 lg:pb-0">
-        {/* Topbar avec recherche rapide globale & actions 1-clic */}
         <header className="sticky top-0 z-30 flex h-15 items-center justify-between gap-3 border-b border-[#E2E8F0] bg-white/95 px-4 backdrop-blur-md sm:px-6 lg:px-8">
           <div className="flex flex-1 items-center gap-3">
             <button
               type="button"
               onClick={() => setSidebarOpen(true)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E2E8F0] text-[#102A43] hover:bg-slate-50 lg:hidden cursor-pointer"
-              aria-label="Menu"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E2E8F0] text-[#15232D] hover:bg-slate-50 lg:hidden cursor-pointer"
             >
               <Menu className="h-5 w-5" />
             </button>
 
-            {/* Barre de recherche rapide multi-entités */}
             <div className="relative w-full max-w-sm">
               <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
               <input
@@ -524,14 +700,14 @@ export default function DashboardLayout({
                 onFocus={() => setSearchFocused(true)}
                 onBlur={() => setTimeout(() => setSearchFocused(false), 180)}
                 placeholder="Rechercher commande, produit, client..."
-                className="h-9 w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] pl-9 pr-3 text-xs text-[#1E293B] placeholder:text-slate-400 transition-colors focus:border-[#102A43] focus:bg-white focus:outline-none"
+                className="h-9 w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] pl-9 pr-3 text-xs text-[#15232D] placeholder:text-slate-400 focus:border-[#00A884] focus:bg-white focus:outline-none"
               />
 
               {searchFocused && searchResults && (
-                <div className="animate-modal-in absolute left-0 right-0 top-11 z-50 rounded-2xl border border-[#E2E8F0] bg-white p-3 shadow-xl">
+                <div className="absolute left-0 right-0 top-11 z-50 rounded-2xl border border-[#E2E8F0] bg-white p-3 shadow-xl">
                   {searchResults.matchedOrders.length === 0 &&
-                  searchResults.matchedProducts.length === 0 &&
-                  searchResults.matchedCustomers.length === 0 ? (
+                    searchResults.matchedProducts.length === 0 &&
+                    searchResults.matchedCustomers.length === 0 ? (
                     <p className="py-3 text-center text-xs text-slate-500">
                       Aucun résultat dans {activeStore.name}
                     </p>
@@ -539,7 +715,7 @@ export default function DashboardLayout({
                     <div className="space-y-3 text-xs">
                       {searchResults.matchedOrders.length > 0 && (
                         <div>
-                          <p className="mb-1 font-bold uppercase tracking-wider text-[10px] text-slate-400">
+                          <p className="mb-1 text-[10px] font-bold uppercase text-slate-400">
                             Commandes
                           </p>
                           {searchResults.matchedOrders.map((o) => (
@@ -548,10 +724,10 @@ export default function DashboardLayout({
                               href="/dashboard/commandes"
                               className="flex items-center justify-between rounded-lg px-2.5 py-1.5 hover:bg-[#F8FAFC]"
                             >
-                              <span className="font-semibold text-[#102A43]">
+                              <span className="font-semibold text-[#15232D]">
                                 {o.orderNumber} · {o.customerName}
                               </span>
-                              <span className="font-bold text-[#10B981]">
+                              <span className="font-bold text-[#00A884]">
                                 {formatCurrency(
                                   o.totalAmount,
                                   activeStore.currency
@@ -561,10 +737,9 @@ export default function DashboardLayout({
                           ))}
                         </div>
                       )}
-
                       {searchResults.matchedProducts.length > 0 && (
                         <div>
-                          <p className="mb-1 font-bold uppercase tracking-wider text-[10px] text-slate-400">
+                          <p className="mb-1 text-[10px] font-bold uppercase text-slate-400">
                             Produits
                           </p>
                           {searchResults.matchedProducts.map((p) => (
@@ -573,32 +748,12 @@ export default function DashboardLayout({
                               href="/dashboard/produits"
                               className="flex items-center justify-between rounded-lg px-2.5 py-1.5 hover:bg-[#F8FAFC]"
                             >
-                              <span className="truncate font-semibold text-[#102A43]">
+                              <span className="truncate font-semibold text-[#15232D]">
                                 {p.name}
                               </span>
                               <span className="text-slate-500">
                                 Stock: {p.stock}
                               </span>
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-
-                      {searchResults.matchedCustomers.length > 0 && (
-                        <div>
-                          <p className="mb-1 font-bold uppercase tracking-wider text-[10px] text-slate-400">
-                            Clients
-                          </p>
-                          {searchResults.matchedCustomers.map((c) => (
-                            <Link
-                              key={c.id}
-                              href="/dashboard/clients"
-                              className="flex items-center justify-between rounded-lg px-2.5 py-1.5 hover:bg-[#F8FAFC]"
-                            >
-                              <span className="font-semibold text-[#102A43]">
-                                {c.fullName}
-                              </span>
-                              <span className="text-slate-500">{c.phone}</span>
                             </Link>
                           ))}
                         </div>
@@ -610,52 +765,38 @@ export default function DashboardLayout({
             </div>
           </div>
 
-          {/* Actions rapides à portée de main (esprit Shafrik) */}
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={copyStoreUrl}
-              className="hidden items-center gap-1.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-1.5 text-xs font-semibold text-[#102A43] transition-colors hover:bg-white md:inline-flex cursor-pointer"
-              title="Copier le lien de ma boutique"
+              className="hidden items-center gap-1.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-1.5 text-xs font-semibold text-[#15232D] hover:bg-white md:inline-flex cursor-pointer"
             >
               {copied ? (
-                <Check className="h-3.5 w-3.5 text-[#10B981]" />
+                <Check className="h-3.5 w-3.5 text-[#00A884]" />
               ) : (
                 <Copy className="h-3.5 w-3.5 text-slate-500" />
               )}
               <span>{copied ? "Copié !" : "Lien boutique"}</span>
             </button>
 
-            <button
-              type="button"
-              onClick={shareOnWhatsapp}
-              className="hidden items-center gap-1.5 rounded-xl border border-[#E2E8F0] bg-white px-3 py-1.5 text-xs font-semibold text-[#102A43] transition-colors hover:border-[#10B981] lg:inline-flex cursor-pointer"
-              title="Partager ma boutique sur WhatsApp"
-            >
-              <Share2 className="h-3.5 w-3.5 text-[#10B981]" />
-              <span>Partager</span>
-            </button>
-
-            {/* Cloche de notifications commerçant */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setNotifOpen((v) => !v)}
-                className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E2E8F0] bg-white text-[#102A43] transition-colors hover:bg-[#F8FAFC] cursor-pointer"
-                title="Notifications de la boutique"
+                className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E2E8F0] bg-white text-[#15232D] hover:bg-[#F8FAFC] cursor-pointer"
               >
                 <Bell className="h-4 w-4" />
                 {unreadNotifCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#10B981] px-1 text-[10px] font-bold text-white">
+                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#00A884] px-1 text-[10px] font-bold text-white">
                     {unreadNotifCount}
                   </span>
                 )}
               </button>
 
               {notifOpen && (
-                <div className="animate-modal-in absolute right-0 top-11 z-50 w-80 rounded-2xl border border-[#E2E8F0] bg-white p-3 shadow-xl">
+                <div className="absolute right-0 top-11 z-50 w-80 rounded-2xl border border-[#E2E8F0] bg-white p-3 shadow-xl">
                   <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2">
-                    <span className="text-xs font-extrabold text-[#102A43]">
+                    <span className="text-xs font-extrabold text-[#15232D]">
                       Notifications ({storeNotifications.length})
                     </span>
                     {unreadNotifCount > 0 && (
@@ -664,7 +805,7 @@ export default function DashboardLayout({
                         onClick={() =>
                           markAllNotificationsRead(activeStore.id, "merchant")
                         }
-                        className="text-[11px] font-semibold text-[#10B981] hover:underline cursor-pointer"
+                        className="text-[11px] font-semibold text-[#00A884] hover:underline cursor-pointer"
                       >
                         Tout marquer lu
                       </button>
@@ -673,18 +814,17 @@ export default function DashboardLayout({
                   <div className="mt-2 max-h-64 divide-y divide-[#E2E8F0] overflow-y-auto">
                     {storeNotifications.length === 0 ? (
                       <p className="py-4 text-center text-xs text-slate-400">
-                        Aucune notification pour le moment.
+                        Aucune notification.
                       </p>
                     ) : (
                       storeNotifications.slice(0, 8).map((n) => (
                         <div
                           key={n.id}
                           onClick={() => markNotificationRead(n.id)}
-                          className={`py-2.5 text-xs cursor-pointer ${
-                            n.isRead ? "opacity-65" : "font-medium"
-                          }`}
+                          className={`py-2.5 text-xs cursor-pointer ${n.isRead ? "opacity-65" : "font-medium"
+                            }`}
                         >
-                          <p className="font-bold text-[#102A43]">{n.title}</p>
+                          <p className="font-bold text-[#15232D]">{n.title}</p>
                           <p className="mt-0.5 text-slate-600">{n.message}</p>
                         </div>
                       ))
@@ -697,12 +837,11 @@ export default function DashboardLayout({
             <button
               type="button"
               onClick={() => setCopilotOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#10B981]/35 bg-[#10B981]/10 px-3 py-1.5 text-xs font-bold text-[#102A43] transition-colors hover:bg-[#10B981] hover:text-white cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#00A884]/40 bg-[#E7F7F2] px-3 py-1.5 text-xs font-bold text-[#073B35] hover:bg-[#00A884] hover:text-white cursor-pointer"
             >
-              <Bot className="h-4 w-4 text-[#10B981] group-hover:text-white" />
+              <Bot className="h-4 w-4" />
               <span className="hidden sm:inline">Adeshina IA</span>
             </button>
-
 
             <Link href="/dashboard/produits">
               <Button variant="primary" size="sm">
@@ -713,47 +852,66 @@ export default function DashboardLayout({
           </div>
         </header>
 
-        {/* Alerte compte suspendu ou abonnement expiré / bientôt expiré */}
         {subHealth.isExpired ? (
-          <div className="animate-page-enter flex flex-wrap items-center justify-between gap-3 border-b border-red-200 bg-red-50 px-6 py-3 text-sm text-red-800">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-red-200 bg-red-50 px-6 py-3 text-sm text-red-800">
             <div className="flex items-center gap-2.5">
               <AlertTriangle className="h-5 w-5 shrink-0 text-red-600" />
               <span>
                 <strong>Abonnement expiré ou boutique suspendue :</strong>{" "}
-                renouvelez votre abonnement par Mobile Money pour réactiver
-                l&apos;accès public à votre vitrine.
+                renouvelez votre formule pour réactiver votre boutique.
               </span>
             </div>
             <Link
               href="/dashboard/abonnement"
-              className="rounded-lg bg-red-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-800"
+              className="rounded-lg bg-red-700 px-3 py-1.5 text-xs font-bold text-white"
             >
-              Renouveler maintenant
-            </Link>
-          </div>
-        ) : subHealth.isExpiringSoon ? (
-          <div className="animate-page-enter flex flex-wrap items-center justify-between gap-3 border-b border-amber-200 bg-amber-50 px-6 py-2.5 text-xs text-amber-900">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
-              <span>
-                <strong>Attention :</strong> votre formule arrive à échéance
-                dans <strong>{subHealth.daysRemaining} jour(s)</strong>. Pensez
-                à la renouveler pour éviter toute coupure.
-              </span>
-            </div>
-            <Link
-              href="/dashboard/abonnement"
-              className="rounded-lg bg-[#102A43] px-3 py-1 text-xs font-bold text-white hover:bg-[#1B3B5A]"
-            >
-              Gérer mon abonnement
+              Renouveler
             </Link>
           </div>
         ) : null}
 
-
-        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-          <div key={pathname} className="animate-page-enter">
-            {children}
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+          <div key={pathname} className="animate-page-enter space-y-5">
+            {hasRouteAccess && PAGE_UTILITY_GUIDE[pathname] && (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#00A884]/30 bg-[#E7F7F2]/60 px-4 py-3 text-xs text-[#073B35]">
+                <div className="flex items-center gap-2.5">
+                  <span className="inline-flex shrink-0 items-center rounded-lg bg-[#073B35] px-2.5 py-1 text-[11px] font-extrabold text-white">
+                    À quoi sert cette page ?
+                  </span>
+                  <p className="font-semibold text-[#15232D]">
+                    {PAGE_UTILITY_GUIDE[pathname].utility}
+                  </p>
+                </div>
+              </div>
+            )}
+            {hasRouteAccess ? (
+              children
+            ) : (
+              <div className="mx-auto max-w-lg rounded-2xl border border-[#E2E8F0] bg-white p-8 text-center shadow-xs">
+                <ShieldCheck className="mx-auto h-10 w-10 text-[#00A884]" />
+                <h2 className="mt-3 text-lg font-extrabold text-[#15232D]">
+                  Accès restreint pour le rôle « {TEAM_ROLE_LABELS[activeTeamRole]} »
+                </h2>
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
+                  Ce module est réservé au Propriétaire ou aux rôles disposant
+                  de cette permission dans la boutique.
+                </p>
+                <div className="mt-5 flex flex-wrap justify-center gap-2.5">
+                  <Link href="/dashboard">
+                    <Button variant="outline" size="sm">
+                      Retour à l&apos;accueil
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => switchActiveTeamRole("owner")}
+                  >
+                    Revenir au rôle Propriétaire
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </main>
       </div>
@@ -767,27 +925,21 @@ export default function DashboardLayout({
               ? pathname === "/dashboard"
               : pathname.startsWith(tab.href);
           const count =
-            tab.href === "/dashboard/commandes"
-              ? pendingOrdersCount
-              : tab.href === "/dashboard/stocks"
-              ? stockAlertsCount
-              : 0;
+            tab.href === "/dashboard/commandes" ? pendingOrdersCount : 0;
 
           return (
             <Link
               key={tab.href}
               href={tab.href}
               className={cn(
-                "relative flex flex-col items-center justify-center gap-0.5 rounded-xl px-2.5 py-1.5 text-[10px] font-semibold transition-colors",
-                active ? "text-[#102A43]" : "text-slate-400"
+                "relative flex flex-col items-center justify-center gap-0.5 rounded-xl px-2.5 py-1.5 text-[10px] font-semibold",
+                active ? "text-[#073B35]" : "text-slate-400"
               )}
             >
-              <Icon
-                className={cn("h-5 w-5", active && "text-[#10B981]")}
-              />
+              <Icon className={cn("h-5 w-5", active && "text-[#00A884]")} />
               <span>{tab.label}</span>
               {count > 0 && (
-                <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#10B981] px-1 text-[9px] font-bold text-white">
+                <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#00A884] px-1 text-[9px] font-bold text-white">
                   {count}
                 </span>
               )}
@@ -798,14 +950,13 @@ export default function DashboardLayout({
         <button
           type="button"
           onClick={() => setCopilotOpen(true)}
-          className="flex flex-col items-center justify-center gap-0.5 rounded-xl px-2.5 py-1.5 text-[10px] font-bold text-[#10B981] cursor-pointer"
+          className="flex flex-col items-center justify-center gap-0.5 rounded-xl px-2.5 py-1.5 text-[10px] font-bold text-[#00A884] cursor-pointer"
         >
           <Sparkles className="h-5 w-5" />
           <span>IA</span>
         </button>
       </nav>
 
-      {/* Panneau latéral Adeshina IA disponible partout */}
       <AdeshinaCollaboratorDrawer
         open={copilotOpen}
         onClose={() => setCopilotOpen(false)}

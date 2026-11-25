@@ -10,13 +10,14 @@ export type BadgeVariant =
   | "navy";
 
 const variantStyles: Record<BadgeVariant, string> = {
-  default: "bg-slate-100 text-slate-700 border-slate-200",
-  success: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  warning: "bg-amber-50 text-amber-700 border-amber-200",
+  default: "bg-slate-100 text-[#15232D] border-slate-200",
+  success: "bg-[#E7F7F2] text-[#073B35] border-[#00A884]/30",
+  warning: "bg-[#F4A340]/15 text-[#9A5806] border-[#F4A340]/40",
   danger: "bg-red-50 text-red-700 border-red-200",
-  info: "bg-sky-50 text-sky-700 border-sky-200",
-  navy: "bg-[#102A43]/10 text-[#102A43] border-[#102A43]/20",
+  info: "bg-[#E7F7F2]/70 text-[#008F6F] border-[#00A884]/25",
+  navy: "bg-[#073B35]/10 text-[#073B35] border-[#073B35]/20",
 };
+
 
 export function Badge({
   variant = "default",

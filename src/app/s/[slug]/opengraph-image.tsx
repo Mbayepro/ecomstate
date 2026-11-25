@@ -19,9 +19,9 @@ export default async function StoreOpenGraphImage({
   const storeName = store?.name ?? slug.replace(/-/g, " ").toUpperCase();
   const storeDesc =
     store?.settings.description ??
-    "Découvrez notre catalogue en ligne et commandez facilement par WhatsApp ou paiement à la livraison.";
-  const primary = store?.settings.primaryColor ?? "#102A43";
-  const secondary = store?.settings.secondaryColor ?? "#10B981";
+    "Découvrez notre catalogue en ligne et commandez en 30 secondes — Paiement 100 % à la livraison.";
+  const primary = store?.settings.primaryColor ?? "#073B35";
+  const secondary = store?.settings.secondaryColor ?? "#00A884";
   const domain = store?.customDomain || store?.subdomain || `${slug}.ecomsate.com`;
 
   return new ImageResponse(
@@ -33,7 +33,7 @@ export default async function StoreOpenGraphImage({
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          background: `linear-gradient(135deg, #0B1F33 0%, ${primary} 100%)`,
+          background: `linear-gradient(135deg, #052B27 0%, ${primary} 100%)`,
           padding: "64px 72px",
           fontFamily: "sans-serif",
           color: "#FFFFFF",
@@ -66,7 +66,7 @@ export default async function StoreOpenGraphImage({
             }}
           >
             Propulsé par Ecom
-            <span style={{ color: "#10B981" }}>Sate</span>
+            <span style={{ color: "#00A884" }}>Sate</span>
           </span>
         </div>
 
@@ -101,8 +101,8 @@ export default async function StoreOpenGraphImage({
             paddingTop: "24px",
           }}
         >
-          <span style={{ fontSize: "18px", color: "#CBD5E1" }}>
-            Commande rapide · Livraison à domicile · Mobile Money & WhatsApp
+          <span style={{ fontSize: "18px", color: "#E7F7F2" }}>
+            Commande directe en ligne · Livraison rapide · 100 % Paiement à la livraison (COD)
           </span>
           <span
             style={{

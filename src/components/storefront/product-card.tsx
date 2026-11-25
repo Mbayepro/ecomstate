@@ -19,8 +19,8 @@ export function StoreProductCard({
   onAddToCart: (product: Product) => void;
   onQuickView: (product: Product) => void;
 }) {
-  const primary = store.settings.primaryColor || "#102A43";
-  const secondary = store.settings.secondaryColor || "#10B981";
+  const primary = store.settings.primaryColor || "#073B35";
+  const secondary = store.settings.secondaryColor || "#00A884";
   const template = store.settings.template || "minimal";
 
   const outOfStock = product.stock <= 0;

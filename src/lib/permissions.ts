@@ -1,38 +1,67 @@
 import type {
+  CodFinancialStatus,
   ModulePermission,
   OrderStatus,
   PaymentMethodCode,
   Store,
   SubscriptionPlan,
   SubscriptionPlanCode,
+  TeamMemberRole,
 } from "@/types/domain";
 
+/**
+ * Contrôle d'accès réel par rôle d'équipe (Section 20.2 du Cahier des charges)
+ */
+export const TEAM_ROLE_LABELS: Record<TeamMemberRole, string> = {
+  owner: "Propriétaire",
+  admin: "Administrateur",
+  operator: "Opérateur Confirmation",
+  delivery_manager: "Responsable Livraison",
+  courier: "Livreur",
+  analyst: "Analyste Marketing",
+};
+
+const ROLE_ALLOWED_PREFIXES: Record<TeamMemberRole, string[]> = {
+  owner: ["/dashboard"],
+  admin: ["/dashboard"],
+  operator: [
+    "/dashboard/commandes",
+    "/dashboard/clients",
+    "/dashboard/produits",
+    "/dashboard/stocks",
+    "/dashboard/categories",
+  ],
+  delivery_manager: [
+    "/dashboard/commandes",
+    "/dashboard/livreurs",
+    "/dashboard/stocks",
+  ],
+  courier: ["/dashboard/commandes", "/dashboard/livreurs"],
+  analyst: [
+    "/dashboard/statistiques",
+    "/dashboard/croissance",
+    "/dashboard/finances",
+    "/dashboard/adeshina-ia",
+  ],
+};
+
+export function canTeamRoleAccessPath(
+  role: TeamMemberRole | undefined,
+  pathname: string
+): boolean {
+  const effectiveRole: TeamMemberRole = role ?? "owner";
+  if (effectiveRole === "owner" || effectiveRole === "admin") return true;
+  if (pathname === "/dashboard" || pathname.startsWith("/dashboard/support")) {
+    return true;
+  }
+  const allowed = ROLE_ALLOWED_PREFIXES[effectiveRole] ?? [];
+  return allowed.some((prefix) => pathname.startsWith(prefix));
+}
 
 /**
- * Système centralisé des offres, modules et limites.
- * Ne jamais coder en dur les limites d'abonnement dans les composants UI.
+ * Système centralisé des offres Standard & Premium (Section 5 du Cahier des charges officiel)
  */
 export const DEFAULT_PLANS: SubscriptionPlan[] = [
-  {
-    id: "plan-trial",
-    code: "trial",
-    name: "Activation & Essai 30 jours",
-    monthlyPrice: 2000,
-    annualPrice: 2000,
-    currency: "FCFA",
-    description:
-      "Paiement unique d'activation donnant accès à 30 jours complets pour lancer et tester votre boutique.",
-    maxProducts: 50,
-    customDomainAllowed: false,
-    isActive: true,
-    features: [
-      "Création automatique de votre boutique",
-      "Sous-domaine gratuit (.ecomsate.com)",
-      "Jusqu'à 50 produits avec variantes",
-      "Commandes WhatsApp & Paiement à la livraison",
-      "Tableau de bord & gestion des stocks",
-    ],
-  },
   {
     id: "plan-standard",
     code: "standard",
@@ -41,17 +70,22 @@ export const DEFAULT_PLANS: SubscriptionPlan[] = [
     annualPrice: 75000,
     currency: "FCFA",
     description:
-      "Idéal pour les commerçants et petites entreprises qui veulent vendre en ligne chaque jour.",
-    maxProducts: 100,
+      "Plan destiné aux commerçants qui souhaitent gérer efficacement une boutique e-commerce COD complète.",
+    maxProducts: 150,
+    maxStores: 1,
+    maxCouriers: 5,
+    aiQuotaMonthly: 50,
     customDomainAllowed: false,
     isActive: true,
     features: [
-      "Jusqu'à 100 produits et catégories illimitées",
-      "Sous-domaine personnalisé (.ecomsate.com)",
-      "Personnalisation complète (logo, bannière, couleurs)",
-      "Gestion des stocks, alertes et clients",
-      "Commandes WhatsApp, livraison & Mobile Money manuel",
-      "Support prioritaire par e-mail et WhatsApp",
+      "1 boutique en ligne + Store Builder",
+      "Thème initial de référence (Shrine Pro 1)",
+      "Jusqu'à 150 produits, variantes, prix d'achat & marges",
+      "Formulaire COD personnalisable (Form Builder)",
+      "Gestion commandes (11 statuts), clients & stocks",
+      "Livraison, jusqu'à 5 livreurs & rapprochement COD",
+      "Dépenses essentielles & calcul du bénéfice réel",
+      "Adeshina IA (50 générations / mois) & exports de base",
     ],
   },
   {
@@ -62,57 +96,113 @@ export const DEFAULT_PLANS: SubscriptionPlan[] = [
     annualPrice: 150000,
     currency: "FCFA",
     description:
-      "Toute la puissance d'EcomSate pour les marques ambitieuses avec votre propre nom de domaine.",
+      "Plan destiné aux commerçants avancés : multi-boutiques, thèmes Shrine Pro supplémentaires, IA avancée et équipe.",
     maxProducts: null,
+    maxStores: 5,
+    maxCouriers: null,
+    aiQuotaMonthly: null,
     customDomainAllowed: true,
     isActive: true,
     features: [
-      "Produits illimités & variantes avancées",
-      "Nom de domaine personnalisé (.com, .sn, .bj) + SSL",
-      "Tous les modèles de boutiques premium",
-      "Statistiques avancées et export des commandes",
-      "Multi-paiements locaux (évolutions incluses)",
-      "Accompagnement dédié",
+      "Toutes les fonctionnalités Standard incluses",
+      "Multi-boutiques (jusqu'à 5 boutiques indépendantes)",
+      "Thèmes avancés inclus (Shrine Pro 3 Conversion + Niches)",
+      "Produits, livreurs & générations Adeshina IA illimités",
+      "Form Builder COD avancé (champs conditionnels & templates)",
+      "Suivi publicitaire (ROAS), automatisations & alertes IA",
+      "Gestion d'équipe multi-rôles & domaine personnalisé",
+      "Exports avancés CSV & support prioritaire",
     ],
   },
 ];
 
+export interface PlanComparisonRow {
+  feature: string;
+  standard: string;
+  premium: string;
+}
+
+/**
+ * Comparateur officiel Standard vs Premium (Section 5.3)
+ */
+export const PLAN_COMPARISON_ROWS: PlanComparisonRow[] = [
+  { feature: "Nombre de boutiques", standard: "1 boutique", premium: "Jusqu'à 5 boutiques (Multi-boutiques)" },
+  { feature: "Nombre de produits", standard: "Jusqu'à 150 produits", premium: "Illimité" },
+  { feature: "Store Builder & Thèmes", standard: "Thème Shrine Pro 1 (Référence)", premium: "Shrine Pro 1 + Shrine Pro 3 + Niches" },
+  { feature: "Personnalisation vitrine", standard: "Essentielle (couleurs, logo, sections)", premium: "Avancée (blocs, packs, résultats, comparatif)" },
+  { feature: "Formulaire COD (Form Builder)", standard: "Personnalisable (champs & design)", premium: "Avancé + Champs personnalisés & Conditions" },
+  { feature: "Livreurs & Rapprochement COD", standard: "Jusqu'à 5 livreurs", premium: "Livreurs illimités + Audit écarts" },
+  { feature: "Finances & Bénéfice réel", standard: "Revenus livrés, dépenses & marge", premium: "Complet + Analyse rentabilité produit/pub" },
+  { feature: "Adeshina IA opérationnelle", standard: "50 actions / mois", premium: "Illimitée (création boutique, produits, formulaires)" },
+  { feature: "Analytics & Publicités", standard: "Analytics de base", premium: "Avancés + Suivi campagnes & ROAS" },
+  { feature: "Automatisations", standard: "Alertes essentielles", premium: "Règles personnalisées (Déclencheur → Action)" },
+  { feature: "Gestion d'équipe", standard: "Propriétaire", premium: "Équipe complète (6 rôles & permissions)" },
+  { feature: "Exports CSV & Rapports", standard: "Commandes & Produits", premium: "Exports avancés multi-modules" },
+  { feature: "Domaine personnalisé", standard: "Sous-domaine .ecomsate.com", premium: "Domaine personnalisé (.com, .bj, .sn, .ci)" },
+  { feature: "Support", standard: "Assistance standard", premium: "Support prioritaire" },
+];
+
 export const DEFAULT_MODULES: ModulePermission[] = [
   {
-    key: "storefront",
-    label: "Boutique publique & sous-domaine",
-    description: "Vitrine e-commerce mobile-first accessible via .ecomsate.com",
+    key: "storefront_core",
+    label: "Store Builder & Vitrine COD",
+    description: "Création de boutique, sections modulaires et publication",
     enabledInPlans: ["trial", "standard", "premium"],
   },
   {
     key: "products_catalog",
-    label: "Catalogue produits & variantes",
-    description: "Ajout de produits, photos multiples, prix promo, tailles et couleurs",
+    label: "Catalogue produits, variantes & marges",
+    description: "Produits, variantes, prix d'achat, marges et import/export CSV",
     enabledInPlans: ["trial", "standard", "premium"],
-    limits: { trial: 50, standard: 100, premium: null },
+    limits: { trial: 50, standard: 150, premium: null },
   },
   {
-    key: "inventory_tracking",
-    label: "Suivi des stocks & alertes",
-    description: "Alertes de stock faible et historique des mouvements",
+    key: "cod_form_builder",
+    label: "Form Builder COD personnalisable",
+    description: "Constructeur visuel de formulaire de commande à la livraison",
     enabledInPlans: ["trial", "standard", "premium"],
   },
   {
-    key: "store_customization",
-    label: "Personnalisation visuelle",
-    description: "Logo, bannière, palette personnalisée et modèles de boutique",
+    key: "inventory_management",
+    label: "Gestion des stocks & alertes",
+    description: "Entrées, sorties, réservations, retours et seuils critiques",
     enabledInPlans: ["trial", "standard", "premium"],
+  },
+  {
+    key: "couriers_cod",
+    label: "Livreurs & Rapprochement COD",
+    description: "Assignation livreurs, encaissements, reversements et écarts",
+    enabledInPlans: ["trial", "standard", "premium"],
+    limits: { trial: 3, standard: 5, premium: null },
+  },
+  {
+    key: "finance_profit",
+    label: "Finances, Dépenses & Bénéfice réel",
+    description: "Suivi des revenus encaissés, dépenses et calcul du profit net",
+    enabledInPlans: ["trial", "standard", "premium"],
+  },
+  {
+    key: "premium_themes",
+    label: "Thèmes Shrine Pro supplémentaires",
+    description: "Accès à Shrine Pro 3 Conversion et adaptations avancées",
+    enabledInPlans: ["premium"],
+  },
+  {
+    key: "multi_stores",
+    label: "Multi-boutiques & Équipe avancée",
+    description: "Création de plusieurs boutiques isolées et rôles d'équipe",
+    enabledInPlans: ["premium"],
   },
   {
     key: "custom_domain",
-    label: "Nom de domaine personnalisé",
-    description: "Achat et connexion de domaine personnel avec certificat SSL",
+    label: "Domaine personnalisé (.com, .sn, .bj...)",
+    description: "Connexion d'un nom de domaine propre avec SSL HTTPS",
     enabledInPlans: ["premium"],
   },
   {
     key: "advanced_analytics",
-    label: "Statistiques avancées",
-    description: "Rapports détaillés par période et performances produits",
+    label: "Analytics avancés, Publicités & Automatisations",
+    description: "Suivi campagnes publicitaires, ROAS et règles automatisées",
     enabledInPlans: ["premium"],
   },
 ];
@@ -138,23 +228,51 @@ export function getModuleLimit(
   return limit === undefined ? null : limit;
 }
 
+/**
+ * 11 statuts officiels de commande (Section 10.5)
+ */
 export const ORDER_STATUS_META: Record<
   OrderStatus,
-  { label: string; badge: "info" | "warning" | "navy" | "success" | "danger" | "default" }
+  {
+    label: string;
+    badge: "info" | "warning" | "navy" | "success" | "danger" | "default";
+  }
 > = {
   new: { label: "Nouvelle commande", badge: "info" },
-  pending_confirmation: { label: "En attente de confirmation", badge: "warning" },
+  pending_confirmation: { label: "À confirmer", badge: "warning" },
   confirmed: { label: "Confirmée", badge: "navy" },
-  preparing: { label: "En préparation", badge: "navy" },
-  shipped: { label: "Expédiée", badge: "info" },
+  preparing: { label: "À préparer", badge: "navy" },
+  ready_to_ship: { label: "Prête à expédier", badge: "info" },
+  assigned_courier: { label: "Assignée au livreur", badge: "warning" },
+  shipped: { label: "En cours de livraison", badge: "info" },
   delivered: { label: "Livrée", badge: "success" },
+  delivery_failed: { label: "Échec de livraison", badge: "danger" },
+  returned: { label: "Retournée", badge: "warning" },
   cancelled: { label: "Annulée", badge: "danger" },
 };
 
+/**
+ * 6 statuts financiers COD indépendants (Section 12.4)
+ */
+export const COD_FINANCIAL_STATUS_META: Record<
+  CodFinancialStatus,
+  {
+    label: string;
+    badge: "default" | "warning" | "info" | "success" | "danger" | "navy";
+  }
+> = {
+  uncollected: { label: "Non encaissé", badge: "default" },
+  expected: { label: "Encaissement attendu", badge: "warning" },
+  collected_by_courier: { label: "Encaissé par le livreur", badge: "info" },
+  partially_remitted: { label: "Reversement partiel", badge: "warning" },
+  remitted: { label: "Reversement complet", badge: "success" },
+  discrepancy: { label: "Écart à vérifier", badge: "danger" },
+};
+
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethodCode, string> = {
-  cash_on_delivery: "Paiement à la livraison",
-  whatsapp_order: "Commande via WhatsApp",
-  manual_mobile_money: "Mobile Money (confirmation vendeur)",
+  cash_on_delivery: "Paiement à la livraison (COD)",
+  whatsapp_order: "Paiement à la livraison (COD)",
+  manual_mobile_money: "Paiement à la livraison (COD)",
 };
 
 export interface StoreSubscriptionHealth {
@@ -206,4 +324,3 @@ export function getStoreSubscriptionHealth(
     statusLabel,
   };
 }
-

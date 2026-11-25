@@ -174,15 +174,15 @@ export function AdeshinaCopilotPanel({
     <Card className="border-[#E2E8F0] bg-white">
       <CardHeader className="flex flex-col justify-between gap-3 border-b border-[#E2E8F0] px-5 py-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-3">
-          <span className="flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-xl bg-[#102A43] text-white">
-            <Bot className="h-5 w-5 text-[#10B981]" />
+          <span className="flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-xl bg-[#073B35] text-white">
+            <Bot className="h-5 w-5 text-[#00A884]" />
           </span>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-extrabold text-[#102A43]">
+              <h2 className="text-sm font-extrabold text-[#073B35]">
                 Adeshina IA · Collaborateur commercial
               </h2>
-              <span className="rounded-full bg-[#10B981]/12 px-2 py-0.5 text-[10px] font-bold text-[#10B981]">
+              <span className="rounded-full bg-[#00A884]/12 px-2 py-0.5 text-[10px] font-bold text-[#00A884]">
                 Connecté à votre boutique
               </span>
             </div>
@@ -205,11 +205,11 @@ export function AdeshinaCopilotPanel({
                 onClick={() => runSkill(sk.intent)}
                 className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
                   selected
-                    ? "border-[#102A43] bg-[#102A43] text-white"
-                    : "border-[#E2E8F0] bg-[#F8FAFC] text-[#102A43] hover:border-[#10B981] hover:bg-white"
+                    ? "border-[#073B35] bg-[#073B35] text-white"
+                    : "border-[#E2E8F0] bg-[#F8FAFC] text-[#073B35] hover:border-[#00A884] hover:bg-white"
                 }`}
               >
-                <Icon className="h-3.5 w-3.5 text-[#10B981]" />
+                <Icon className="h-3.5 w-3.5 text-[#00A884]" />
                 {sk.label}
               </button>
             );
@@ -221,17 +221,17 @@ export function AdeshinaCopilotPanel({
         {/* Réponse dynamique d'Adeshina IA lorsqu'une compétence ou question est lancée */}
         {isThinking && (
           <div className="flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 text-xs text-slate-500">
-            <span className="typing-dot h-2 w-2 rounded-full bg-[#10B981]" />
-            <span className="typing-dot h-2 w-2 rounded-full bg-[#10B981]" />
-            <span className="typing-dot h-2 w-2 rounded-full bg-[#10B981]" />
+            <span className="typing-dot h-2 w-2 rounded-full bg-[#00A884]" />
+            <span className="typing-dot h-2 w-2 rounded-full bg-[#00A884]" />
+            <span className="typing-dot h-2 w-2 rounded-full bg-[#00A884]" />
             <span>Adeshina IA inspecte vos données...</span>
           </div>
         )}
 
         {!isThinking && customReply && (
-          <div className="animate-tab-panel flex flex-col justify-between gap-3 rounded-xl border border-[#10B981]/35 bg-[#F8FAFC] p-4 sm:flex-row sm:items-start">
+          <div className="animate-tab-panel flex flex-col justify-between gap-3 rounded-xl border border-[#00A884]/35 bg-[#F8FAFC] p-4 sm:flex-row sm:items-start">
             <div className="space-y-1">
-              <p className="text-xs font-extrabold text-[#102A43]">
+              <p className="text-xs font-extrabold text-[#073B35]">
                 {customReply.title}
               </p>
               <p className="text-xs leading-relaxed text-slate-700 whitespace-pre-line">
@@ -264,9 +264,9 @@ export function AdeshinaCopilotPanel({
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                       {c.badge}
                     </span>
-                    <Icon className="h-4 w-4 text-[#102A43]" />
+                    <Icon className="h-4 w-4 text-[#073B35]" />
                   </div>
-                  <h3 className="mt-1.5 text-sm font-bold text-[#102A43]">
+                  <h3 className="mt-1.5 text-sm font-bold text-[#073B35]">
                     {c.title}
                   </h3>
                   <p className="mt-1 text-xs leading-relaxed text-slate-600">
@@ -275,7 +275,7 @@ export function AdeshinaCopilotPanel({
                 </div>
                 <Link
                   href={c.href}
-                  className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#102A43] hover:text-[#10B981]"
+                  className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#073B35] hover:text-[#00A884]"
                 >
                   {c.cta}
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -300,10 +300,10 @@ export function AdeshinaCopilotPanel({
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             placeholder="Posez une question sur votre activité à Adeshina IA (ex: quels produits sont en stock faible ?)"
-            className="h-9.5 flex-1 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 text-xs text-[#1E293B] placeholder:text-slate-400 focus:border-[#102A43] focus:bg-white focus:outline-none"
+            className="h-9.5 flex-1 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 text-xs text-[#15232D] placeholder:text-slate-400 focus:border-[#073B35] focus:bg-white focus:outline-none"
           />
           <Button type="submit" variant="outline" size="sm">
-            <Send className="h-3.5 w-3.5 text-[#10B981]" />
+            <Send className="h-3.5 w-3.5 text-[#00A884]" />
             Interroger
           </Button>
         </form>

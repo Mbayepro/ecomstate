@@ -33,10 +33,10 @@ interface ChatTurn {
 
 const QUICK_PROMPTS = [
   "À quoi sert EcomSate ?",
-  "Comment ça marche en 3 étapes ?",
-  "Tarifs & essai à 2 000 FCFA",
-  "Commandes WhatsApp & Livraison",
-  "Mobile Money sans NINEA / RCCM",
+  "Formulaire 100 % COD",
+  "Thèmes Shrine Pro 1 & 3",
+  "Livreurs & Bénéfice réel",
+  "Tarifs Standard & Premium",
 ];
 
 
@@ -68,12 +68,14 @@ export function AdeshinaFloatingWidget() {
 
   const [dismissed, setDismissed] = useState(false);
 
-  // Masquer le widget sur les boutiques clientes (/s/...), le dashboard marchand (/dashboard) et l'administration (/admin)
+  // Masquer le widget sur les boutiques clientes (/s/...), le dashboard marchand (/dashboard), l'admin (/admin) et les pages d'authentification (/creer-une-boutique, /connexion)
   if (
     dismissed ||
     pathname?.startsWith("/s/") ||
     pathname?.startsWith("/dashboard") ||
-    pathname?.startsWith("/admin")
+    pathname?.startsWith("/admin") ||
+    pathname?.startsWith("/creer-une-boutique") ||
+    pathname?.startsWith("/connexion")
   ) {
     return null;
   }
@@ -124,15 +126,15 @@ export function AdeshinaFloatingWidget() {
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="animate-pulse-emerald group flex items-center gap-3 rounded-full border border-white/20 bg-[#102A43] py-2.5 pl-3.5 pr-4 text-white shadow-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-2xl active:scale-98 cursor-pointer"
+              className="animate-pulse-emerald group flex items-center gap-3 rounded-full border border-white/20 bg-[#073B35] py-2.5 pl-3.5 pr-4 text-white shadow-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-2xl active:scale-98 cursor-pointer"
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#10B981] text-white transition-transform duration-200 group-hover:rotate-12">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#00A884] text-white transition-transform duration-200 group-hover:rotate-12">
                 <Sparkles className="h-4 w-4" />
               </span>
               <div className="text-left">
                 <p className="flex items-center gap-1.5 text-xs font-extrabold tracking-wide text-white">
                   Adeshina IA
-                  <span className="rounded-full bg-[#10B981]/25 px-2 py-0.5 text-[10px] font-semibold text-[#10B981]">
+                  <span className="rounded-full bg-[#00A884]/25 px-2 py-0.5 text-[10px] font-semibold text-[#00A884]">
                     En ligne
                   </span>
                 </p>
@@ -148,12 +150,12 @@ export function AdeshinaFloatingWidget() {
 
       {/* Fenêtre Adeshina IA */}
       {open && (
-        <div className="animate-modal-in fixed bottom-5 right-4 z-50 flex max-h-[84vh] w-[calc(100vw-2rem)] max-w-md flex-col overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-2xl sm:right-6">
-          {/* Header */}
-          <div className="bg-[#102A43] p-4 text-white">
+        <div className="animate-modal-in fixed bottom-5 right-4 z-50 flex h-[540px] max-h-[85vh] w-[calc(100vw-2rem)] max-w-md flex-col overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-2xl sm:right-6">
+          {/* Header (shrink-0 pour ne jamais être écrasé) */}
+          <div className="shrink-0 bg-[#073B35] p-4 text-white">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#10B981] text-white shadow-xs">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#00A884] text-white shadow-xs">
                   <Bot className="h-5 w-5" />
                 </span>
                 <div>
@@ -161,13 +163,13 @@ export function AdeshinaFloatingWidget() {
                     <h3 className="text-sm font-extrabold text-white">
                       Adeshina IA
                     </h3>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#10B981]/20 px-2 py-0.5 text-[10px] font-semibold text-[#10B981]">
-                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#10B981]" />
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#00A884]/25 px-2 py-0.5 text-[10px] font-semibold text-[#E7F7F2]">
+                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#00A884]" />
                       Actif
                     </span>
                   </div>
                   <p className="text-xs text-slate-300">
-                    Copilote e-commerce EcomSate
+                    Copilote e-commerce COD EcomSate
                   </p>
                 </div>
               </div>
@@ -188,7 +190,7 @@ export function AdeshinaFloatingWidget() {
                 onClick={() => setMode("chat")}
                 className={`flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-semibold transition-all cursor-pointer ${
                   mode === "chat"
-                    ? "bg-[#10B981] text-white shadow-xs"
+                    ? "bg-[#00A884] text-white shadow-xs"
                     : "text-slate-200 hover:text-white"
                 }`}
               >
@@ -200,7 +202,7 @@ export function AdeshinaFloatingWidget() {
                 onClick={() => setMode("builder")}
                 className={`flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-semibold transition-all cursor-pointer ${
                   mode === "builder"
-                    ? "bg-[#10B981] text-white shadow-xs"
+                    ? "bg-[#00A884] text-white shadow-xs"
                     : "text-slate-200 hover:text-white"
                 }`}
               >
@@ -213,7 +215,7 @@ export function AdeshinaFloatingWidget() {
           {/* Contenu selon le mode */}
           {mode === "chat" ? (
             <div key="chat" className="animate-tab-panel flex min-h-0 flex-1 flex-col">
-              <div className="flex-1 space-y-3 overflow-y-auto bg-[#F8FAFC] p-4">
+              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-[#F8FAFC] p-4">
                 {messages.map((m) => (
                   <div
                     key={m.id}
@@ -224,8 +226,8 @@ export function AdeshinaFloatingWidget() {
                     <div
                       className={`max-w-[90%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed whitespace-pre-line ${
                         m.sender === "user"
-                          ? "bg-[#102A43] text-white"
-                          : "border border-[#E2E8F0] bg-white text-[#1E293B] shadow-2xs"
+                          ? "bg-[#073B35] text-white"
+                          : "border border-[#E2E8F0] bg-white text-[#15232D] shadow-2xs"
                       }`}
                     >
                       {m.sender === "user" ? (
@@ -239,7 +241,7 @@ export function AdeshinaFloatingWidget() {
                       <Link
                         href={m.ctaHref}
                         onClick={() => setOpen(false)}
-                        className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg bg-[#10B981] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#059669]"
+                        className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg bg-[#00A884] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#073B35]"
                       >
                         <Sparkles className="h-3.5 w-3.5" />
                         {m.ctaLabel}
@@ -251,46 +253,45 @@ export function AdeshinaFloatingWidget() {
 
                 {isTyping && (
                   <div className="flex items-center gap-1.5 rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3 w-fit shadow-2xs">
-                    <span className="typing-dot h-2 w-2 rounded-full bg-[#10B981]" />
-                    <span className="typing-dot h-2 w-2 rounded-full bg-[#10B981]" />
-                    <span className="typing-dot h-2 w-2 rounded-full bg-[#10B981]" />
+                    <span className="typing-dot h-2 w-2 rounded-full bg-[#00A884]" />
+                    <span className="typing-dot h-2 w-2 rounded-full bg-[#00A884]" />
+                    <span className="typing-dot h-2 w-2 rounded-full bg-[#00A884]" />
                   </div>
                 )}
 
                 <div ref={scrollEndRef} />
               </div>
 
-              {/* Barre horizontale compacte de suggestions rapides (ne pousse plus les réponses sur mobile) */}
-              <div className="flex gap-1.5 overflow-x-auto border-t border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 no-scrollbar">
+              {/* Suggestions rapides en grille flex-wrap bien visible (zéro barre de défilement horizontale qui coupe le texte) */}
+              <div className="shrink-0 flex flex-wrap gap-1.5 border-t border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2.5">
                 {QUICK_PROMPTS.map((q) => (
                   <button
                     key={q}
                     type="button"
                     onClick={() => sendMessage(q)}
-                    className="shrink-0 rounded-full border border-[#CBD5E1] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#102A43] transition-colors hover:border-[#10B981] hover:text-[#10B981] cursor-pointer"
+                    className="rounded-full border border-[#CBD5E1] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#15232D] transition-colors hover:border-[#00A884] hover:bg-[#E7F7F2] hover:text-[#073B35] cursor-pointer"
                   >
                     {q}
                   </button>
                 ))}
               </div>
 
-
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   sendMessage(input);
                 }}
-                className="flex items-center gap-2 border-t border-[#E2E8F0] bg-white p-3"
+                className="shrink-0 flex items-center gap-2 border-t border-[#E2E8F0] bg-white p-3"
               >
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Posez votre question à Adeshina IA..."
-                  className="h-10 flex-1 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 text-xs text-[#1E293B] transition-colors focus:border-[#102A43] focus:bg-white focus:outline-none"
+                  className="h-10 flex-1 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 text-xs text-[#15232D] transition-colors focus:border-[#00A884] focus:bg-white focus:outline-none"
                 />
                 <button
                   type="submit"
-                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#10B981] text-white transition-transform hover:bg-[#059669] active:scale-95 cursor-pointer"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#00A884] text-white transition-transform hover:bg-[#073B35] active:scale-95 cursor-pointer"
                   aria-label="Envoyer"
                 >
                   <Send className="h-4 w-4" />
@@ -303,7 +304,7 @@ export function AdeshinaFloatingWidget() {
               className="animate-tab-panel flex-1 space-y-4 overflow-y-auto bg-[#F8FAFC] p-4"
             >
               <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
-                <p className="text-xs font-bold text-[#102A43]">
+                <p className="text-xs font-bold text-[#073B35]">
                   1. Choisissez votre secteur d&apos;activité
                 </p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
@@ -314,8 +315,8 @@ export function AdeshinaFloatingWidget() {
                       onClick={() => setSelectedSector(sec.sectorId)}
                       className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
                         selectedSector === sec.sectorId
-                          ? "bg-[#102A43] text-white shadow-2xs"
-                          : "border border-[#E2E8F0] bg-[#F8FAFC] text-slate-700 hover:border-[#102A43]"
+                          ? "bg-[#073B35] text-white shadow-2xs"
+                          : "border border-[#E2E8F0] bg-[#F8FAFC] text-slate-700 hover:border-[#073B35]"
                       }`}
                     >
                       {sec.sectorLabel.split(",")[0]}
@@ -323,23 +324,23 @@ export function AdeshinaFloatingWidget() {
                   ))}
                 </div>
 
-                <p className="mt-3 text-xs font-bold text-[#102A43]">
+                <p className="mt-3 text-xs font-bold text-[#073B35]">
                   2. Nom souhaité (ou laissez Adeshina IA proposer)
                 </p>
                 <input
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
                   placeholder={`Ex : ${blueprint.suggestedName}`}
-                  className="mt-1.5 h-9 w-full rounded-lg border border-[#E2E8F0] px-3 text-xs focus:border-[#102A43] focus:outline-none"
+                  className="mt-1.5 h-9 w-full rounded-lg border border-[#E2E8F0] px-3 text-xs focus:border-[#073B35] focus:outline-none"
                 />
               </div>
 
               <div
                 key={blueprint.sectorId}
-                className="animate-tab-panel rounded-xl border border-[#10B981]/30 bg-white p-4 shadow-2xs"
+                className="animate-tab-panel rounded-xl border border-[#00A884]/30 bg-white p-4 shadow-2xs"
               >
                 <div className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#10B981]">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#00A884]">
                     <Sparkles className="h-3.5 w-3.5" />
                     Proposition Adeshina IA
                   </span>
@@ -347,7 +348,7 @@ export function AdeshinaFloatingWidget() {
                     {blueprint.subdomain}
                   </span>
                 </div>
-                <p className="mt-1.5 text-sm font-extrabold text-[#102A43]">
+                <p className="mt-1.5 text-sm font-extrabold text-[#073B35]">
                   {blueprint.suggestedName}
                 </p>
                 <p className="mt-1 text-xs text-slate-600">
@@ -358,30 +359,25 @@ export function AdeshinaFloatingWidget() {
                   {blueprint.categories.map((c) => (
                     <span
                       key={c.name}
-                      className="rounded-full border border-[#E2E8F0] bg-[#F8FAFC] px-2.5 py-0.5 text-[11px] font-medium text-[#102A43]"
+                      className="rounded-full border border-[#E2E8F0] bg-[#F8FAFC] px-2.5 py-0.5 text-[11px] font-medium text-[#073B35]"
                     >
                       {c.name}
                     </span>
                   ))}
                 </div>
 
-                <div className="mt-3 space-y-1.5 border-t border-[#E2E8F0] pt-2.5">
+                <div className="mt-3 space-y-1.5 border-t border-[#E2E8F0] pt-2.5 text-xs">
                   <p className="text-[11px] font-semibold text-slate-500">
-                    Produits pré-configurés par Adeshina IA :
+                    Configuration prête à l&apos;emploi :
                   </p>
-                  {blueprint.sampleProducts.slice(0, 2).map((p) => (
-                    <div
-                      key={p.name}
-                      className="flex items-center justify-between text-xs"
-                    >
-                      <span className="truncate font-medium text-[#102A43]">
-                        {p.name}
-                      </span>
-                      <span className="font-bold text-[#10B981]">
-                        {formatCurrency(p.promoPrice ?? p.price)}
-                      </span>
-                    </div>
-                  ))}
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-600">Thème vitrine :</span>
+                    <span className="font-bold text-[#073B35]">Shrine Pro 1</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-600">Formulaire client :</span>
+                    <span className="font-bold text-[#00A884]">100 % COD</span>
+                  </div>
                 </div>
 
                 <Link
@@ -389,7 +385,7 @@ export function AdeshinaFloatingWidget() {
                     blueprint.sectorId
                   }&storeName=${encodeURIComponent(blueprint.suggestedName)}`}
                   onClick={() => setOpen(false)}
-                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#10B981] py-2.5 text-xs font-bold text-white transition-all hover:bg-[#059669] active:scale-98"
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#00A884] py-2.5 text-xs font-bold text-white transition-all hover:bg-[#008F6F] active:scale-98"
                 >
                   <Store className="h-4 w-4" />
                   Lancer cette boutique maintenant

@@ -125,7 +125,7 @@ export default function DashboardStocksPage() {
         <Card className="border-[#E2E8F0] bg-white lg:col-span-7">
           <CardHeader className="space-y-3 border-b border-[#E2E8F0] px-5 py-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-sm font-extrabold text-[#102A43]">
+              <h2 className="text-sm font-extrabold text-[#073B35]">
                 Niveaux de stock par produit
               </h2>
               <div className="flex gap-1.5">
@@ -142,8 +142,8 @@ export default function DashboardStocksPage() {
                     onClick={() => setFilter(id)}
                     className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors cursor-pointer ${
                       filter === id
-                        ? "bg-[#102A43] text-white"
-                        : "bg-[#F8FAFC] text-slate-600 hover:text-[#102A43]"
+                        ? "bg-[#073B35] text-white"
+                        : "bg-[#F8FAFC] text-slate-600 hover:text-[#073B35]"
                     }`}
                   >
                     {label}
@@ -158,7 +158,7 @@ export default function DashboardStocksPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Filtrer un article..."
-                className="h-9 w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] pl-9 pr-3 text-xs focus:border-[#102A43] focus:bg-white focus:outline-none"
+                className="h-9 w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] pl-9 pr-3 text-xs focus:border-[#073B35] focus:bg-white focus:outline-none"
               />
             </div>
           </CardHeader>
@@ -177,7 +177,7 @@ export default function DashboardStocksPage() {
                     ? "bg-rose-500"
                     : p.stock <= p.lowStockThreshold
                     ? "bg-amber-500"
-                    : "bg-[#10B981]";
+                    : "bg-[#00A884]";
 
                 return (
                   <div key={p.id} className="px-5 py-4 hover:bg-[#F8FAFC]">
@@ -190,7 +190,7 @@ export default function DashboardStocksPage() {
                         />
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="truncate text-sm font-bold text-[#102A43]">
+                            <p className="truncate text-sm font-bold text-[#073B35]">
                               {p.name}
                             </p>
                             {p.stock === 0 ? (
@@ -225,7 +225,7 @@ export default function DashboardStocksPage() {
                         >
                           <Minus className="h-3.5 w-3.5" />
                         </button>
-                        <span className="w-10 text-center text-sm font-extrabold text-[#102A43]">
+                        <span className="w-10 text-center text-sm font-extrabold text-[#073B35]">
                           {p.stock}
                         </span>
                         <button
@@ -249,7 +249,7 @@ export default function DashboardStocksPage() {
                               restockProductId === p.id ? null : p.id
                             )
                           }
-                          className="rounded-lg bg-[#10B981]/12 px-2.5 py-1.5 text-xs font-bold text-[#10B981] transition-colors hover:bg-[#10B981] hover:text-white cursor-pointer"
+                          className="rounded-lg bg-[#00A884]/12 px-2.5 py-1.5 text-xs font-bold text-[#00A884] transition-colors hover:bg-[#00A884] hover:text-white cursor-pointer"
                         >
                           Entrée stock
                         </button>
@@ -266,7 +266,7 @@ export default function DashboardStocksPage() {
                           value={restockQty}
                           onChange={(e) => setRestockQty(e.target.value)}
                           placeholder="Qté"
-                          className="h-8.5 w-20 rounded-lg border border-[#E2E8F0] px-2.5 text-xs font-bold text-[#102A43]"
+                          className="h-8.5 w-20 rounded-lg border border-[#E2E8F0] px-2.5 text-xs font-bold text-[#073B35]"
                         />
                         <input
                           value={restockReason}
@@ -295,7 +295,7 @@ export default function DashboardStocksPage() {
         {/* Historique des mouvements */}
         <Card className="border-[#E2E8F0] bg-white lg:col-span-5">
           <CardHeader className="border-b border-[#E2E8F0] px-5 py-4">
-            <h2 className="text-sm font-extrabold text-[#102A43]">
+            <h2 className="text-sm font-extrabold text-[#073B35]">
               Historique des mouvements ({storeMovements.length})
             </h2>
           </CardHeader>
@@ -312,7 +312,7 @@ export default function DashboardStocksPage() {
                       <span
                         className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
                           positive
-                            ? "bg-emerald-50 text-[#10B981]"
+                            ? "bg-emerald-50 text-[#00A884]"
                             : "bg-amber-50 text-amber-600"
                         }`}
                       >
@@ -323,7 +323,7 @@ export default function DashboardStocksPage() {
                         )}
                       </span>
                       <div className="min-w-0">
-                        <p className="truncate text-xs font-bold text-[#102A43]">
+                        <p className="truncate text-xs font-bold text-[#073B35]">
                           {m.productName}
                         </p>
                         <p className="text-[11px] text-slate-500">

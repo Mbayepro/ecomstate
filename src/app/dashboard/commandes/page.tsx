@@ -2,56 +2,77 @@
 
 import { useMemo, useState } from "react";
 import {
+  AlertTriangle,
   Check,
-  CheckCircle2,
+  Clock,
+  Download,
   MapPin,
-  MessageCircle,
   Phone,
+  Plus,
   Printer,
   Search,
   ShoppingBag,
   Truck,
   X,
 } from "lucide-react";
-
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { DashboardPageHeader } from "@/components/dashboard/page-header";
 import {
+  CodFinancialStatusPill,
   OrderStatusPill,
-  PaymentMethodPill,
 } from "@/components/dashboard/status-pill";
 import { usePlatform } from "@/lib/platform-store";
 import { ORDER_STATUS_META } from "@/lib/permissions";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import type { Order, OrderStatus } from "@/types/domain";
+import type { CodFinancialStatus, Order, OrderStatus } from "@/types/domain";
 
+/**
+ * Les 11 statuts officiels du cycle de vie COD (Section 10.5)
+ */
 const ALL_STATUSES: OrderStatus[] = [
   "new",
   "pending_confirmation",
   "confirmed",
   "preparing",
+  "ready_to_ship",
+  "assigned_courier",
   "shipped",
   "delivered",
+  "delivery_failed",
+  "returned",
   "cancelled",
 ];
 
-const WORKFLOW_STEPS: { status: OrderStatus; short: string }[] = [
-  { status: "new", short: "Reçue" },
-  { status: "confirmed", short: "Confirmée" },
-  { status: "preparing", short: "Préparation" },
-  { status: "shipped", short: "Expédiée" },
-  { status: "delivered", short: "Livrée" },
-];
-
 export default function DashboardCommandesPage() {
-  const { activeStore, orders, updateOrderStatus } = usePlatform();
+  const {
+    activeStore,
+    orders,
+    products,
+    couriers,
+    placeOrder,
+    updateOrderStatus,
+    updateOrderInternalNotes,
+    assignOrderCourier,
+    updateOrderCodFinancialStatus,
+  } = usePlatform();
+
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
   const [receiptOrder, setReceiptOrder] = useState<Order | null>(null);
+  const [manualModalOpen, setManualModalOpen] = useState(false);
 
+  // Création manuelle de commande (Section 10.6)
+  const [mName, setMName] = useState("");
+  const [mPhone, setMPhone] = useState("");
+  const [mCity, setMCity] = useState("");
+  const [mAddress, setMAddress] = useState("");
+  const [mProductId, setMProductId] = useState("");
+  const [mQty, setMQty] = useState("1");
+  const [mFee, setMFee] = useState("1500");
 
   const storeOrders = useMemo(
     () =>
@@ -65,6 +86,22 @@ export default function DashboardCommandesPage() {
     [orders, activeStore?.id]
   );
 
+  const storeCouriers = useMemo(
+    () =>
+      activeStore
+        ? (couriers ?? []).filter((c) => c.storeId === activeStore.id)
+        : [],
+    [couriers, activeStore]
+  );
+
+  const storeProducts = useMemo(
+    () =>
+      activeStore
+        ? products.filter((p) => p.storeId === activeStore.id)
+        : [],
+    [products, activeStore]
+  );
+
   if (!activeStore) return null;
 
   const filtered = storeOrders.filter((o) => {
@@ -75,18 +112,13 @@ export default function DashboardCommandesPage() {
       o.orderNumber.toLowerCase().includes(q) ||
       o.customerName.toLowerCase().includes(q) ||
       o.customerPhone.toLowerCase().includes(q) ||
-      o.deliveryCity.toLowerCase().includes(q);
+      o.deliveryCity.toLowerCase().includes(q) ||
+      (o.courierName ?? "").toLowerCase().includes(q);
     return matchesStatus && matchesSearch;
   });
 
   const selectedOrder: Order | null =
     filtered.find((o) => o.id === selectedId) ?? filtered[0] ?? null;
-
-  const getStepIndex = (status: OrderStatus) => {
-    if (status === "cancelled") return -1;
-    if (status === "pending_confirmation") return 0;
-    return WORKFLOW_STEPS.findIndex((s) => s.status === status);
-  };
 
   const getNextLogicalAction = (
     status: OrderStatus
@@ -94,29 +126,97 @@ export default function DashboardCommandesPage() {
     switch (status) {
       case "new":
       case "pending_confirmation":
-        return { next: "confirmed", label: "Confirmer la commande" };
+        return { next: "confirmed", label: "Confirmer l'appel client" };
       case "confirmed":
         return { next: "preparing", label: "Passer en préparation" };
       case "preparing":
-        return { next: "shipped", label: "Marquer expédiée" };
+        return { next: "ready_to_ship", label: "Marquer prête à expédier" };
+      case "ready_to_ship":
+      case "assigned_courier":
+        return { next: "shipped", label: "Démarrer la livraison" };
       case "shipped":
-        return { next: "delivered", label: "Confirmer la livraison" };
+        return { next: "delivered", label: "Confirmer Livraison & COD" };
       default:
         return null;
     }
   };
 
+  const handleExportOrdersCsv = () => {
+    const header = [
+      "Numero",
+      "Date",
+      "Client",
+      "Telephone",
+      "Ville",
+      "Adresse",
+      "Statut",
+      "Livreur",
+      "StatutCashCOD",
+      "TotalFCFA",
+    ];
+    const rows = filtered.map((o) =>
+      [
+        o.orderNumber,
+        o.createdAt,
+        `"${o.customerName}"`,
+        o.customerPhone,
+        `"${o.deliveryCity}"`,
+        `"${o.deliveryAddress}"`,
+        ORDER_STATUS_META[o.status].label,
+        o.courierName ?? "",
+        o.codFinancialStatus ?? "expected",
+        o.totalAmount,
+      ].join(";")
+    );
+    const csv = "\uFEFF" + [header.join(";"), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `commandes-${activeStore.slug}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCreateManualOrder = (e: React.FormEvent) => {
+    e.preventDefault();
+    const prod =
+      storeProducts.find((p) => p.id === mProductId) ?? storeProducts[0];
+    if (!prod || !mName.trim() || !mPhone.trim()) return;
+    const qty = Math.max(1, Number(mQty) || 1);
+    const created = placeOrder({
+      storeId: activeStore.id,
+      customerName: mName,
+      customerPhone: mPhone,
+      deliveryCity: mCity || activeStore.settings.address,
+      deliveryAddress: mAddress || mCity || "Saisie manuelle commerçant",
+      paymentMethod: "cash_on_delivery",
+      deliveryFee: Number(mFee) || 0,
+      internalNotes: "Créée manuellement depuis le back-office",
+      items: [
+        {
+          productId: prod.id,
+          productName: prod.name,
+          quantity: qty,
+          unitPrice: prod.promoPrice ?? prod.price,
+          costPrice: (prod.costPrice ?? 0) + (prod.additionalCost ?? 0),
+          imageUrl: prod.images[0],
+        },
+      ],
+    });
+    setSelectedId(created.id);
+    setManualModalOpen(false);
+    setMName("");
+    setMPhone("");
+    setMAddress("");
+  };
+
   const renderOrderDetail = (ord: Order) => {
-    const currentStepIdx = getStepIndex(ord.status);
     const nextAction = getNextLogicalAction(ord.status);
-    const cleanPhone = ord.customerPhone.replace(/[^\d]/g, "");
-    const whatsappHref = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
-      `Bonjour ${ord.customerName}, concernant votre commande ${ord.orderNumber} chez ${activeStore.name}.`
-    )}`;
 
     return (
-      <div key={ord.id} className="animate-tab-panel space-y-5">
-        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#E2E8F0] pb-4">
+      <div key={ord.id} className="space-y-4">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#E2E8F0] pb-3.5">
           <div>
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs font-bold text-slate-500">
@@ -126,14 +226,23 @@ export default function DashboardCommandesPage() {
                 · {formatDate(ord.createdAt)}
               </span>
             </div>
-            <h2 className="mt-1 text-lg font-extrabold text-[#102A43]">
+            <h2 className="mt-1 text-lg font-extrabold text-[#15232D]">
               {ord.customerName}
             </h2>
           </div>
           <OrderStatusPill status={ord.status} showIcon />
         </div>
 
-        {/* Bouton d'avancement rapide en 1 clic (esprit Shafrik) */}
+        {ord.isDuplicateWarning && (
+          <div className="flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-2.5 text-xs font-bold text-amber-900">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-[#F4A340]" />
+            <span>
+              Doublon potentiel détecté (même téléphone & article sous 24h) —
+              Vérifiez par appel avant d&apos;expédier.
+            </span>
+          </div>
+        )}
+
         {nextAction && (
           <Button
             variant="primary"
@@ -142,55 +251,16 @@ export default function DashboardCommandesPage() {
               updateOrderStatus(activeStore.id, ord.id, nextAction.next)
             }
           >
-            {nextAction.next === "shipped" ||
-            nextAction.next === "delivered" ? (
-              <Truck className="h-4 w-4" />
-            ) : (
-              <Check className="h-4 w-4" />
-            )}
+            <Check className="h-4 w-4" />
             {nextAction.label}
           </Button>
         )}
 
-        {/* Progression visuelle */}
-        {ord.status !== "cancelled" && (
-          <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5">
-            <div className="flex items-center justify-between gap-1">
-              {WORKFLOW_STEPS.map((step, idx) => {
-                const done = idx <= currentStepIdx;
-                return (
-                  <div
-                    key={step.status}
-                    className="flex flex-1 flex-col items-center gap-1.5 text-center"
-                  >
-                    <span
-                      className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold transition-colors ${
-                        done
-                          ? "bg-[#10B981] text-white"
-                          : "border border-[#E2E8F0] bg-white text-slate-400"
-                      }`}
-                    >
-                      {done ? <CheckCircle2 className="h-3.5 w-3.5" /> : idx + 1}
-                    </span>
-                    <span
-                      className={`text-[10px] font-semibold ${
-                        done ? "text-[#102A43]" : "text-slate-400"
-                      }`}
-                    >
-                      {step.short}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Sélecteur manuel complet + WhatsApp */}
+        {/* Cycle 11 statuts + Assignation Livreur + Statut Cash COD */}
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-1">
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Statut personnalisé
+          <div>
+            <label className="block text-[11px] font-bold uppercase text-slate-500">
+              Statut logistique (11 états)
             </label>
             <select
               value={ord.status}
@@ -201,7 +271,7 @@ export default function DashboardCommandesPage() {
                   e.target.value as OrderStatus
                 )
               }
-              className="h-9.5 w-full rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#102A43] focus:border-[#102A43] focus:outline-none cursor-pointer"
+              className="mt-1 h-9.5 w-full rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#15232D]"
             >
               {ALL_STATUSES.map((st) => (
                 <option key={st} value={st}>
@@ -211,101 +281,162 @@ export default function DashboardCommandesPage() {
             </select>
           </div>
 
-          <div className="flex items-end gap-2">
-            <a
-              href={whatsappHref}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex h-9.5 flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#10B981]/30 bg-[#10B981]/10 px-3 text-xs font-bold text-[#102A43] transition-colors hover:bg-[#10B981] hover:text-white"
+          <div>
+            <label className="block text-[11px] font-bold uppercase text-slate-500">
+              Livreur assigné
+            </label>
+            <select
+              value={ord.courierId ?? ""}
+              onChange={(e) =>
+                assignOrderCourier(
+                  activeStore.id,
+                  ord.id,
+                  e.target.value || null
+                )
+              }
+              className="mt-1 h-9.5 w-full rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#15232D]"
             >
-              <MessageCircle className="h-4 w-4" />
-              WhatsApp
-            </a>
+              <option value="">Non assigné</option>
+              {storeCouriers.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name} ({c.zone})
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-2.5">
+          <CodFinancialStatusPill
+            status={ord.codFinancialStatus ?? "expected"}
+          />
+          <div className="flex items-center gap-2">
+            <select
+              value={ord.codFinancialStatus ?? "expected"}
+              onChange={(e) =>
+                updateOrderCodFinancialStatus(
+                  activeStore.id,
+                  ord.id,
+                  e.target.value as CodFinancialStatus
+                )
+              }
+              className="h-8 rounded-lg border border-[#E2E8F0] bg-white px-2 text-xs font-semibold"
+            >
+              <option value="expected">Attendu</option>
+              <option value="collected_by_courier">Encaissé livreur</option>
+              <option value="partially_remitted">Partiel</option>
+              <option value="remitted">Reversé complet</option>
+              <option value="uncollected">Non encaissé</option>
+              <option value="discrepancy">Écart</option>
+            </select>
+
             <button
               type="button"
               onClick={() => setReceiptOrder(ord)}
-              className="inline-flex h-9.5 items-center justify-center gap-1.5 rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-bold text-[#102A43] transition-colors hover:bg-slate-50 cursor-pointer"
-              title="Afficher et imprimer le reçu de commande"
+              className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#E2E8F0] bg-white px-2.5 text-xs font-bold text-[#15232D] hover:bg-slate-50 cursor-pointer"
             >
-              <Printer className="h-3.5 w-3.5 text-[#10B981]" />
-              Reçu
+              <Printer className="h-3.5 w-3.5 text-[#00A884]" />
+              Bon COD
             </button>
           </div>
-
         </div>
 
-        {/* Coordonnées & Livraison */}
-        <div className="space-y-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-xs text-slate-700">
-          <p className="flex items-center gap-2 font-medium text-[#102A43]">
-            <Phone className="h-3.5 w-3.5 text-[#10B981]" />
+        {/* Coordonnées & Champs personnalisés COD */}
+        <div className="space-y-2 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 text-xs text-slate-700">
+          <p className="flex items-center gap-2 font-bold text-[#15232D]">
+            <Phone className="h-3.5 w-3.5 text-[#00A884]" />
             {ord.customerPhone}
-            {ord.customerEmail ? ` · ${ord.customerEmail}` : ""}
+            {ord.secondaryPhone ? ` / Secours : ${ord.secondaryPhone}` : ""}
           </p>
           <p className="flex items-start gap-2">
-            <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#10B981]" />
+            <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#00A884]" />
             <span>
-              {ord.deliveryAddress}, <strong>{ord.deliveryCity}</strong>
+              {ord.deliveryAddress} — <strong>{ord.deliveryCity}</strong>
             </span>
           </p>
-          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#E2E8F0] pt-2.5">
-            <PaymentMethodPill method={ord.paymentMethod} />
-            {ord.paymentReference && (
-              <span className="font-mono text-[11px] font-semibold text-[#102A43]">
-                Réf : {ord.paymentReference}
-              </span>
-            )}
-          </div>
+          {ord.customFields && Object.keys(ord.customFields).length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {Object.entries(ord.customFields).map(([k, v]) => (
+                <span
+                  key={k}
+                  className="rounded-md border border-[#E2E8F0] bg-white px-2 py-0.5 text-[11px] font-semibold text-[#073B35]"
+                >
+                  {k} : {v}
+                </span>
+              ))}
+            </div>
+          )}
           {ord.notes && (
-            <p className="rounded-lg bg-white px-3 py-2 text-[11px] italic text-slate-600">
-              Note : {ord.notes}
+            <p className="rounded bg-white px-2.5 py-1.5 text-[11px] italic">
+              Note client : {ord.notes}
             </p>
           )}
         </div>
 
         {/* Articles */}
-        <div className="space-y-2">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-            Articles commandés ({ord.items.length})
-          </p>
-          <div className="divide-y divide-[#E2E8F0] rounded-xl border border-[#E2E8F0] bg-white">
-            {ord.items.map((item, idx) => (
-              <div
-                key={`${item.productId}-${idx}`}
-                className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
-              >
-                <div className="min-w-0">
-                  <p className="truncate font-semibold text-[#102A43]">
-                    {item.productName}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {item.quantity} ×{" "}
-                    {formatCurrency(item.unitPrice, activeStore.currency)}
-                    {item.variantLabel ? ` · ${item.variantLabel}` : ""}
-                  </p>
-                </div>
-                <span className="shrink-0 font-bold text-[#102A43]">
-                  {formatCurrency(item.totalPrice, activeStore.currency)}
-                </span>
+        <div className="divide-y divide-[#E2E8F0] rounded-xl border border-[#E2E8F0] bg-white text-xs">
+          {ord.items.map((item, idx) => (
+            <div
+              key={`${item.productId}-${idx}`}
+              className="flex items-center justify-between gap-3 px-3.5 py-2.5"
+            >
+              <div>
+                <p className="font-bold text-[#15232D]">{item.productName}</p>
+                <p className="text-[11px] text-slate-500">
+                  {item.quantity} ×{" "}
+                  {formatCurrency(item.unitPrice, activeStore.currency)}
+                  {item.variantLabel ? ` · ${item.variantLabel}` : ""}
+                </p>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Récapitulatif */}
-        <div className="space-y-1.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-sm">
-          <div className="flex justify-between text-xs text-slate-600">
-            <span>Sous-total articles</span>
-            <span>{formatCurrency(ord.subtotal, activeStore.currency)}</span>
-          </div>
-          <div className="flex justify-between text-xs text-slate-600">
-            <span>Frais de livraison</span>
-            <span>{formatCurrency(ord.deliveryFee, activeStore.currency)}</span>
-          </div>
-          <div className="flex justify-between border-t border-[#E2E8F0] pt-2 text-base font-extrabold text-[#102A43]">
-            <span>Total</span>
+              <span className="font-extrabold text-[#15232D]">
+                {formatCurrency(item.totalPrice, activeStore.currency)}
+              </span>
+            </div>
+          ))}
+          <div className="flex justify-between bg-[#F8FAFC] px-3.5 py-2.5 text-sm font-extrabold text-[#073B35]">
+            <span>Total COD (dont livr. {ord.deliveryFee} F)</span>
             <span>{formatCurrency(ord.totalAmount, activeStore.currency)}</span>
           </div>
         </div>
+
+        {/* Notes internes privées */}
+        <div>
+          <label className="block text-[11px] font-bold uppercase text-slate-500">
+            Note interne équipe (non visible par le client)
+          </label>
+          <input
+            value={ord.internalNotes ?? ""}
+            onChange={(e) =>
+              updateOrderInternalNotes(activeStore.id, ord.id, e.target.value)
+            }
+            placeholder="Ex : Confirmé par téléphone, livrer après 15h..."
+            className="mt-1 h-9 w-full rounded-lg border border-[#E2E8F0] px-3 text-xs"
+          />
+        </div>
+
+        {/* Historique auditable des changements de statut */}
+        {ord.history && ord.history.length > 0 && (
+          <div className="space-y-1.5 border-t border-[#E2E8F0] pt-3">
+            <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase text-slate-400">
+              <Clock className="h-3 w-3" />
+              Journal d&apos;audit de la commande
+            </p>
+            <div className="max-h-32 space-y-1 overflow-y-auto text-[11px] text-slate-600">
+              {ord.history.map((h) => (
+                <div key={h.id} className="flex justify-between gap-2">
+                  <span>
+                    <strong>{h.actor}</strong> →{" "}
+                    {ORDER_STATUS_META[h.toStatus]?.label ?? h.toStatus}
+                    {h.note ? ` (${h.note})` : ""}
+                  </span>
+                  <span className="shrink-0 text-slate-400">
+                    {formatDate(h.date)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -313,20 +444,39 @@ export default function DashboardCommandesPage() {
   return (
     <div className="space-y-6">
       <DashboardPageHeader
-        eyebrow="Ventes & Expéditions"
-        title="Commandes"
-        description={`Suivez, confirmez et livrez vos ${storeOrders.length} commande(s) reçue(s).`}
+        eyebrow="Module 10 · Opérations COD"
+        title="Commandes (11 Statuts)"
+        description={`Pilotez la confirmation téléphonique, les livreurs et l'encaissement COD de vos ${storeOrders.length} commande(s).`}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={handleExportOrdersCsv}>
+              <Download className="h-4 w-4" />
+              Export CSV
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                setMProductId(storeProducts[0]?.id ?? "");
+                setManualModalOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              Commande manuelle
+            </Button>
+          </div>
+        }
       />
 
-      {/* Onglets de statut avec compteurs réels */}
+      {/* Filtres des 11 statuts */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
         <button
           type="button"
           onClick={() => setStatusFilter("all")}
-          className={`shrink-0 rounded-xl border px-3.5 py-2 text-xs font-semibold transition-colors cursor-pointer ${
+          className={`shrink-0 rounded-xl border px-3 py-1.5 text-xs font-semibold cursor-pointer ${
             statusFilter === "all"
-              ? "border-[#102A43] bg-[#102A43] text-white"
-              : "border-[#E2E8F0] bg-white text-slate-600 hover:text-[#102A43]"
+              ? "border-[#073B35] bg-[#073B35] text-white"
+              : "border-[#E2E8F0] bg-white text-slate-600"
           }`}
         >
           Toutes ({storeOrders.length})
@@ -339,10 +489,10 @@ export default function DashboardCommandesPage() {
               key={st}
               type="button"
               onClick={() => setStatusFilter(st)}
-              className={`shrink-0 rounded-xl border px-3.5 py-2 text-xs font-semibold transition-colors cursor-pointer ${
+              className={`shrink-0 rounded-xl border px-3 py-1.5 text-xs font-semibold cursor-pointer ${
                 active
-                  ? "border-[#102A43] bg-[#102A43] text-white"
-                  : "border-[#E2E8F0] bg-white text-slate-600 hover:text-[#102A43]"
+                  ? "border-[#073B35] bg-[#073B35] text-white"
+                  : "border-[#E2E8F0] bg-white text-slate-600"
               }`}
             >
               {ORDER_STATUS_META[st].label} ({count})
@@ -351,14 +501,13 @@ export default function DashboardCommandesPage() {
         })}
       </div>
 
-      {/* Recherche */}
       <div className="relative max-w-md">
         <Search className="pointer-events-none absolute left-3.5 top-2.5 h-4 w-4 text-slate-400" />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="N° commande, nom client, téléphone ou ville..."
-          className="h-9.5 w-full rounded-xl border border-[#E2E8F0] bg-white pl-10 pr-4 text-xs font-medium text-[#1E293B] focus:border-[#102A43] focus:outline-none"
+          placeholder="N° commande, nom client, téléphone, livreur ou ville..."
+          className="h-9.5 w-full rounded-xl border border-[#E2E8F0] bg-white pl-10 pr-4 text-xs font-medium text-[#15232D] focus:border-[#00A884] focus:outline-none"
         />
       </div>
 
@@ -373,8 +522,8 @@ export default function DashboardCommandesPage() {
             {filtered.length === 0 ? (
               <div className="p-12 text-center">
                 <ShoppingBag className="mx-auto h-9 w-9 text-slate-300" />
-                <p className="mt-2.5 text-sm font-semibold text-[#102A43]">
-                  Aucune commande correspondante
+                <p className="mt-2.5 text-sm font-semibold text-[#15232D]">
+                  Aucune commande dans cette vue
                 </p>
               </div>
             ) : (
@@ -390,41 +539,45 @@ export default function DashboardCommandesPage() {
                         setMobileDetailOpen(true);
                       }}
                       className={`flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors cursor-pointer ${
-                        active
-                          ? "bg-[#102A43]/[0.04]"
-                          : "hover:bg-[#F8FAFC]"
+                        active ? "bg-[#E7F7F2]/50" : "hover:bg-[#F8FAFC]"
                       }`}
                     >
                       <div className="min-w-0 space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-mono text-xs font-bold text-[#102A43]">
+                          <span className="font-mono text-xs font-bold text-[#15232D]">
                             {ord.orderNumber}
                           </span>
                           <OrderStatusPill status={ord.status} />
+                          {ord.isDuplicateWarning && (
+                            <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-900">
+                              Doublon ?
+                            </span>
+                          )}
                         </div>
-                        <p className="truncate text-sm font-semibold text-[#102A43]">
+                        <p className="truncate text-sm font-semibold text-[#15232D]">
                           {ord.customerName} ·{" "}
                           <span className="font-normal text-slate-500">
                             {ord.deliveryCity}
                           </span>
                         </p>
                         <p className="text-xs text-slate-500">
-                          {ord.items.length} article(s) ·{" "}
+                          {ord.courierName
+                            ? `Livreur : ${ord.courierName} · `
+                            : ""}
                           {formatDate(ord.createdAt)}
                         </p>
                       </div>
 
                       <div className="shrink-0 text-right">
-                        <p className="text-sm font-extrabold text-[#102A43]">
+                        <p className="text-sm font-extrabold text-[#073B35]">
                           {formatCurrency(
                             ord.totalAmount,
                             activeStore.currency
                           )}
                         </p>
-                        <div className="mt-1.5">
-                          <PaymentMethodPill
-                            method={ord.paymentMethod}
-                            compact
+                        <div className="mt-1">
+                          <CodFinancialStatusPill
+                            status={ord.codFinancialStatus ?? "expected"}
                           />
                         </div>
                       </div>
@@ -436,7 +589,7 @@ export default function DashboardCommandesPage() {
           </CardContent>
         </Card>
 
-        <Card className="hidden border-[#E2E8F0] bg-white lg:block lg:col-span-5">
+        <Card className="hidden border-[#E2E8F0] bg-white lg:col-span-5 lg:block">
           <CardContent className="p-6">
             {!selectedOrder ? (
               <p className="py-16 text-center text-sm text-slate-500">
@@ -449,18 +602,18 @@ export default function DashboardCommandesPage() {
         </Card>
       </div>
 
-      {/* Tiroir mobile */}
+      {/* Détail mobile */}
       {mobileDetailOpen && selectedOrder && (
-        <div className="animate-backdrop fixed inset-0 z-50 flex items-end justify-center bg-[#0B1F33]/50 backdrop-blur-xs lg:hidden">
-          <div className="animate-modal-in max-h-[88vh] w-full overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 backdrop-blur-xs lg:hidden">
+          <div className="max-h-[88vh] w-full overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl">
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Détail commande
+              <span className="text-xs font-bold uppercase text-slate-400">
+                Détail commande COD
               </span>
               <button
                 type="button"
                 onClick={() => setMobileDetailOpen(false)}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 cursor-pointer"
+                className="rounded-lg p-1.5 text-slate-400 cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -470,48 +623,141 @@ export default function DashboardCommandesPage() {
         </div>
       )}
 
-      {/* Modal Reçu / Bon de livraison imprimable */}
+      {/* Modal Création Manuelle de Commande */}
+      {manualModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+              <h3 className="text-base font-extrabold text-[#15232D]">
+                Créer une commande COD manuelle
+              </h3>
+              <button
+                type="button"
+                onClick={() => setManualModalOpen(false)}
+                className="rounded p-1 text-slate-400 cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {storeProducts.length === 0 ? (
+              <p className="py-6 text-xs text-slate-600">
+                Créez d&apos;abord au moins un produit dans votre catalogue avant
+                de saisir une commande manuelle.
+              </p>
+            ) : (
+              <form onSubmit={handleCreateManualOrder} className="mt-4 space-y-3">
+                <Input
+                  label="Nom du client *"
+                  required
+                  value={mName}
+                  onChange={(e) => setMName(e.target.value)}
+                />
+                <Input
+                  label="Téléphone *"
+                  required
+                  value={mPhone}
+                  onChange={(e) => setMPhone(e.target.value)}
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    label="Ville / Zone"
+                    value={mCity}
+                    onChange={(e) => setMCity(e.target.value)}
+                  />
+                  <Input
+                    label="Frais livraison"
+                    type="number"
+                    value={mFee}
+                    onChange={(e) => setMFee(e.target.value)}
+                  />
+                </div>
+                <Input
+                  label="Quartier & Adresse"
+                  value={mAddress}
+                  onChange={(e) => setMAddress(e.target.value)}
+                />
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-[#15232D]">
+                      Produit
+                    </label>
+                    <select
+                      value={mProductId}
+                      onChange={(e) => setMProductId(e.target.value)}
+                      className="mt-1.5 h-10.5 w-full rounded-lg border border-[#E2E8F0] px-2 text-xs"
+                    >
+                      {storeProducts.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} ({formatCurrency(p.promoPrice ?? p.price)})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <Input
+                    label="Qté"
+                    type="number"
+                    min={1}
+                    value={mQty}
+                    onChange={(e) => setMQty(e.target.value)}
+                  />
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setManualModalOpen(false)}
+                  >
+                    Annuler
+                  </Button>
+                  <Button type="submit" variant="primary">
+                    Enregistrer la commande
+                  </Button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Bon de livraison COD imprimable */}
       {receiptOrder && (
-        <div className="animate-backdrop fixed inset-0 z-50 flex items-center justify-center bg-[#0B1F33]/60 p-4 backdrop-blur-xs">
-          <div className="animate-modal-in max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+          <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-2xl">
             <div className="flex items-center justify-between border-b border-dashed border-[#CBD5E1] pb-4">
               <div>
-                <p className="text-base font-extrabold text-[#102A43]">
+                <p className="text-base font-extrabold text-[#15232D]">
                   {activeStore.name}
                 </p>
                 <p className="text-xs text-slate-500">
-                  {activeStore.customDomain || activeStore.subdomain} ·{" "}
-                  {activeStore.settings.whatsappPhone}
+                  Bon de Livraison Cash on Delivery (COD)
                 </p>
               </div>
-              <div className="text-right">
-                <span className="rounded-lg bg-[#102A43] px-2.5 py-1 font-mono text-xs font-bold text-white">
-                  {receiptOrder.orderNumber}
-                </span>
-                <p className="mt-1 text-[11px] text-slate-400">
-                  {formatDate(receiptOrder.createdAt)}
-                </p>
-              </div>
+              <span className="rounded-lg bg-[#073B35] px-2.5 py-1 font-mono text-xs font-bold text-white">
+                {receiptOrder.orderNumber}
+              </span>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl bg-[#F8FAFC] p-3.5 text-xs">
               <div>
-                <p className="font-bold uppercase tracking-wider text-[10px] text-slate-400">
-                  Client
+                <p className="text-[10px] font-bold uppercase text-slate-400">
+                  Destinataire
                 </p>
-                <p className="mt-0.5 font-bold text-[#102A43]">
+                <p className="mt-0.5 font-bold text-[#15232D]">
                   {receiptOrder.customerName}
                 </p>
                 <p className="text-slate-600">{receiptOrder.customerPhone}</p>
               </div>
               <div>
-                <p className="font-bold uppercase tracking-wider text-[10px] text-slate-400">
-                  Livraison
+                <p className="text-[10px] font-bold uppercase text-slate-400">
+                  Adresse & Livreur
                 </p>
-                <p className="mt-0.5 font-semibold text-[#102A43]">
-                  {receiptOrder.deliveryCity}
+                <p className="mt-0.5 font-semibold text-[#15232D]">
+                  {receiptOrder.deliveryAddress}
                 </p>
-                <p className="text-slate-600">{receiptOrder.deliveryAddress}</p>
+                <p className="text-slate-600">
+                  {receiptOrder.courierName || "Livraison directe"}
+                </p>
               </div>
             </div>
 
@@ -521,51 +767,25 @@ export default function DashboardCommandesPage() {
                   key={idx}
                   className="flex items-center justify-between py-2.5"
                 >
-                  <div>
-                    <p className="font-bold text-[#102A43]">
-                      {item.quantity} × {item.productName}
-                    </p>
-                    {item.variantLabel && (
-                      <p className="text-[11px] text-slate-500">
-                        {item.variantLabel}
-                      </p>
-                    )}
-                  </div>
-                  <span className="font-bold text-[#102A43]">
+                  <span>
+                    {item.quantity} × {item.productName}{" "}
+                    {item.variantLabel ? `(${item.variantLabel})` : ""}
+                  </span>
+                  <span className="font-bold">
                     {formatCurrency(item.totalPrice, activeStore.currency)}
                   </span>
                 </div>
               ))}
             </div>
 
-            <div className="mt-4 space-y-1.5 text-xs">
-              <div className="flex justify-between text-slate-600">
-                <span>Sous-total</span>
-                <span>
-                  {formatCurrency(receiptOrder.subtotal, activeStore.currency)}
-                </span>
-              </div>
-              <div className="flex justify-between text-slate-600">
-                <span>Frais de livraison</span>
-                <span>
-                  {formatCurrency(
-                    receiptOrder.deliveryFee,
-                    activeStore.currency
-                  )}
-                </span>
-              </div>
-              <div className="flex justify-between border-t border-[#E2E8F0] pt-2 text-base font-extrabold text-[#102A43]">
-                <span>Total à régler</span>
-                <span className="text-[#10B981]">
-                  {formatCurrency(
-                    receiptOrder.totalAmount,
-                    activeStore.currency
-                  )}
-                </span>
-              </div>
+            <div className="mt-4 flex justify-between text-base font-extrabold text-[#073B35]">
+              <span>Montant à encaisser à la livraison :</span>
+              <span className="text-[#00A884]">
+                {formatCurrency(receiptOrder.totalAmount, activeStore.currency)}
+              </span>
             </div>
 
-            <div className="mt-6 flex items-center justify-end gap-2 border-t border-[#E2E8F0] pt-4">
+            <div className="mt-6 flex justify-end gap-2 border-t border-[#E2E8F0] pt-4">
               <Button
                 variant="outline"
                 size="sm"
@@ -579,7 +799,7 @@ export default function DashboardCommandesPage() {
                 onClick={() => window.print()}
               >
                 <Printer className="h-3.5 w-3.5" />
-                Imprimer / PDF
+                Imprimer
               </Button>
             </div>
           </div>
@@ -587,5 +807,4 @@ export default function DashboardCommandesPage() {
       )}
     </div>
   );
-
 }

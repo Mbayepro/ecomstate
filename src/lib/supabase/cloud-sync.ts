@@ -18,6 +18,12 @@ export interface SharedCloudSnapshot {
   inventoryMovements?: { id: string }[];
   promoCodes?: { id: string }[];
   customDomains?: { id: string }[];
+  codForms?: { id: string }[];
+  couriers?: { id: string }[];
+  expenses?: { id: string }[];
+  adCampaigns?: { id: string }[];
+  automations?: { id: string }[];
+  teamMembers?: { id: string }[];
   plans?: { id: string }[];
 
 

@@ -11,7 +11,7 @@ export function FormattedAiText({
   text: string;
   darkBg?: boolean;
 }) {
-  const tokenRegex = /(\*\*[^*]+\*\*|`[^`]+`)/g;
+  const tokenRegex = /(\*\*[^*]+\*\*|\*[^*\n]+\*|`[^`]+`)/g;
   const parts = text.split(tokenRegex);
 
   return (
@@ -22,11 +22,25 @@ export function FormattedAiText({
             <strong
               key={idx}
               className={
-                darkBg ? "font-bold text-white" : "font-bold text-[#102A43]"
+                darkBg ? "font-bold text-white" : "font-bold text-[#15232D]"
               }
             >
               {part.slice(2, -2)}
             </strong>
+          );
+        }
+        if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
+          return (
+            <span
+              key={idx}
+              className={
+                darkBg
+                  ? "font-semibold text-[#E7F7F2]"
+                  : "font-semibold text-[#073B35]"
+              }
+            >
+              {part.slice(1, -1)}
+            </span>
           );
         }
         if (part.startsWith("`") && part.endsWith("`") && part.length > 2) {
@@ -35,8 +49,8 @@ export function FormattedAiText({
               key={idx}
               className={
                 darkBg
-                  ? "rounded bg-white/12 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-[#34D399]"
-                  : "rounded bg-[#10B981]/12 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-[#059669]"
+                  ? "rounded bg-white/12 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-[#E7F7F2]"
+                  : "rounded bg-[#E7F7F2] px-1.5 py-0.5 font-mono text-[11px] font-semibold text-[#073B35]"
               }
             >
               {part.slice(1, -1)}

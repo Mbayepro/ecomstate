@@ -3,36 +3,24 @@ import { BrandLogo } from "@/components/ui/brand-logo";
 
 export function MarketingFooter() {
   return (
-    <footer className="border-t border-[#E2E8F0] bg-[#102A43] text-slate-300">
+    <footer className="border-t border-white/10 bg-[#052B27] text-slate-300">
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-4">
             <BrandLogo light showTagline />
             <p className="text-sm leading-relaxed text-slate-300">
-
-              La plateforme SaaS de référence permettant aux commerçants et
-              entreprises africaines de créer et gérer leur boutique en ligne en
-              toute autonomie.
+              Plateforme SaaS e-commerce tout-en-un dédiée au paiement à la
+              livraison (COD) : Store Builder, Form Builder COD, livreurs,
+              bénéfice réel et Adeshina IA.
             </p>
             <p className="text-xs text-slate-400">
               Bénin · Sénégal · Côte d&apos;Ivoire · Togo · Burkina Faso
             </p>
-            <div className="pt-1 text-xs text-slate-300 space-y-1">
-              <p>
-                WhatsApp Support :{" "}
-                <a
-                  href="https://wa.me/22995782132?text=Bonjour%20EcomSate%2C%20je%20souhaite%20lancer%20ma%20boutique."
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-semibold text-[#10B981] hover:underline"
-                >
-                  +229 95 78 21 32
-                </a>
-              </p>
-              <p>E-mail : support@ecomsate.com</p>
+            <div className="space-y-1 pt-1 text-xs text-slate-300">
+              <p>E-mail support plateforme : support@ecomsate.com</p>
+              <p>Assistance dédiée : +229 95 78 21 32</p>
             </div>
           </div>
-
 
           <div>
             <h3 className="text-sm font-semibold uppercase tracking-wider text-white">
@@ -40,23 +28,23 @@ export function MarketingFooter() {
             </h3>
             <ul className="mt-4 space-y-2.5 text-sm">
               <li>
-                <Link href="/fonctionnalites" className="hover:text-white">
-                  Fonctionnalités
+                <Link href="/#modules" className="hover:text-white">
+                  Store Builder & Thèmes Shrine
                 </Link>
               </li>
               <li>
-                <Link href="/comment-ca-marche" className="hover:text-white">
-                  Comment ça marche ?
+                <Link href="/#modules" className="hover:text-white">
+                  Form Builder COD
                 </Link>
               </li>
               <li>
                 <Link href="/tarifs" className="hover:text-white">
-                  Tarifs & Abonnements
+                  Offres Standard & Premium
                 </Link>
               </li>
               <li>
                 <Link href="/s/atelier-dakar" className="hover:text-white">
-                  Voir une boutique démo
+                  Voir une vitrine COD en direct
                 </Link>
               </li>
             </ul>
@@ -64,7 +52,7 @@ export function MarketingFooter() {
 
           <div>
             <h3 className="text-sm font-semibold uppercase tracking-wider text-white">
-              Entreprise
+              Ressources
             </h3>
             <ul className="mt-4 space-y-2.5 text-sm">
               <li>
@@ -73,22 +61,21 @@ export function MarketingFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/faq" className="hover:text-white">
-                  Questions fréquentes
+                <Link href="/#faq" className="hover:text-white">
+                  Questions fréquentes (COD & Plans)
                 </Link>
               </li>
               <li>
                 <Link href="/contact" className="hover:text-white">
-                  Contact & Support
+                  Contact & Assistance
                 </Link>
               </li>
               <li>
                 <Link href="/connexion" className="hover:text-white">
-                  Espace Partenaire & Direction
+                  Espace Administration
                 </Link>
               </li>
             </ul>
-
           </div>
 
           <div>
@@ -99,9 +86,9 @@ export function MarketingFooter() {
               <li>
                 <Link
                   href="/creer-une-boutique"
-                  className="font-medium text-[#10B981] hover:underline"
+                  className="font-semibold text-[#00A884] hover:underline"
                 >
-                  Créer ma boutique (Essai 30 jours)
+                  Créer ma boutique maintenant
                 </Link>
               </li>
               <li>
@@ -111,7 +98,7 @@ export function MarketingFooter() {
               </li>
               <li>
                 <Link href="/dashboard" className="hover:text-white">
-                  Démo tableau de bord
+                  Explorer le Centre de contrôle
                 </Link>
               </li>
             </ul>
@@ -134,7 +121,6 @@ export function MarketingFooter() {
               Conditions commerciales
             </Link>
           </div>
-
         </div>
       </div>
     </footer>

@@ -9,11 +9,11 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
-  { href: "/fonctionnalites", label: "Fonctionnalités" },
-  { href: "/comment-ca-marche", label: "Comment ça marche" },
+  { href: "/#problemes", label: "Pourquoi EcomSate" },
+  { href: "/#modules", label: "Modules" },
+  { href: "/#demonstration", label: "Démonstration" },
   { href: "/tarifs", label: "Tarifs" },
-  { href: "/a-propos", label: "À propos" },
-  { href: "/faq", label: "FAQ" },
+  { href: "/#faq", label: "FAQ" },
   { href: "/contact", label: "Contact" },
 ];
 
@@ -34,8 +34,8 @@ export function MarketingNavbar() {
       className={cn(
         "sticky top-0 z-40 border-b transition-all duration-200",
         scrolled
-          ? "border-white/10 bg-[#0B1F33]/95 shadow-lg backdrop-blur-md"
-          : "border-white/10 bg-[#102A43]/95 backdrop-blur-xs"
+          ? "border-white/10 bg-[#052B27]/95 shadow-lg backdrop-blur-md"
+          : "border-white/10 bg-[#073B35]/95 backdrop-blur-xs"
       )}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -52,7 +52,7 @@ export function MarketingNavbar() {
                   "relative rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150",
                   active
                     ? "bg-white/12 text-white"
-                    : "text-slate-300 hover:bg-white/8 hover:text-white"
+                    : "text-slate-200 hover:bg-white/8 hover:text-white"
                 )}
               >
                 {link.label}
@@ -62,16 +62,6 @@ export function MarketingNavbar() {
         </nav>
 
         <div className="hidden items-center gap-2.5 lg:flex">
-          <Link href="/dashboard">
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-white/15 bg-white/8 text-white hover:border-[#10B981]/50 hover:bg-white/15"
-            >
-              <LayoutDashboard className="h-4 w-4 text-[#10B981]" />
-              Démo
-            </Button>
-          </Link>
           <Link href="/connexion">
             <Button
               variant="ghost"
@@ -101,7 +91,7 @@ export function MarketingNavbar() {
       </div>
 
       {open && (
-        <div className="animate-page-enter border-t border-white/10 bg-[#0B1F33] px-4 py-4 shadow-xl lg:hidden">
+        <div className="animate-page-enter border-t border-white/10 bg-[#052B27] px-4 py-4 shadow-xl lg:hidden">
           <div className="flex flex-col space-y-1">
             {NAV_LINKS.map((link) => (
               <Link
@@ -112,7 +102,7 @@ export function MarketingNavbar() {
                   "rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                   pathname === link.href
                     ? "bg-white/12 text-white"
-                    : "text-slate-300 hover:bg-white/8 hover:text-white"
+                    : "text-slate-200 hover:bg-white/8 hover:text-white"
                 )}
               >
                 {link.label}
@@ -120,15 +110,6 @@ export function MarketingNavbar() {
             ))}
           </div>
           <div className="mt-4 flex flex-col gap-2 border-t border-white/10 pt-4">
-            <Link href="/dashboard" onClick={() => setOpen(false)}>
-              <Button
-                variant="outline"
-                className="w-full border-white/15 bg-white/8 text-white hover:bg-white/15"
-              >
-                <LayoutDashboard className="h-4 w-4 text-[#10B981]" />
-                Tableau de bord Démo
-              </Button>
-            </Link>
             <Link href="/connexion" onClick={() => setOpen(false)}>
               <Button
                 variant="outline"

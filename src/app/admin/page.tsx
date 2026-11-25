@@ -107,18 +107,18 @@ export default function AdminDashboardPage() {
 
   if (session?.role !== "super_admin") {
     return (
-      <div className="bg-navy-architectural flex min-h-screen flex-col items-center justify-center bg-[#0B1F33] px-4 py-12">
+      <div className="bg-navy-architectural flex min-h-screen flex-col items-center justify-center bg-[#052B27] px-4 py-12">
         <div className="mb-8">
           <BrandLogo light />
         </div>
         <Card className="w-full max-w-md border-white/15 bg-white shadow-2xl">
           <CardContent className="p-7">
             <div className="flex items-center gap-2.5">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#102A43] text-[#10B981]">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#073B35] text-[#00A884]">
                 <Lock className="h-5 w-5" />
               </span>
               <div>
-                <h1 className="text-xl font-extrabold text-[#102A43]">
+                <h1 className="text-xl font-extrabold text-[#073B35]">
                   Accès Super Administrateur
                 </h1>
                 <p className="text-xs text-slate-500">
@@ -177,7 +177,7 @@ export default function AdminDashboardPage() {
             <div className="mt-5 text-center">
               <Link
                 href="/"
-                className="text-xs font-semibold text-slate-500 hover:text-[#102A43]"
+                className="text-xs font-semibold text-slate-500 hover:text-[#073B35]"
               >
                 ← Retourner à l&apos;accueil public
               </Link>
@@ -250,7 +250,7 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      <header className="border-b border-[#E2E8F0] bg-[#102A43] text-white">
+      <header className="border-b border-[#E2E8F0] bg-[#073B35] text-white">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
             <BrandLogo light href="/" />
@@ -287,14 +287,14 @@ export default function AdminDashboardPage() {
             <CardContent className="flex items-start justify-between p-5">
               <div>
                 <p className="text-xs text-slate-500">Boutiques inscrites</p>
-                <p className="mt-1 text-2xl font-bold text-[#102A43]">
+                <p className="mt-1 text-2xl font-bold text-[#073B35]">
                   {stores.length}
                 </p>
-                <p className="mt-0.5 text-xs text-[#10B981]">
+                <p className="mt-0.5 text-xs text-[#00A884]">
                   {activeStoresCount} actives · {trialStoresCount} en essai
                 </p>
               </div>
-              <StoreIcon className="h-5 w-5 text-[#102A43]" />
+              <StoreIcon className="h-5 w-5 text-[#073B35]" />
             </CardContent>
           </Card>
 
@@ -302,14 +302,14 @@ export default function AdminDashboardPage() {
             <CardContent className="flex items-start justify-between p-5">
               <div>
                 <p className="text-xs text-slate-500">Volume d&apos;affaires (GMV)</p>
-                <p className="mt-1 text-2xl font-bold text-[#102A43]">
+                <p className="mt-1 text-2xl font-bold text-[#073B35]">
                   {formatCurrency(totalGmv)}
                 </p>
                 <p className="mt-0.5 text-xs text-slate-500">
                   {orders.length} commande(s) traitée(s)
                 </p>
               </div>
-              <TrendingUp className="h-5 w-5 text-[#10B981]" />
+              <TrendingUp className="h-5 w-5 text-[#00A884]" />
             </CardContent>
           </Card>
 
@@ -317,12 +317,12 @@ export default function AdminDashboardPage() {
             <CardContent className="flex items-start justify-between p-5">
               <div>
                 <p className="text-xs text-slate-500">Pays actifs</p>
-                <p className="mt-1 text-2xl font-bold text-[#102A43]">
+                <p className="mt-1 text-2xl font-bold text-[#073B35]">
                   {countries.filter((c) => c.isActive).length} / {countries.length}
                 </p>
                 <p className="mt-0.5 text-xs text-slate-500">Zone FCFA (UEMOA)</p>
               </div>
-              <Globe className="h-5 w-5 text-[#102A43]" />
+              <Globe className="h-5 w-5 text-[#073B35]" />
             </CardContent>
           </Card>
 
@@ -330,14 +330,14 @@ export default function AdminDashboardPage() {
             <CardContent className="flex items-start justify-between p-5">
               <div>
                 <p className="text-xs text-slate-500">Sécurité & Audit</p>
-                <p className="mt-1 text-2xl font-bold text-[#102A43]">
+                <p className="mt-1 text-2xl font-bold text-[#073B35]">
                   {auditLogs.length}
                 </p>
                 <p className="mt-0.5 text-xs text-slate-500">
                   Opérations journalisées
                 </p>
               </div>
-              <ShieldCheck className="h-5 w-5 text-[#10B981]" />
+              <ShieldCheck className="h-5 w-5 text-[#00A884]" />
             </CardContent>
           </Card>
         </div>
@@ -364,8 +364,8 @@ export default function AdminDashboardPage() {
               onClick={() => setTab(id)}
               className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors cursor-pointer ${
                 tab === id
-                  ? "bg-[#102A43] text-white"
-                  : "bg-white text-slate-600 border border-[#E2E8F0] hover:text-[#102A43]"
+                  ? "bg-[#073B35] text-white"
+                  : "bg-white text-slate-600 border border-[#E2E8F0] hover:text-[#073B35]"
               }`}
             >
               <Icon className="h-4 w-4" />
@@ -378,10 +378,10 @@ export default function AdminDashboardPage() {
         {tab === "merchants" && (
           <div className="space-y-6">
             {/* Paiements Mobile Money directs (Sans NINEA / RCCM) à valider */}
-            <Card className="border-[#10B981]/30 bg-white">
+            <Card className="border-[#00A884]/30 bg-white">
               <CardHeader className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E2E8F0]">
                 <div>
-                  <h2 className="text-base font-bold text-[#102A43]">
+                  <h2 className="text-base font-bold text-[#073B35]">
                     Paiements Mobile Money reçus au{" "}
                     {adminAccount?.phone || "+229 95 78 21 32"} (Sans NINEA / RCCM)
                   </h2>
@@ -405,7 +405,7 @@ export default function AdminDashboardPage() {
                   <p className="px-5 py-6 text-xs text-slate-500">
                     Aucun paiement Mobile Money déclaré pour le moment. Lorsqu&apos;un
                     commerçant déclare un transfert depuis{" "}
-                    <code className="font-semibold text-[#102A43]">
+                    <code className="font-semibold text-[#073B35]">
                       /dashboard/abonnement
                     </code>
                     , il s&apos;affiche ici pour validation en 1 clic.
@@ -419,23 +419,23 @@ export default function AdminDashboardPage() {
                       >
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold text-[#102A43]">
+                            <span className="text-sm font-bold text-[#073B35]">
                               {pay.storeName}
                             </span>
                             <Badge variant="navy">
                               Formule {pay.planCode.toUpperCase()}
                             </Badge>
-                            <span className="font-extrabold text-[#10B981]">
+                            <span className="font-extrabold text-[#00A884]">
                               {formatCurrency(pay.amount, pay.currency)}
                             </span>
                           </div>
                           <p className="mt-1 text-slate-600">
                             {pay.operator} · Expéditeur :{" "}
-                            <strong className="text-[#102A43]">
+                            <strong className="text-[#073B35]">
                               {pay.senderPhone}
                             </strong>{" "}
                             · Référence SMS :{" "}
-                            <code className="rounded bg-slate-100 px-1.5 py-0.5 font-bold text-[#102A43]">
+                            <code className="rounded bg-slate-100 px-1.5 py-0.5 font-bold text-[#073B35]">
                               {pay.transactionReference}
                             </code>
                           </p>
@@ -485,7 +485,7 @@ export default function AdminDashboardPage() {
 
             <Card>
               <CardHeader>
-                <h2 className="text-base font-bold text-[#102A43]">
+                <h2 className="text-base font-bold text-[#073B35]">
                   Supervision des commerçants et boutiques
                 </h2>
               </CardHeader>
@@ -515,13 +515,13 @@ export default function AdminDashboardPage() {
                       return (
                       <tr key={s.id} className="hover:bg-[#F8FAFC]">
                         <td className="px-5 py-4">
-                          <p className="font-semibold text-[#102A43]">{s.name}</p>
+                          <p className="font-semibold text-[#073B35]">{s.name}</p>
                           <p className="text-xs text-slate-500">
                             {s.customDomain || s.subdomain}
                           </p>
                         </td>
                         <td className="px-5 py-4">
-                          <p className="font-medium text-[#102A43]">
+                          <p className="font-medium text-[#073B35]">
                             {s.ownerName}
                           </p>
                           <p className="text-xs text-slate-500">
@@ -553,7 +553,7 @@ export default function AdminDashboardPage() {
                                 e.target.value as SubscriptionPlanCode
                               )
                             }
-                            className="rounded-lg border border-[#E2E8F0] bg-white px-2.5 py-1.5 text-xs font-medium text-[#102A43]"
+                            className="rounded-lg border border-[#E2E8F0] bg-white px-2.5 py-1.5 text-xs font-medium text-[#073B35]"
                           >
                             <option value="trial">Essai</option>
                             <option value="standard">Standard</option>
@@ -569,7 +569,7 @@ export default function AdminDashboardPage() {
                                 e.target.value as StoreStatus
                               )
                             }
-                            className="rounded-lg border border-[#E2E8F0] bg-white px-2.5 py-1.5 text-xs font-medium text-[#102A43]"
+                            className="rounded-lg border border-[#E2E8F0] bg-white px-2.5 py-1.5 text-xs font-medium text-[#073B35]"
                           >
                             <option value="trial">Essai</option>
                             <option value="active">Active</option>
@@ -585,7 +585,7 @@ export default function AdminDashboardPage() {
                                 )}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-[#10B981]"
+                                className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-[#00A884]"
                                 title="Contacter le commerçant sur WhatsApp"
                               >
                                 <MessageCircle className="h-3.5 w-3.5" />
@@ -595,7 +595,7 @@ export default function AdminDashboardPage() {
                             <Link
                               href={`/s/${s.slug}`}
                               target="_blank"
-                              className="inline-flex items-center gap-1 text-xs font-semibold text-[#10B981] hover:underline"
+                              className="inline-flex items-center gap-1 text-xs font-semibold text-[#00A884] hover:underline"
                             >
                               Visiter
                               <ExternalLink className="h-3.5 w-3.5" />
@@ -624,7 +624,7 @@ export default function AdminDashboardPage() {
                   <p className="text-xs text-slate-500">
                     Revenus SaaS EcomSate encaissés
                   </p>
-                  <p className="mt-1 text-2xl font-bold text-[#10B981]">
+                  <p className="mt-1 text-2xl font-bold text-[#00A884]">
                     {formatCurrency(totalSaasRevenue)}
                   </p>
                   <p className="mt-0.5 text-xs text-slate-500">
@@ -636,13 +636,13 @@ export default function AdminDashboardPage() {
               <Card>
                 <CardContent className="p-5">
                   <p className="text-xs text-slate-500">
-                    Activations initiales (2 000 FCFA)
+                    Boutiques Standard & Essai
                   </p>
-                  <p className="mt-1 text-2xl font-bold text-[#102A43]">
-                    {formatCurrency(activationRevenue)}
+                  <p className="mt-1 text-2xl font-bold text-[#073B35]">
+                    {stores.filter((s) => s.planCode !== "premium").length}
                   </p>
                   <p className="mt-0.5 text-xs text-slate-500">
-                    Ouvertures de boutiques (30j)
+                    Boutiques actives / essai Standard
                   </p>
                 </CardContent>
               </Card>
@@ -652,7 +652,7 @@ export default function AdminDashboardPage() {
                   <p className="text-xs text-slate-500">
                     Abonnements Standard & Premium
                   </p>
-                  <p className="mt-1 text-2xl font-bold text-[#102A43]">
+                  <p className="mt-1 text-2xl font-bold text-[#073B35]">
                     {formatCurrency(recurringRevenue)}
                   </p>
                   <p className="mt-0.5 text-xs text-slate-500">
@@ -679,7 +679,7 @@ export default function AdminDashboardPage() {
             <Card>
               <CardHeader className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E2E8F0]">
                 <div>
-                  <h2 className="text-base font-bold text-[#102A43]">
+                  <h2 className="text-base font-bold text-[#073B35]">
                     Grand livre des transactions & abonnements Mobile Money
                   </h2>
                   <p className="text-xs text-slate-500">
@@ -715,7 +715,7 @@ export default function AdminDashboardPage() {
                             {formatDate(pay.createdAt)}
                           </td>
                           <td className="px-5 py-3.5">
-                            <p className="font-semibold text-[#102A43]">
+                            <p className="font-semibold text-[#073B35]">
                               {pay.storeName}
                             </p>
                             <p className="text-xs text-slate-500">
@@ -731,12 +731,12 @@ export default function AdminDashboardPage() {
                               )
                             </Badge>
                           </td>
-                          <td className="px-5 py-3.5 font-extrabold text-[#102A43]">
+                          <td className="px-5 py-3.5 font-extrabold text-[#073B35]">
                             {formatCurrency(pay.amount, pay.currency)}
                           </td>
                           <td className="px-5 py-3.5 text-xs">
                             <p className="text-slate-700">{pay.operator}</p>
-                            <code className="font-bold text-[#102A43]">
+                            <code className="font-bold text-[#073B35]">
                               {pay.transactionReference}
                             </code>
                           </td>
@@ -797,7 +797,7 @@ export default function AdminDashboardPage() {
         {tab === "domains" && (
           <Card>
             <CardHeader className="border-b border-[#E2E8F0]">
-              <h2 className="text-base font-bold text-[#102A43]">
+              <h2 className="text-base font-bold text-[#073B35]">
                 Supervision des noms de domaine personnalisés (Premium)
               </h2>
               <p className="text-xs text-slate-500">
@@ -819,7 +819,7 @@ export default function AdminDashboardPage() {
                     >
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-sm font-extrabold text-[#102A43]">
+                          <span className="font-mono text-sm font-extrabold text-[#073B35]">
                             {dom.domain}
                           </span>
                           <Badge variant="navy">
@@ -830,7 +830,7 @@ export default function AdminDashboardPage() {
                         </div>
                         <p className="mt-1 text-slate-500">
                           Boutique :{" "}
-                          <strong className="text-[#102A43]">
+                          <strong className="text-[#073B35]">
                             {dom.storeName}
                           </strong>{" "}
                           ({dom.merchantEmail}) · {formatDate(dom.createdAt)}
@@ -884,7 +884,7 @@ export default function AdminDashboardPage() {
                 <Card key={plan.id}>
                   <CardContent className="space-y-4 p-5">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-bold text-[#102A43]">{plan.name}</h3>
+                      <h3 className="font-bold text-[#073B35]">{plan.name}</h3>
                       <Badge variant="navy">{plan.code}</Badge>
                     </div>
                     <div className="space-y-2 text-xs">
@@ -899,7 +899,7 @@ export default function AdminDashboardPage() {
                             monthlyPrice: Number(e.target.value) || 0,
                           })
                         }
-                        className="h-9 w-full rounded-lg border border-[#E2E8F0] px-3 font-semibold text-[#102A43]"
+                        className="h-9 w-full rounded-lg border border-[#E2E8F0] px-3 font-semibold text-[#073B35]"
                       />
                     </div>
                     <div className="space-y-2 text-xs">
@@ -917,7 +917,7 @@ export default function AdminDashboardPage() {
                               : null,
                           })
                         }
-                        className="h-9 w-full rounded-lg border border-[#E2E8F0] px-3 font-semibold text-[#102A43]"
+                        className="h-9 w-full rounded-lg border border-[#E2E8F0] px-3 font-semibold text-[#073B35]"
                       />
                     </div>
                   </CardContent>
@@ -927,7 +927,7 @@ export default function AdminDashboardPage() {
 
             <Card>
               <CardHeader>
-                <h2 className="text-base font-bold text-[#102A43]">
+                <h2 className="text-base font-bold text-[#073B35]">
                   Matrice centralisée des modules & permissions
                 </h2>
               </CardHeader>
@@ -952,7 +952,7 @@ export default function AdminDashboardPage() {
                       {modules.map((mod) => (
                         <tr key={mod.key}>
                           <td className="px-5 py-3.5">
-                            <p className="font-semibold text-[#102A43]">
+                            <p className="font-semibold text-[#073B35]">
                               {mod.label}
                             </p>
                             <p className="text-xs text-slate-500">
@@ -971,7 +971,7 @@ export default function AdminDashboardPage() {
                                   onChange={() =>
                                     adminToggleModuleInPlan(mod.key, planCode)
                                   }
-                                  className="h-4 w-4 cursor-pointer accent-[#10B981]"
+                                  className="h-4 w-4 cursor-pointer accent-[#00A884]"
                                 />
                               </td>
                             )
@@ -990,7 +990,7 @@ export default function AdminDashboardPage() {
         {tab === "countries" && (
           <Card>
             <CardHeader>
-              <h2 className="text-base font-bold text-[#102A43]">
+              <h2 className="text-base font-bold text-[#073B35]">
                 Configuration multi-pays, devises & moyens de paiement
               </h2>
             </CardHeader>
@@ -1002,7 +1002,7 @@ export default function AdminDashboardPage() {
                     className="flex flex-wrap items-center justify-between gap-4 px-5 py-4"
                   >
                     <div>
-                      <p className="font-semibold text-[#102A43]">
+                      <p className="font-semibold text-[#073B35]">
                         {c.name} ({c.code}) · {c.currency} · {c.phonePrefix}
                       </p>
                       <p className="mt-1 text-xs text-slate-500">
@@ -1027,7 +1027,7 @@ export default function AdminDashboardPage() {
         {tab === "audit" && (
           <Card>
             <CardHeader>
-              <h2 className="text-base font-bold text-[#102A43]">
+              <h2 className="text-base font-bold text-[#073B35]">
                 Journalisation des opérations sensibles
               </h2>
             </CardHeader>
@@ -1065,7 +1065,7 @@ export default function AdminDashboardPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-base font-bold text-[#102A43]">
+                  <h2 className="text-base font-bold text-[#073B35]">
                     Paramètres du compte Super Administrateur
                   </h2>
                   <p className="mt-0.5 text-xs text-slate-500">
@@ -1113,7 +1113,7 @@ export default function AdminDashboardPage() {
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-[#102A43]">
+                  <label className="mb-1.5 block text-sm font-medium text-[#073B35]">
                     Mot de passe Super Administrateur
                   </label>
                   <div className="relative">
@@ -1123,12 +1123,12 @@ export default function AdminDashboardPage() {
                       minLength={6}
                       value={adminPassword}
                       onChange={(e) => setAdminPassword(e.target.value)}
-                      className="h-10.5 w-full rounded-lg border border-[#E2E8F0] bg-white px-3.5 pr-11 text-sm font-medium text-[#102A43] focus:border-[#102A43] focus:outline-none"
+                      className="h-10.5 w-full rounded-lg border border-[#E2E8F0] bg-white px-3.5 pr-11 text-sm font-medium text-[#073B35] focus:border-[#073B35] focus:outline-none"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword((s) => !s)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#102A43] cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#073B35] cursor-pointer"
                     >
                       {showPassword ? (
                         <EyeOff className="h-4 w-4" />
@@ -1141,7 +1141,7 @@ export default function AdminDashboardPage() {
 
                 {savedNotice && (
                   <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-xs font-semibold text-emerald-800">
-                    <Check className="h-4 w-4 text-[#10B981]" />
+                    <Check className="h-4 w-4 text-[#00A884]" />
                     Les nouveaux identifiants Super Administrateur ont été
                     enregistrés.
                   </div>

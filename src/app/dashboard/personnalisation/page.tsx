@@ -41,6 +41,16 @@ const SENEGAL_ZONES_PRESET: DeliveryZone[] = [
 
 const TEMPLATES: { id: StoreTemplateId; name: string; desc: string }[] = [
   {
+    id: "shrine_pro_1",
+    name: "Shrine Référence (Standard)",
+    desc: "Thème officiel orienté conversion COD avec bénéfices, résultats et FAQ.",
+  },
+  {
+    id: "shrine_pro_3",
+    name: "Shrine Pro 3 (Premium)",
+    desc: "Offres Packs 1x/2x/3x, tableau comparatif et fiche produit COD intégrée.",
+  },
+  {
     id: "minimal",
     name: "Minimal",
     desc: "Bannière deux colonnes et grille carrée contemporaine.",
@@ -207,7 +217,7 @@ export default function DashboardPersonnalisationPage() {
           [
             ["appearance", "Marque & Modèle", Palette],
             ["sections", "Sections d'accueil", LayoutTemplate],
-            ["contact", "WhatsApp & Paiements", Phone],
+            ["contact", "Coordonnées privées", Phone],
             ["delivery", "Livraison & Réseaux", Truck],
           ] as const
         ).map(([id, label, Icon]) => (
@@ -216,8 +226,8 @@ export default function DashboardPersonnalisationPage() {
             type="button"
             onClick={() => setSection(id)}
             className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${section === id
-                ? "bg-[#102A43] text-white"
-                : "text-slate-600 hover:text-[#102A43]"
+              ? "bg-[#102A43] text-white"
+              : "text-slate-600 hover:text-[#102A43]"
               }`}
           >
             <Icon className="h-3.5 w-3.5" />
@@ -303,8 +313,8 @@ export default function DashboardPersonnalisationPage() {
                         type="button"
                         onClick={() => setTemplate(tpl.id)}
                         className={`rounded-xl border p-3.5 text-left transition-all cursor-pointer ${template === tpl.id
-                            ? "border-[#102A43] bg-[#102A43]/[0.04] shadow-2xs"
-                            : "border-[#E2E8F0] hover:bg-slate-50"
+                          ? "border-[#102A43] bg-[#102A43]/[0.04] shadow-2xs"
+                          : "border-[#E2E8F0] hover:bg-slate-50"
                           }`}
                       >
                         <p className="text-sm font-bold text-[#102A43]">
@@ -403,48 +413,36 @@ export default function DashboardPersonnalisationPage() {
           {section === "contact" && (
             <Card className="animate-tab-panel border-[#E2E8F0] bg-white">
               <CardHeader className="border-b border-[#E2E8F0] px-5 py-4">
-                <h2 className="text-sm font-extrabold text-[#102A43]">
-                  Coordonnées & Mobile Money
+                <h2 className="text-sm font-extrabold text-[#15232D]">
+                  Coordonnées de la boutique (Confidentialité garantie)
                 </h2>
               </CardHeader>
               <CardContent className="space-y-4 p-5">
+                <div className="rounded-xl border border-[#00A884]/35 bg-[#E7F7F2] p-3 text-xs text-[#073B35]">
+                  <strong>Confidentialité propriétaire :</strong> votre numéro de
+                  téléphone reste strictement interne à votre compte et n&apos;est
+                  jamais affiché publiquement sur votre vitrine client. Toutes
+                  les commandes passent par votre Formulaire COD intégré.
+                </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Input
-                    label="Numéro WhatsApp commandes"
+                    label="Téléphone interne du propriétaire (Privé)"
                     value={whatsappPhone}
                     onChange={(e) => setWhatsappPhone(e.target.value)}
-                    placeholder="+221770000000"
+                    placeholder="+229 97 00 00 00"
                   />
                   <Input
-                    label="E-mail de contact"
+                    label="E-mail public de contact"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
                 <Input
-                  label="Adresse physique / Ville"
+                  label="Adresse / Ville de référence"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                 />
-                <Input
-                  label="Numéro Mobile Money (affiché au paiement)"
-                  value={mobileMoneyNumber}
-                  onChange={(e) => setMobileMoneyNumber(e.target.value)}
-                  placeholder="+221 77 000 00 00 (Wave / Orange Money)"
-                />
-                <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-[#102A43]">
-                    Instructions Mobile Money pour le client
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={mobileMoneyInstructions}
-                    onChange={(e) => setMobileMoneyInstructions(e.target.value)}
-                    placeholder="Ex: Envoyez le montant exact puis indiquez la référence du transfert."
-                    className="w-full rounded-lg border border-[#E2E8F0] px-3.5 py-2 text-sm"
-                  />
-                </div>
               </CardContent>
             </Card>
           )}

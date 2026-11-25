@@ -35,7 +35,7 @@ export default function AProposPage() {
           ].map((val) => (
             <Card key={val.title}>
               <CardContent className="p-6">
-                <h2 className="text-base font-bold text-[#102A43]">
+                <h2 className="text-base font-bold text-[#073B35]">
                   {val.title}
                 </h2>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">

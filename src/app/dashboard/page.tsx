@@ -5,16 +5,23 @@ import { useMemo, useState } from "react";
 import {
   AlertCircle,
   ArrowRight,
+  BarChart3,
+  Bot,
+  Calculator,
   Calendar,
   Check,
-  CheckCircle2,
   Clock,
+  Compass,
   ExternalLink,
-  MessageCircle,
+  FormInput,
+  Layers,
+  Megaphone,
   Package,
+  Plus,
   ShoppingBag,
-  TrendingUp,
+  Sparkles,
   Truck,
+  Users,
   Wallet,
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -22,11 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AnimatedNumber } from "@/components/ui/motion";
 import { SalesInteractiveChart } from "@/components/dashboard/sales-chart";
-import {
-  OrderStatusPill,
-  PaymentMethodPill,
-} from "@/components/dashboard/status-pill";
-import { AdeshinaCopilotPanel } from "@/components/dashboard/adeshina-copilot-panel";
+import { OrderStatusPill } from "@/components/dashboard/status-pill";
 import {
   DashboardPageHeader,
   StatMetricCard,
@@ -35,42 +38,108 @@ import { getRealPopularProducts } from "@/lib/adeshina-merchant-copilot";
 import { usePlatform } from "@/lib/platform-store";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
-type PeriodFilter = "today" | "7d" | "30d" | "all" | "custom";
-type RecentTab = "all" | "waiting" | "confirmed" | "delivered";
+type PeriodFilter =
+  | "today"
+  | "yesterday"
+  | "7d"
+  | "30d"
+  | "this_month"
+  | "last_month"
+  | "all"
+  | "custom";
+
+type OverviewTab = "orders" | "guide" | "chart";
+
+const MERCHANT_PAGES_DIRECTORY = [
+  {
+    href: "/dashboard/commandes",
+    title: "Commandes clients",
+    purpose:
+      "Appeler vos clients pour confirmer leurs commandes, choisir un livreur et imprimer le bon COD.",
+    icon: ShoppingBag,
+  },
+  {
+    href: "/dashboard/produits",
+    title: "Produits & Prix",
+    purpose:
+      "Ajouter vos articles, définir leur prix de vente et leur coût d'achat pour connaître votre marge.",
+    icon: Package,
+  },
+  {
+    href: "/dashboard/livreurs",
+    title: "Livreurs & Argent COD",
+    purpose:
+      "Savoir exactement combien d'argent chaque livreur a encaissé et enregistrer ses versements.",
+    icon: Truck,
+  },
+  {
+    href: "/dashboard/finances",
+    title: "Mes bénéfices & Dépenses",
+    purpose:
+      "Voir votre vrai bénéfice net (calculé uniquement sur les commandes livrées) et noter vos charges.",
+    icon: Calculator,
+  },
+  {
+    href: "/dashboard/store-builder",
+    title: "Apparence de ma boutique",
+    purpose:
+      "Choisir votre thème (Shrine Pro) et modifier les images, textes et sections de votre vitrine.",
+    icon: Layers,
+  },
+  {
+    href: "/dashboard/form-builder",
+    title: "Formulaire de commande COD",
+    purpose:
+      "Choisir les champs que remplit l'acheteur (nom, téléphone, ville, quartier) et créer des packs 1x / 2x / 3x.",
+    icon: FormInput,
+  },
+  {
+    href: "/dashboard/adeshina-ia",
+    title: "Assistant Adeshina IA",
+    purpose:
+      "Poser une question simple sur vos chiffres ou laisser l'IA rédiger une fiche produit pour vous.",
+    icon: Sparkles,
+  },
+  {
+    href: "/dashboard/clients",
+    title: "Fichier clients",
+    purpose:
+      "Retrouver vos meilleurs clients fidèles et repérer les numéros qui ont fait des retours.",
+    icon: Users,
+  },
+  {
+    href: "/dashboard/croissance",
+    title: "Publicités & Automatisations",
+    purpose:
+      "Suivre la rentabilité de vos pubs Facebook/TikTok et activer des alertes automatiques.",
+    icon: Megaphone,
+  },
+];
 
 export default function DashboardOverviewPage() {
   const {
     activeStore,
     products,
-    categories,
     orders,
-    customers,
-    modules,
+    expenses,
     updateOrderStatus,
   } = usePlatform();
 
-  // Par défaut "30d" ou "all" : "30d" correspond aux habitudes e-commerce
   const [period, setPeriod] = useState<PeriodFilter>("30d");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
-  const [recentTab, setRecentTab] = useState<RecentTab>("all");
+  const [activeTab, setActiveTab] = useState<OverviewTab>("orders");
 
   const storeProducts = useMemo(
     () => products.filter((p) => p.storeId === activeStore?.id),
     [products, activeStore?.id]
   );
 
-  const storeCategories = useMemo(
-    () => categories.filter((c) => c.storeId === activeStore?.id),
-    [categories, activeStore?.id]
+  const storeExpenses = useMemo(
+    () => (expenses ?? []).filter((e) => e.storeId === activeStore?.id),
+    [expenses, activeStore?.id]
   );
 
-  const storeCustomers = useMemo(
-    () => customers.filter((c) => c.storeId === activeStore?.id),
-    [customers, activeStore?.id]
-  );
-
-  // Filtrage temporel 100 % réel (Aujourd'hui, 7j, 30j, Tout, Période personnalisée)
   const storeOrders = useMemo(() => {
     const all = orders
       .filter((o) => o.storeId === activeStore?.id)
@@ -83,19 +152,58 @@ export default function DashboardOverviewPage() {
     if (period === "all") return all;
 
     const now = new Date();
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    ).getTime();
+
     if (period === "today") {
-      const startOfDay = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate()
-      ).getTime();
-      return all.filter((o) => new Date(o.createdAt).getTime() >= startOfDay);
+      return all.filter(
+        (o) => new Date(o.createdAt).getTime() >= startOfToday
+      );
+    }
+
+    if (period === "yesterday") {
+      const startOfYesterday = startOfToday - 24 * 60 * 60 * 1000;
+      return all.filter((o) => {
+        const ts = new Date(o.createdAt).getTime();
+        return ts >= startOfYesterday && ts < startOfToday;
+      });
     }
 
     if (period === "7d" || period === "30d") {
       const days = period === "7d" ? 7 : 30;
       const cutoff = now.getTime() - days * 24 * 60 * 60 * 1000;
       return all.filter((o) => new Date(o.createdAt).getTime() >= cutoff);
+    }
+
+    if (period === "this_month") {
+      const firstOfMonth = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        1
+      ).getTime();
+      return all.filter(
+        (o) => new Date(o.createdAt).getTime() >= firstOfMonth
+      );
+    }
+
+    if (period === "last_month") {
+      const firstOfLast = new Date(
+        now.getFullYear(),
+        now.getMonth() - 1,
+        1
+      ).getTime();
+      const firstOfThis = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        1
+      ).getTime();
+      return all.filter((o) => {
+        const ts = new Date(o.createdAt).getTime();
+        return ts >= firstOfLast && ts < firstOfThis;
+      });
     }
 
     if (period === "custom") {
@@ -121,75 +229,80 @@ export default function DashboardOverviewPage() {
 
   if (!activeStore) return null;
 
-  // Les 7 indicateurs demandés dans le cahier de refonte (strictement réels)
-  const validOrders = storeOrders.filter((o) => o.status !== "cancelled");
-  const revenue = validOrders.reduce((sum, o) => sum + o.totalAmount, 0);
-  const averageBasket =
-    validOrders.length > 0 ? Math.round(revenue / validOrders.length) : 0;
-
-  const totalOrdersCount = storeOrders.length;
-  const pendingOrdersCount = storeOrders.filter(
+  const deliveredOrders = storeOrders.filter((o) => o.status === "delivered");
+  const returnedOrFailedOrders = storeOrders.filter(
+    (o) => o.status === "returned" || o.status === "delivery_failed"
+  );
+  const pendingConfirmationOrders = storeOrders.filter(
     (o) => o.status === "new" || o.status === "pending_confirmation"
-  ).length;
-  const confirmedOrdersCount = storeOrders.filter(
-    (o) =>
-      o.status === "confirmed" ||
-      o.status === "preparing" ||
-      o.status === "shipped"
-  ).length;
-  const deliveredOrdersCount = storeOrders.filter(
-    (o) => o.status === "delivered"
-  ).length;
+  );
 
-  const availableProductsCount = storeProducts.filter(
-    (p) => p.isActive && p.stock > 0
-  ).length;
-  const outOfStockCount = storeProducts.filter((p) => p.stock === 0).length;
-  const totalUnitsInStock = storeProducts.reduce((s, p) => s + p.stock, 0);
+  const totalOrderedAmount = storeOrders
+    .filter((o) => o.status !== "cancelled")
+    .reduce((s, o) => s + o.totalAmount, 0);
+  const deliveredRevenue = deliveredOrders.reduce(
+    (s, o) => s + o.totalAmount,
+    0
+  );
 
-  const deliveryRate =
-    validOrders.length > 0
-      ? Math.round((deliveredOrdersCount / validOrders.length) * 100)
+  const deliveredCogs = deliveredOrders.reduce((sum, ord) => {
+    return (
+      sum +
+      ord.items.reduce((acc, it) => {
+        if (typeof it.costPrice === "number" && it.costPrice > 0) {
+          return acc + it.costPrice * it.quantity;
+        }
+        const p = storeProducts.find((pr) => pr.id === it.productId);
+        return (
+          acc +
+          (p ? (p.costPrice ?? 0) + (p.additionalCost ?? 0) : 0) * it.quantity
+        );
+      }, 0)
+    );
+  }, 0);
+
+  const totalExpenses = storeExpenses.reduce((s, e) => s + e.amount, 0);
+  const estimatedNetProfit = deliveredRevenue - deliveredCogs - totalExpenses;
+
+  const closedShipments =
+    deliveredOrders.length + returnedOrFailedOrders.length;
+  const deliveryRatePct =
+    closedShipments > 0
+      ? Math.round((deliveredOrders.length / closedShipments) * 100)
+      : storeOrders.length > 0
+      ? Math.round((deliveredOrders.length / storeOrders.length) * 100)
+      : 0;
+  const returnRatePct =
+    closedShipments > 0
+      ? Math.round((returnedOrFailedOrders.length / closedShipments) * 100)
       : 0;
 
-  // Dernières commandes filtrées par onglet rapide
-  const filteredRecentOrders = storeOrders
-    .filter((o) => {
-      if (recentTab === "waiting") {
-        return o.status === "new" || o.status === "pending_confirmation";
-      }
-      if (recentTab === "confirmed") {
-        return (
-          o.status === "confirmed" ||
-          o.status === "preparing" ||
-          o.status === "shipped"
-        );
-      }
-      if (recentTab === "delivered") {
-        return o.status === "delivered";
-      }
-      return true;
-    })
-    .slice(0, 6);
+  const cashHeldByCouriers = Math.max(
+    0,
+    deliveredOrders
+      .filter((o) => o.codFinancialStatus === "collected_by_courier")
+      .reduce((s, o) => s + o.totalAmount, 0)
+  );
+
+  const outOfStockCount = storeProducts.filter((p) => p.stock <= 0).length;
+  const lowStockCount = storeProducts.filter(
+    (p) => p.stock > 0 && p.stock <= p.lowStockThreshold
+  ).length;
 
   return (
     <div className="space-y-6">
-      {/* EN-TÊTE + FILTRES TEMPORELS COMPLETS */}
+      {/* 1. EN-TÊTE SIMPLE */}
       <DashboardPageHeader
-        eyebrow={`Espace commerçant · ${activeStore.countryCode}`}
-        title={`Bonjour, ${activeStore.ownerName.split(" ")[0]}`}
+        eyebrow={`Boutique · ${activeStore.name}`}
+        title={`Bonjour ${activeStore.ownerName.split(" ")[0]} 👋`}
         description={
           <span>
-            Suivi commercial de{" "}
-            <strong className="font-semibold text-[#102A43]">
-              {activeStore.name}
-            </strong>{" "}
-            ·{" "}
+            Lien public de votre boutique :{" "}
             <a
               href={`/s/${activeStore.slug}`}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 font-medium text-[#10B981] hover:underline"
+              className="inline-flex items-center gap-1 font-semibold text-[#00A884] hover:underline"
             >
               {activeStore.customDomain || activeStore.subdomain}
               <ExternalLink className="h-3 w-3" />
@@ -198,557 +311,410 @@ export default function DashboardOverviewPage() {
         }
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex flex-wrap items-center gap-0.5 rounded-xl border border-[#E2E8F0] bg-white p-1 shadow-2xs">
-              <Calendar className="ml-2 mr-1 hidden h-3.5 w-3.5 text-slate-400 sm:inline" />
-              {(
-                [
-                  ["today", "Aujourd'hui"],
-                  ["7d", "7 jours"],
-                  ["30d", "30 jours"],
-                  ["all", "Tout"],
-                  ["custom", "Personnalisé"],
-                ] as const
-              ).map(([val, label]) => (
-                <button
-                  key={val}
-                  type="button"
-                  onClick={() => setPeriod(val)}
-                  className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
-                    period === val
-                      ? "bg-[#102A43] text-white"
-                      : "text-slate-600 hover:text-[#102A43]"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
+            <div className="inline-flex items-center gap-1.5 rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 shadow-2xs">
+              <Calendar className="h-3.5 w-3.5 text-[#00A884]" />
+              <select
+                value={period}
+                onChange={(e) => setPeriod(e.target.value as PeriodFilter)}
+                className="bg-transparent text-xs font-bold text-[#15232D] focus:outline-none cursor-pointer"
+              >
+                <option value="today">Aujourd&apos;hui</option>
+                <option value="yesterday">Hier</option>
+                <option value="7d">7 derniers jours</option>
+                <option value="30d">30 derniers jours</option>
+                <option value="this_month">Ce mois-ci</option>
+                <option value="last_month">Mois précédent</option>
+                <option value="all">Toute l&apos;activité</option>
+                <option value="custom">Période personnalisée</option>
+              </select>
             </div>
+
+            <Link href="/dashboard/produits">
+              <Button variant="primary" size="sm">
+                <Plus className="h-4 w-4" />
+                Ajouter un produit
+              </Button>
+            </Link>
           </div>
         }
       />
 
-      {/* Sélecteur de dates si Période personnalisée active */}
       {period === "custom" && (
-        <div className="animate-page-enter flex flex-wrap items-center gap-3 rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3 shadow-2xs">
-          <span className="text-xs font-bold text-[#102A43]">
-            Plage de dates :
-          </span>
-          <label className="inline-flex items-center gap-2 text-xs text-slate-600">
-            <span>Du</span>
-            <input
-              type="date"
-              value={customStart}
-              onChange={(e) => setCustomStart(e.target.value)}
-              className="rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-2.5 py-1.5 text-xs font-medium text-[#102A43] focus:border-[#102A43] focus:bg-white focus:outline-none"
-            />
-          </label>
-          <label className="inline-flex items-center gap-2 text-xs text-slate-600">
-            <span>Au</span>
-            <input
-              type="date"
-              value={customEnd}
-              onChange={(e) => setCustomEnd(e.target.value)}
-              className="rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-2.5 py-1.5 text-xs font-medium text-[#102A43] focus:border-[#102A43] focus:bg-white focus:outline-none"
-            />
-          </label>
-          {(customStart || customEnd) && (
-            <button
-              type="button"
-              onClick={() => {
-                setCustomStart("");
-                setCustomEnd("");
-              }}
-              className="text-xs font-semibold text-slate-500 hover:text-[#102A43] cursor-pointer"
-            >
-              Réinitialiser
-            </button>
-          )}
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3 text-xs">
+          <span className="font-bold text-[#15232D]">Du :</span>
+          <input
+            type="date"
+            value={customStart}
+            onChange={(e) => setCustomStart(e.target.value)}
+            className="rounded-lg border border-[#E2E8F0] px-2.5 py-1.5"
+          />
+          <span className="font-bold text-[#15232D]">Au :</span>
+          <input
+            type="date"
+            value={customEnd}
+            onChange={(e) => setCustomEnd(e.target.value)}
+            className="rounded-lg border border-[#E2E8F0] px-2.5 py-1.5"
+          />
         </div>
       )}
 
-      {/* NIVEAU 1 : 4 INDICATEURS MAJEURS */}
+      {/* 2. LES 4 CHIFFRES ESSENTIELS DU COMMERÇANT COD */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatMetricCard
-          label="Chiffre d'affaires"
+          label="1. Commandes à confirmer"
+          value={<AnimatedNumber value={pendingConfirmationOrders.length} />}
+          subtext={`${storeOrders.length} cmd au total (${formatCurrency(totalOrderedAmount, activeStore.currency)})`}
+          icon={Clock}
+          tone={pendingConfirmationOrders.length > 0 ? "amber" : "emerald"}
+          action={
+            <Link
+              href="/dashboard/commandes"
+              className="font-bold text-[#073B35] hover:text-[#00A884]"
+            >
+              Ouvrir →
+            </Link>
+          }
+        />
+
+        <StatMetricCard
+          label="2. Ventes livrées (Encaissées)"
           value={
             <AnimatedNumber
-              value={revenue}
+              value={deliveredRevenue}
               suffix={` ${activeStore.currency}`}
             />
           }
-          subtext={`Panier moyen : ${formatCurrency(
-            averageBasket,
-            activeStore.currency
-          )}`}
+          subtext={`${deliveredOrders.length} livrée(s) · Taux livraison ${deliveryRatePct} %`}
           icon={Wallet}
           tone="emerald"
         />
 
         <StatMetricCard
-          label="Nombre de commandes"
-          value={<AnimatedNumber value={totalOrdersCount} />}
-          subtext={`${validOrders.length} validée(s) sur la période`}
-          icon={ShoppingBag}
-          tone="navy"
+          label="3. Mon bénéfice net réel"
+          value={
+            <AnimatedNumber
+              value={estimatedNetProfit}
+              suffix={` ${activeStore.currency}`}
+            />
+          }
+          subtext={`Dépenses déduites : ${formatCurrency(totalExpenses, activeStore.currency)}`}
+          icon={Calculator}
+          tone={estimatedNetProfit >= 0 ? "emerald" : "rose"}
           action={
             <Link
-              href="/dashboard/commandes"
-              className="font-semibold text-[#102A43] hover:text-[#10B981]"
+              href="/dashboard/finances"
+              className="font-bold text-[#073B35] hover:text-[#00A884]"
             >
-              Voir →
+              Détails →
             </Link>
           }
         />
 
         <StatMetricCard
-          label="Commandes en attente"
-          value={<AnimatedNumber value={pendingOrdersCount} />}
-          subtext={
-            pendingOrdersCount > 0
-              ? "Nécessitent votre confirmation"
-              : "Aucune commande en attente"
+          label="4. Argent chez les livreurs"
+          value={
+            <AnimatedNumber
+              value={cashHeldByCouriers}
+              suffix={` ${activeStore.currency}`}
+            />
           }
-          icon={Clock}
-          tone={pendingOrdersCount > 0 ? "amber" : "slate"}
+          subtext={`Retours : ${returnedOrFailedOrders.length} (${returnRatePct} %)`}
+          icon={Truck}
+          tone={cashHeldByCouriers > 0 ? "amber" : "navy"}
           action={
-            pendingOrdersCount > 0 ? (
+            <Link
+              href="/dashboard/livreurs"
+              className="font-bold text-[#073B35] hover:text-[#00A884]"
+            >
+              Livreurs →
+            </Link>
+          }
+        />
+      </div>
+
+      {/* 3. SÉLECTEUR EN 3 ONGLETS CLAIRS (UN SEUL BLOC AFFICHÉ À LA FOIS POUR NE JAMAIS SURCHARGER L'ÉCRAN) */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-[#E2E8F0] pb-3">
+        <button
+          type="button"
+          onClick={() => setActiveTab("orders")}
+          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-extrabold transition cursor-pointer ${
+            activeTab === "orders"
+              ? "bg-[#073B35] text-white shadow-2xs"
+              : "border border-[#E2E8F0] bg-white text-slate-600 hover:text-[#15232D]"
+          }`}
+        >
+          <ShoppingBag className="h-4 w-4 text-[#00A884]" />
+          Commandes à traiter ({pendingConfirmationOrders.length})
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("guide")}
+          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-extrabold transition cursor-pointer ${
+            activeTab === "guide"
+              ? "bg-[#073B35] text-white shadow-2xs"
+              : "border border-[#E2E8F0] bg-white text-slate-600 hover:text-[#15232D]"
+          }`}
+        >
+          <Compass className="h-4 w-4 text-[#00A884]" />
+          À quoi sert chaque page ? (Guide commerçant)
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("chart")}
+          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-extrabold transition cursor-pointer ${
+            activeTab === "chart"
+              ? "bg-[#073B35] text-white shadow-2xs"
+              : "border border-[#E2E8F0] bg-white text-slate-600 hover:text-[#15232D]"
+          }`}
+        >
+          <BarChart3 className="h-4 w-4 text-[#00A884]" />
+          Courbe des ventes & Top produits
+        </button>
+      </div>
+
+      {/* ONGLET 1 : COMMANDES À TRAITER + CONSEIL RAPIDE */}
+      {activeTab === "orders" && (
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3 text-xs">
+            <div className="flex items-center gap-2.5">
+              <Bot className="h-4 w-4 text-[#00A884]" />
+              <span className="text-slate-700">
+                <strong className="text-[#15232D]">Conseil du jour :</strong>{" "}
+                {pendingConfirmationOrders.length > 0
+                  ? `Vous avez ${pendingConfirmationOrders.length} commande(s) à confirmer par téléphone.`
+                  : "Toutes vos commandes récentes ont été traitées."}
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              {(outOfStockCount > 0 || lowStockCount > 0) && (
+                <Link
+                  href="/dashboard/stocks"
+                  className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1 font-bold text-amber-900"
+                >
+                  <AlertCircle className="h-3.5 w-3.5 text-[#F4A340]" />
+                  {outOfStockCount + lowStockCount} alerte(s) stock
+                </Link>
+              )}
+              <Link
+                href="/dashboard/adeshina-ia"
+                className="font-bold text-[#00A884] hover:underline"
+              >
+                Demander à Adeshina IA →
+              </Link>
+            </div>
+          </div>
+
+          <Card className="border-[#E2E8F0] bg-white">
+            <CardHeader className="flex items-center justify-between border-b border-[#E2E8F0] px-5 py-4">
+              <div>
+                <h2 className="text-base font-extrabold text-[#15232D]">
+                  Vos 5 dernières commandes
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Cliquez sur « Confirmer » après avoir appelé le client
+                </p>
+              </div>
               <Link
                 href="/dashboard/commandes"
-                className="font-bold text-amber-700 hover:underline"
+                className="inline-flex items-center gap-1 text-xs font-bold text-[#073B35] hover:text-[#00A884]"
               >
-                Traiter
+                Voir toutes les commandes ({storeOrders.length})
+                <ArrowRight className="h-3.5 w-3.5" />
               </Link>
-            ) : undefined
-          }
-        />
+            </CardHeader>
 
-        <StatMetricCard
-          label="Commandes livrées"
-          value={<AnimatedNumber value={deliveredOrdersCount} />}
-          subtext={`Taux de livraison : ${deliveryRate} %`}
-          icon={Truck}
-          tone="emerald"
-        />
-      </div>
-
-      {/* NIVEAU 2 : 3 INDICATEURS OPÉRATIONNELS & CATALOGUE */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <StatMetricCard
-          compact
-          label="Commandes confirmées (en cours)"
-          value={<AnimatedNumber value={confirmedOrdersCount} />}
-          subtext="Confirmées, en préparation ou expédiées"
-          icon={CheckCircle2}
-          tone="sky"
-        />
-
-        <StatMetricCard
-          compact
-          label="Produits disponibles"
-          value={<AnimatedNumber value={availableProductsCount} />}
-          subtext={`${totalUnitsInStock} unités disponibles en stock`}
-          icon={Package}
-          tone="navy"
-          action={
-            <Link
-              href="/dashboard/produits"
-              className="font-semibold text-[#102A43] hover:text-[#10B981]"
-            >
-              Catalogue →
-            </Link>
-          }
-        />
-
-        <StatMetricCard
-          compact
-          label="Produits en rupture"
-          value={<AnimatedNumber value={outOfStockCount} />}
-          subtext={
-            outOfStockCount > 0
-              ? "Articles indisponibles à réapprovisionner"
-              : "Aucune rupture de stock"
-          }
-          icon={AlertCircle}
-          tone={outOfStockCount > 0 ? "rose" : "emerald"}
-          action={
-            outOfStockCount > 0 ? (
-              <Link
-                href="/dashboard/stocks"
-                className="font-bold text-rose-600 hover:underline"
-              >
-                Stocks →
-              </Link>
-            ) : undefined
-          }
-        />
-      </div>
-
-      {/* NIVEAU 3 : ÉVOLUTION DES VENTES (8 COLS) + PRODUITS POPULAIRES RÉELS (4 COLS) */}
-      <div className="grid gap-6 lg:grid-cols-12">
-        <Card className="border-[#E2E8F0] bg-white lg:col-span-8">
-          <CardHeader className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E2E8F0] px-5 py-4">
-            <div>
-              <h2 className="text-sm font-extrabold text-[#102A43]">
-                Évolution des ventes
-              </h2>
-              <p className="text-xs text-slate-500">
-                Suivi journalier du chiffre d&apos;affaires validé
-              </p>
-            </div>
-            <Badge variant="navy">
-              <TrendingUp className="mr-1 h-3 w-3 text-[#10B981]" />
-              {validOrders.length} vente{validOrders.length > 1 ? "s" : ""}
-            </Badge>
-          </CardHeader>
-          <CardContent className="p-5">
-            <SalesInteractiveChart
-              orders={storeOrders}
-              currency={activeStore.currency}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Top Produits Populaires (calculé sur les vraies ventes) */}
-        <Card className="border-[#E2E8F0] bg-white lg:col-span-4">
-          <CardHeader className="flex items-center justify-between border-b border-[#E2E8F0] px-5 py-4">
-            <div>
-              <h2 className="text-sm font-extrabold text-[#102A43]">
-                Produits populaires
-              </h2>
-              <p className="text-xs text-slate-500">
-                Classement réel sur la période
-              </p>
-            </div>
-            <Link
-              href="/dashboard/produits"
-              className="text-xs font-semibold text-[#10B981] hover:underline"
-            >
-              Tout voir
-            </Link>
-          </CardHeader>
-          <CardContent className="p-4">
-            {rankedProducts.length === 0 ? (
-              <p className="py-10 text-center text-xs text-slate-500">
-                Aucun produit dans votre catalogue.
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {rankedProducts.slice(0, 4).map((item, idx) => (
-                  <div
-                    key={item.product.id}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC]/70 p-2.5 transition-colors hover:bg-white"
-                  >
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white text-[11px] font-extrabold text-[#102A43] shadow-2xs">
-                        {idx + 1}
-                      </span>
-                      <img
-                        src={item.product.images[0]}
-                        alt={item.product.name}
-                        className="h-10 w-10 shrink-0 rounded-lg border border-[#E2E8F0] object-cover"
-                      />
-                      <div className="min-w-0">
-                        <p className="truncate text-xs font-bold text-[#102A43]">
-                          {item.product.name}
-                        </p>
-                        <p className="text-[11px] text-slate-500">
-                          {item.unitsSold > 0
-                            ? `${item.unitsSold} vendu(s)`
-                            : `Prix : ${formatCurrency(
-                                item.product.promoPrice ?? item.product.price,
-                                activeStore.currency
-                              )}`}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="shrink-0 text-right">
-                      {item.revenue > 0 ? (
-                        <p className="text-xs font-extrabold text-[#10B981]">
-                          {formatCurrency(item.revenue, activeStore.currency)}
-                        </p>
-                      ) : (
-                        <Badge
-                          variant={
-                            item.product.stock === 0 ? "danger" : "default"
-                          }
-                        >
-                          Stock {item.product.stock}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* NIVEAU 4 : COLLABORATEUR ADESHINA IA */}
-      <AdeshinaCopilotPanel
-        store={activeStore}
-        products={storeProducts}
-        categories={storeCategories}
-        orders={storeOrders}
-        customers={storeCustomers}
-        modules={modules}
-      />
-
-      {/* NIVEAU 5 : DERNIÈRES COMMANDES AVEC ACTIONS RAPIDES EN 1 CLIC */}
-      <Card className="border-[#E2E8F0] bg-white">
-        <CardHeader className="flex flex-col justify-between gap-3 border-b border-[#E2E8F0] px-5 py-4 sm:flex-row sm:items-center">
-          <div>
-            <h2 className="text-sm font-extrabold text-[#102A43]">
-              Dernières commandes
-            </h2>
-            <p className="text-xs text-slate-500">
-              Validez vos commandes ou contactez vos clients sur WhatsApp sans
-              quitter cette page
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-1.5">
-            {(
-              [
-                ["all", `Toutes (${storeOrders.length})`],
-                ["waiting", `En attente (${pendingOrdersCount})`],
-                ["confirmed", `Confirmées (${confirmedOrdersCount})`],
-                ["delivered", `Livrées (${deliveredOrdersCount})`],
-              ] as const
-            ).map(([tabId, label]) => (
-              <button
-                key={tabId}
-                type="button"
-                onClick={() => setRecentTab(tabId)}
-                className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
-                  recentTab === tabId
-                    ? "bg-[#102A43] text-white"
-                    : "bg-[#F8FAFC] text-slate-600 hover:text-[#102A43]"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-0">
-          {filteredRecentOrders.length === 0 ? (
-            <div className="p-10 text-center">
-              <ShoppingBag className="mx-auto h-8 w-8 text-slate-300" />
-              <p className="mt-2 text-sm font-semibold text-[#102A43]">
-                Aucune commande sur ce filtre
-              </p>
-              <p className="mt-1 text-xs text-slate-500">
-                Changez la période temporelle ou partagez le lien de votre
-                boutique.
-              </p>
-            </div>
-          ) : (
-            <>
-              {/* Vue cartes optimisée pour mobile */}
-              <div className="divide-y divide-[#E2E8F0] md:hidden">
-                {filteredRecentOrders.map((ord) => {
-                  const isWaiting =
-                    ord.status === "new" ||
-                    ord.status === "pending_confirmation";
-                  const cleanPhone = ord.customerPhone.replace(/[^\d]/g, "");
-
-                  return (
-                    <div key={ord.id} className="space-y-3 p-4">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <span className="font-mono text-xs font-bold text-[#102A43]">
-                            {ord.orderNumber}
-                          </span>
-                          <p className="mt-0.5 text-sm font-bold text-[#102A43]">
-                            {ord.customerName} ·{" "}
-                            <span className="font-normal text-slate-500">
-                              {ord.deliveryCity}
+            <CardContent className="p-0">
+              {storeOrders.length === 0 ? (
+                <div className="p-10 text-center">
+                  <ShoppingBag className="mx-auto h-8 w-8 text-slate-300" />
+                  <p className="mt-2 text-sm font-semibold text-[#15232D]">
+                    Aucune commande sur cette période
+                  </p>
+                </div>
+              ) : (
+                <div className="divide-y divide-[#E2E8F0]">
+                  {storeOrders.slice(0, 5).map((ord) => {
+                    const isWaiting =
+                      ord.status === "new" ||
+                      ord.status === "pending_confirmation";
+                    return (
+                      <div
+                        key={ord.id}
+                        className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 hover:bg-[#F8FAFC]"
+                      >
+                        <div className="min-w-0 space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-[#15232D]">
+                              {ord.customerName}
                             </span>
+                            <OrderStatusPill status={ord.status} />
+                          </div>
+                          <p className="text-xs text-slate-500">
+                            {ord.deliveryCity} · {ord.customerPhone} ·{" "}
+                            {formatDate(ord.createdAt)}
                           </p>
                         </div>
-                        <OrderStatusPill status={ord.status} />
-                      </div>
 
-                      <div className="flex items-center justify-between text-xs">
-                        <PaymentMethodPill method={ord.paymentMethod} compact />
-                        <span className="text-sm font-extrabold text-[#102A43]">
-                          {formatCurrency(
-                            ord.totalAmount,
-                            activeStore.currency
-                          )}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2 pt-1">
-                        {isWaiting && (
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            className="flex-1"
-                            onClick={() =>
-                              updateOrderStatus(
-                                activeStore.id,
-                                ord.id,
-                                "confirmed"
-                              )
-                            }
-                          >
-                            <Check className="h-3.5 w-3.5" />
-                            Confirmer
-                          </Button>
-                        )}
-                        <a
-                          href={`https://wa.me/${cleanPhone}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 text-xs font-semibold text-[#102A43]"
-                        >
-                          <MessageCircle className="h-3.5 w-3.5 text-[#10B981]" />
-                          WhatsApp
-                        </a>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Vue tableau Desktop */}
-              <div className="hidden overflow-x-auto md:block">
-                <table className="w-full text-left text-sm">
-                  <thead className="border-b border-[#E2E8F0] bg-[#F8FAFC] text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                    <tr>
-                      <th className="px-5 py-3">Commande</th>
-                      <th className="px-4 py-3">Client & Ville</th>
-                      <th className="px-4 py-3">Paiement</th>
-                      <th className="px-4 py-3">Montant</th>
-                      <th className="px-4 py-3">Statut</th>
-                      <th className="px-5 py-3 text-right">Actions rapides</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#E2E8F0]">
-                    {filteredRecentOrders.map((ord) => {
-                      const isWaiting =
-                        ord.status === "new" ||
-                        ord.status === "pending_confirmation";
-                      const canDeliver =
-                        ord.status === "confirmed" ||
-                        ord.status === "preparing" ||
-                        ord.status === "shipped";
-                      const cleanPhone = ord.customerPhone.replace(
-                        /[^\d]/g,
-                        ""
-                      );
-
-                      return (
-                        <tr
-                          key={ord.id}
-                          className="transition-colors hover:bg-[#F8FAFC]"
-                        >
-                          <td className="px-5 py-3.5">
-                            <Link
-                              href="/dashboard/commandes"
-                              className="font-mono text-xs font-bold text-[#102A43] hover:text-[#10B981]"
-                            >
-                              {ord.orderNumber}
-                            </Link>
-                            <p className="mt-0.5 text-[11px] text-slate-400">
-                              {formatDate(ord.createdAt)} · {ord.items.length}{" "}
-                              article(s)
-                            </p>
-                          </td>
-                          <td className="px-4 py-3.5">
-                            <p className="font-semibold text-[#102A43]">
-                              {ord.customerName}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              {ord.deliveryCity}
-                            </p>
-                          </td>
-                          <td className="px-4 py-3.5">
-                            <PaymentMethodPill
-                              method={ord.paymentMethod}
-                              compact
-                            />
-                          </td>
-                          <td className="px-4 py-3.5 font-extrabold text-[#102A43]">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-extrabold text-[#073B35]">
                             {formatCurrency(
                               ord.totalAmount,
                               activeStore.currency
                             )}
-                          </td>
-                          <td className="px-4 py-3.5">
-                            <OrderStatusPill status={ord.status} />
-                          </td>
-                          <td className="px-5 py-3.5 text-right">
-                            <div className="inline-flex items-center gap-1.5">
-                              {isWaiting && (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    updateOrderStatus(
-                                      activeStore.id,
-                                      ord.id,
-                                      "confirmed"
-                                    )
-                                  }
-                                  className="inline-flex items-center gap-1 rounded-lg bg-[#10B981] px-2.5 py-1.5 text-xs font-bold text-white transition-colors hover:bg-[#059669] cursor-pointer"
-                                >
-                                  <Check className="h-3.5 w-3.5" />
-                                  Confirmer
-                                </button>
-                              )}
-                              {canDeliver && (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    updateOrderStatus(
-                                      activeStore.id,
-                                      ord.id,
-                                      "delivered"
-                                    )
-                                  }
-                                  className="inline-flex items-center gap-1 rounded-lg border border-[#E2E8F0] bg-white px-2.5 py-1.5 text-xs font-semibold text-[#102A43] transition-colors hover:border-[#10B981] hover:text-[#10B981] cursor-pointer"
-                                >
-                                  Marquer livrée
-                                </button>
-                              )}
-                              <a
-                                href={`https://wa.me/${cleanPhone}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] text-[#10B981] transition-colors hover:bg-[#10B981] hover:text-white"
-                                title="Contacter le client sur WhatsApp"
-                              >
-                                <MessageCircle className="h-4 w-4" />
-                              </a>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
+                          </span>
+                          {isWaiting ? (
+                            <Button
+                              size="sm"
+                              variant="primary"
+                              onClick={() =>
+                                updateOrderStatus(
+                                  activeStore.id,
+                                  ord.id,
+                                  "confirmed"
+                                )
+                              }
+                            >
+                              <Check className="h-3.5 w-3.5" />
+                              Confirmer
+                            </Button>
+                          ) : (
+                            <Link
+                              href="/dashboard/commandes"
+                              className="rounded-lg border border-[#E2E8F0] px-3 py-1.5 text-xs font-bold text-[#15232D] hover:bg-slate-50"
+                            >
+                              Détails
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-          <div className="flex items-center justify-between border-t border-[#E2E8F0] bg-[#F8FAFC]/60 px-5 py-3">
-            <span className="text-xs text-slate-500">
-              {filteredRecentOrders.length} commande(s) affichée(s)
-            </span>
-            <Link
-              href="/dashboard/commandes"
-              className="inline-flex items-center gap-1 text-xs font-bold text-[#102A43] hover:text-[#10B981]"
-            >
-              Ouvrir la gestion complète des commandes
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+      {/* ONGLET 2 : GUIDE DES PAGES (À QUOI SERT CHAQUE PAGE DU TABLEAU DE BORD) */}
+      {activeTab === "guide" && (
+        <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+          {MERCHANT_PAGES_DIRECTORY.map((page) => {
+            const Icon = page.icon;
+            return (
+              <Link
+                key={page.href}
+                href={page.href}
+                className="group flex flex-col justify-between rounded-2xl border border-[#E2E8F0] bg-white p-4 transition hover:border-[#00A884] hover:shadow-xs"
+              >
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#E7F7F2] text-[#073B35]">
+                      <Icon className="h-5 w-5 text-[#00A884]" />
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-xs font-extrabold text-[#00A884] group-hover:translate-x-0.5 transition-transform">
+                      Ouvrir
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-extrabold text-[#15232D]">
+                    {page.title}
+                  </h3>
+                  <p className="text-xs leading-relaxed text-slate-600">
+                    {page.purpose}
+                  </p>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ONGLET 3 : COURBE DES VENTES & MEILLEURS PRODUITS */}
+      {activeTab === "chart" && (
+        <div className="grid gap-6 lg:grid-cols-12">
+          <Card className="border-[#E2E8F0] bg-white lg:col-span-7">
+            <CardHeader className="flex items-center justify-between border-b border-[#E2E8F0] px-5 py-4">
+              <div>
+                <h2 className="text-sm font-extrabold text-[#15232D]">
+                  Évolution de vos ventes
+                </h2>
+                <p className="text-xs text-slate-500">Activité jour par jour</p>
+              </div>
+              <Badge variant="navy">{storeOrders.length} cmd</Badge>
+            </CardHeader>
+            <CardContent className="p-5">
+              <SalesInteractiveChart
+                orders={storeOrders}
+                currency={activeStore.currency}
+              />
+            </CardContent>
+          </Card>
+
+          <Card className="border-[#E2E8F0] bg-white lg:col-span-5">
+            <CardHeader className="flex items-center justify-between border-b border-[#E2E8F0] px-5 py-4">
+              <div>
+                <h2 className="text-sm font-extrabold text-[#15232D]">
+                  Produits les plus vendus
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Sur la période choisie
+                </p>
+              </div>
+              <Link
+                href="/dashboard/produits"
+                className="text-xs font-bold text-[#00A884] hover:underline"
+              >
+                Catalogue →
+              </Link>
+            </CardHeader>
+            <CardContent className="p-4">
+              {rankedProducts.length === 0 ? (
+                <div className="py-8 text-center">
+                  <Package className="mx-auto h-7 w-7 text-slate-300" />
+                  <p className="mt-2 text-xs text-slate-500">
+                    Aucun produit dans votre catalogue.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {rankedProducts.slice(0, 4).map((item, idx) => (
+                    <div
+                      key={item.product.id}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-2.5"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white text-[11px] font-extrabold text-[#073B35]">
+                          {idx + 1}
+                        </span>
+                        <img
+                          src={item.product.images[0]}
+                          alt={item.product.name}
+                          className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                        />
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-bold text-[#15232D]">
+                            {item.product.name}
+                          </p>
+                          <p className="text-[11px] text-slate-500">
+                            {item.unitsSold} vendu(s) · Stock{" "}
+                            {item.product.stock}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="shrink-0 text-xs font-extrabold text-[#00A884]">
+                        {formatCurrency(item.revenue, activeStore.currency)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

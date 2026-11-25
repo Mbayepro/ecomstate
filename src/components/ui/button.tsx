@@ -23,16 +23,17 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     const variants: Record<NonNullable<ButtonProps["variant"]>, string> = {
       primary:
-        "bg-[#10B981] text-white hover:bg-[#059669] focus-visible:ring-[#10B981] shadow-xs hover:shadow-md hover:shadow-[#10B981]/20",
+        "bg-[#00A884] text-white hover:bg-[#008F6F] focus-visible:ring-[#00A884] shadow-xs hover:shadow-md hover:shadow-[#00A884]/25",
       secondary:
-        "bg-[#102A43] text-white hover:bg-[#1B3B5A] focus-visible:ring-[#102A43] shadow-xs hover:shadow-md hover:shadow-[#102A43]/15",
+        "bg-[#073B35] text-white hover:bg-[#0B5249] focus-visible:ring-[#073B35] shadow-xs hover:shadow-md hover:shadow-[#073B35]/20",
       outline:
-        "border border-[#E2E8F0] bg-white text-[#102A43] hover:border-[#102A43]/30 hover:bg-[#F8FAFC] focus-visible:ring-[#102A43]",
+        "border border-[#D5E3DF] bg-white text-[#15232D] hover:border-[#073B35]/35 hover:bg-[#E7F7F2]/50 focus-visible:ring-[#073B35]",
       ghost:
-        "bg-transparent text-[#1E293B] hover:bg-[#E2E8F0]/60 focus-visible:ring-[#102A43]",
+        "bg-transparent text-[#15232D] hover:bg-[#E7F7F2] focus-visible:ring-[#073B35]",
       danger:
         "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600 shadow-xs",
     };
+
 
     const sizes: Record<NonNullable<ButtonProps["size"]>, string> = {
       sm: "h-9 px-3.5 text-sm rounded-lg",

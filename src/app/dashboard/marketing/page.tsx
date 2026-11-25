@@ -46,7 +46,7 @@ export default function DashboardMarketingPage() {
   );
 
   const storeUrl = `${origin}/s/${activeStore.slug}`;
-  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=420x420&margin=12&color=102A43&bgcolor=FFFFFF&data=${encodeURIComponent(
+  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=420x420&margin=12&color=073B35&bgcolor=FFFFFF&data=${encodeURIComponent(
     storeUrl
   )}`;
 
@@ -56,7 +56,7 @@ export default function DashboardMarketingPage() {
 
   const generatedPost = useMemo(() => {
     const promoLine = activePromo
-      ? `\n🎁 Code promo actif : *${activePromo.code}* (${
+      ? `\n🎁 Code promo actif : ${activePromo.code} (${
           activePromo.discountType === "percent"
             ? `-${activePromo.discountValue}%`
             : `-${formatCurrency(activePromo.discountValue, activeStore.currency)}`
@@ -69,12 +69,12 @@ export default function DashboardMarketingPage() {
 
     if (!selectedProduct) {
       if (channel === "whatsapp") {
-        return `✨ *${activeStore.name}* est désormais ouvert en ligne 24h/24 !\n\nDécouvrez tous nos articles disponibles avec photos réelles, prix en ${activeStore.currency} et commande rapide en 2 clics.${promoLine}\n\n🚚 ${activeStore.settings.deliveryInfo}\n👉 Visitez la boutique ici : ${storeUrl}`;
+        return `✨ ${activeStore.name} est ouvert en ligne 24h/24 !\n\nDécouvrez nos articles disponibles avec photos réelles, prix en ${activeStore.currency} et commande directe en 30 secondes (100 % paiement à la livraison).${promoLine}\n\n🚚 ${activeStore.settings.deliveryInfo}\n👉 Commandez ici : ${storeUrl}`;
       }
       if (channel === "tiktok") {
-        return `🔥 Plus besoin d'attendre en DM pour commander chez ${activeStore.name} !\nTout notre catalogue est disponible en ligne avec paiement à la livraison & Mobile Money.${promoLine}\n\n🔗 Lien direct en bio : ${storeUrl}\n#EcommerceAfrique #${activeStore.name.replace(/\s+/g, "")} #BoutiqueEnLigne #LivraisonRapide #Shopping`;
+        return `🔥 Commandez directement en ligne chez ${activeStore.name} !\nTout notre catalogue est disponible avec paiement 100 % à la livraison (COD).${promoLine}\n\n🔗 Lien direct en bio : ${storeUrl}\n#EcommerceAfrique #${activeStore.name.replace(/\s+/g, "")} #PaiementALaLivraison #LivraisonRapide`;
       }
-      return `🎉 Bonne nouvelle ! Commandez désormais facilement chez ${activeStore.name} depuis votre téléphone !\n\n✅ Catalogue complet & prix transparents en ${activeStore.currency}\n✅ Paiement à la livraison, WhatsApp ou Mobile Money\n✅ ${activeStore.settings.deliveryInfo}${promoLine}\n\n👇 Cliquez ici pour découvrir nos articles :\n${storeUrl}`;
+      return `🎉 Commandez facilement chez ${activeStore.name} depuis votre téléphone !\n\n✅ Catalogue complet en ${activeStore.currency}\n✅ 100 % Paiement à la livraison (COD)\n✅ ${activeStore.settings.deliveryInfo}${promoLine}\n\n👇 Cliquez ici pour commander :\n${storeUrl}`;
     }
 
     const displayPrice = formatCurrency(
@@ -86,14 +86,14 @@ export default function DashboardMarketingPage() {
       : "";
 
     if (channel === "whatsapp") {
-      return `🔥 *NOUVEL ARRIVAGE — ${selectedProduct.name}*\n\n💰 Prix : *${displayPrice}*${oldPrice}\n📦 Stock disponible : ${selectedProduct.stock > 0 ? "En stock immédiat" : "Sur commande"}\n📝 ${selectedProduct.description.slice(0, 140)}${promoLine}\n\n🚚 ${activeStore.settings.deliveryInfo}\n👉 Commander en 1 clic : ${targetUrl}`;
+      return `🔥 NOUVEL ARRIVAGE — ${selectedProduct.name}\n\n💰 Prix : ${displayPrice}${oldPrice}\n📦 Disponibilité : ${selectedProduct.stock > 0 ? "En stock immédiat" : "Sur commande"}\n📝 ${selectedProduct.description.slice(0, 140)}${promoLine}\n\n🚚 Paiement 100 % à la livraison\n👉 Commander en 1 clic : ${targetUrl}`;
     }
 
     if (channel === "tiktok") {
-      return `✨ Coup de cœur du jour chez ${activeStore.name} : ${selectedProduct.name} à seulement ${displayPrice}${oldPrice} ! 😍\nPaiement à la livraison ou Mobile Money.${promoLine}\n\n👇 Lien direct pour commander : ${targetUrl}\n#BonPlan #ShoppingAfrique #${activeStore.name.replace(/\s+/g, "")} #LivraisonExpress`;
+      return `✨ Coup de cœur du jour chez ${activeStore.name} : ${selectedProduct.name} à ${displayPrice}${oldPrice} !\nVous payez uniquement à la livraison.${promoLine}\n\n👇 Lien direct pour commander : ${targetUrl}\n#Shopping #PaiementALaLivraison #${activeStore.name.replace(/\s+/g, "")}`;
     }
 
-    return `🛍️ DISPONIBLE CHEZ ${activeStore.name.toUpperCase()} !\n\n✨ ${selectedProduct.name}\n💰 Tarif : ${displayPrice}${oldPrice}\n\n${selectedProduct.description}\n\n✅ Paiement à la livraison ou Mobile Money\n✅ ${activeStore.settings.deliveryInfo}${promoLine}\n\n👉 Commandez directement ici sans attendre :\n${targetUrl}`;
+    return `🛍️ DISPONIBLE CHEZ ${activeStore.name.toUpperCase()} !\n\n✨ ${selectedProduct.name}\n💰 Tarif : ${displayPrice}${oldPrice}\n\n${selectedProduct.description}\n\n✅ 100 % Paiement à la livraison (COD)\n✅ ${activeStore.settings.deliveryInfo}${promoLine}\n\n👉 Commandez directement sur la boutique :\n${targetUrl}`;
   }, [activeStore, selectedProduct, channel, activePromo, storeUrl]);
 
   const copyText = (text: string, which: "link" | "post") => {
@@ -122,8 +122,8 @@ export default function DashboardMarketingPage() {
         <Card className="border-[#E2E8F0] bg-white lg:col-span-5">
           <CardHeader className="border-b border-[#E2E8F0] px-5 py-4">
             <div className="flex items-center justify-between">
-              <h2 className="flex items-center gap-2 text-sm font-extrabold text-[#102A43]">
-                <QrCode className="h-4 w-4 text-[#10B981]" />
+              <h2 className="flex items-center gap-2 text-sm font-extrabold text-[#073B35]">
+                <QrCode className="h-4 w-4 text-[#00A884]" />
                 QR Code officiel de votre boutique
               </h2>
               <Badge variant="success">Prêt à imprimer</Badge>
@@ -134,7 +134,7 @@ export default function DashboardMarketingPage() {
             <div
               className="rounded-2xl border-2 p-6 text-center shadow-sm"
               style={{
-                borderColor: activeStore.settings.primaryColor || "#102A43",
+                borderColor: activeStore.settings.primaryColor || "#073B35",
                 background:
                   "linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)",
               }}
@@ -142,7 +142,7 @@ export default function DashboardMarketingPage() {
               <p
                 className="text-xs font-extrabold uppercase tracking-widest"
                 style={{
-                  color: activeStore.settings.secondaryColor || "#10B981",
+                  color: activeStore.settings.secondaryColor || "#00A884",
                 }}
               >
                 Scannez pour commander en ligne
@@ -150,7 +150,7 @@ export default function DashboardMarketingPage() {
               <h3
                 className="mt-1 text-xl font-extrabold"
                 style={{
-                  color: activeStore.settings.primaryColor || "#102A43",
+                  color: activeStore.settings.primaryColor || "#073B35",
                 }}
               >
                 {activeStore.name}
@@ -165,12 +165,11 @@ export default function DashboardMarketingPage() {
                 />
               </div>
 
-              <p className="truncate rounded-lg bg-[#F1F5F9] px-3 py-1.5 font-mono text-[11px] font-bold text-[#102A43]">
+              <p className="truncate rounded-lg bg-[#F1F5F9] px-3 py-1.5 font-mono text-[11px] font-bold text-[#073B35]">
                 {storeUrl}
               </p>
-              <p className="mt-2 text-[11px] text-slate-500">
-                WhatsApp : {activeStore.settings.whatsappPhone} · Paiement à la
-                livraison & Mobile Money
+              <p className="mt-2 text-[11px] font-semibold text-[#073B35]">
+                Commandez en ligne · Paiement 100 % à la livraison (COD)
               </p>
             </div>
 
@@ -189,9 +188,9 @@ export default function DashboardMarketingPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 download={`qrcode-${activeStore.slug}.png`}
-                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-[#E2E8F0] bg-white px-3 text-xs font-bold text-[#102A43] hover:bg-slate-50"
+                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-[#E2E8F0] bg-white px-3 text-xs font-bold text-[#073B35] hover:bg-slate-50"
               >
-                <Download className="h-3.5 w-3.5 text-[#10B981]" />
+                <Download className="h-3.5 w-3.5 text-[#00A884]" />
                 Ouvrir PNG
               </a>
             </div>
@@ -200,10 +199,10 @@ export default function DashboardMarketingPage() {
               <button
                 type="button"
                 onClick={() => copyText(storeUrl, "link")}
-                className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 text-xs font-semibold text-[#102A43] hover:bg-white cursor-pointer"
+                className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 text-xs font-semibold text-[#073B35] hover:bg-white cursor-pointer"
               >
                 {copiedLink ? (
-                  <Check className="h-3.5 w-3.5 text-[#10B981]" />
+                  <Check className="h-3.5 w-3.5 text-[#00A884]" />
                 ) : (
                   <Copy className="h-3.5 w-3.5 text-slate-500" />
                 )}
@@ -213,7 +212,7 @@ export default function DashboardMarketingPage() {
                 href={storeUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-9 items-center justify-center gap-1 rounded-lg border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#102A43] hover:bg-slate-50"
+                className="inline-flex h-9 items-center justify-center gap-1 rounded-lg border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#073B35] hover:bg-slate-50"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
                 Ouvrir
@@ -226,8 +225,8 @@ export default function DashboardMarketingPage() {
         <Card className="border-[#E2E8F0] bg-white lg:col-span-7">
           <CardHeader className="border-b border-[#E2E8F0] px-5 py-4">
             <div className="flex items-center justify-between">
-              <h2 className="flex items-center gap-2 text-sm font-extrabold text-[#102A43]">
-                <Sparkles className="h-4 w-4 text-[#10B981]" />
+              <h2 className="flex items-center gap-2 text-sm font-extrabold text-[#073B35]">
+                <Sparkles className="h-4 w-4 text-[#00A884]" />
                 Générateur de Posts Statut WhatsApp, TikTok & Facebook
               </h2>
               <Badge variant="navy">Adeshina IA</Badge>
@@ -242,7 +241,7 @@ export default function DashboardMarketingPage() {
                 <select
                   value={selectedProductId}
                   onChange={(e) => setSelectedProductId(e.target.value)}
-                  className="h-10.5 w-full rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#102A43] focus:border-[#102A43] focus:outline-none"
+                  className="h-10.5 w-full rounded-xl border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#073B35] focus:border-[#073B35] focus:outline-none"
                 >
                   <option value="store">
                     Présentation générale de {activeStore.name}
@@ -278,8 +277,8 @@ export default function DashboardMarketingPage() {
                       onClick={() => setChannel(id)}
                       className={`h-10.5 rounded-xl border text-xs font-bold transition-colors cursor-pointer ${
                         channel === id
-                          ? "border-[#102A43] bg-[#102A43] text-white"
-                          : "border-[#E2E8F0] bg-[#F8FAFC] text-slate-600 hover:text-[#102A43]"
+                          ? "border-[#073B35] bg-[#073B35] text-white"
+                          : "border-[#E2E8F0] bg-[#F8FAFC] text-slate-600 hover:text-[#073B35]"
                       }`}
                     >
                       {label}
@@ -291,7 +290,7 @@ export default function DashboardMarketingPage() {
 
             {activePromo && (
               <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-xs text-emerald-900">
-                <Megaphone className="h-4 w-4 shrink-0 text-[#10B981]" />
+                <Megaphone className="h-4 w-4 shrink-0 text-[#00A884]" />
                 <span>
                   Adeshina IA a automatiquement inclus votre code promo actif{" "}
                   <strong className="font-mono">{activePromo.code}</strong> dans
@@ -308,7 +307,7 @@ export default function DashboardMarketingPage() {
                 readOnly
                 rows={9}
                 value={generatedPost}
-                className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-xs leading-relaxed text-[#102A43] focus:outline-none"
+                className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-xs leading-relaxed text-[#073B35] focus:outline-none"
               />
             </div>
 
@@ -330,7 +329,7 @@ export default function DashboardMarketingPage() {
                 href={`https://wa.me/?text=${encodeURIComponent(generatedPost)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#10B981] bg-[#10B981]/10 px-4 text-xs font-bold text-[#059669] transition hover:bg-[#10B981] hover:text-white"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#00A884] bg-[#00A884]/10 px-4 text-xs font-bold text-[#008F6F] transition hover:bg-[#00A884] hover:text-white"
               >
                 <MessageCircle className="h-4 w-4" />
                 Partager sur WhatsApp
@@ -349,7 +348,7 @@ export default function DashboardMarketingPage() {
                     copyText(generatedPost, "post");
                   }
                 }}
-                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-[#E2E8F0] bg-white px-4 text-xs font-bold text-[#102A43] hover:bg-slate-50 cursor-pointer"
+                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-[#E2E8F0] bg-white px-4 text-xs font-bold text-[#073B35] hover:bg-slate-50 cursor-pointer"
               >
                 <Share2 className="h-4 w-4 text-slate-500" />
                 Partager (Mobile)

@@ -19,20 +19,20 @@ export const metadata: Metadata = {
     template: "%s | EcomSate",
   },
   description:
-    "Plateforme SaaS e-commerce propulsée par Adeshina IA. Créez votre boutique en ligne professionnelle, gérez vos stocks et recevez vos commandes par WhatsApp et Mobile Money.",
+    "La plateforme e-commerce tout-en-un pensée pour les vendeurs Cash on Delivery (COD). Créez votre boutique Shrine Pro, personnalisez votre formulaire COD et pilotez vos commandes, livreurs et bénéfice réel.",
   openGraph: {
     type: "website",
     locale: "fr_FR",
     siteName: "EcomSate",
-    title: "EcomSate — Votre boutique. Votre marque. Votre commerce.",
+    title: "EcomSate — Créez votre boutique COD et pilotez votre vrai bénéfice.",
     description:
-      "Lancez votre boutique en ligne professionnelle en 2 minutes avec Adeshina IA. Commandes WhatsApp, paiement à la livraison et Mobile Money (0 % commission).",
+      "Lancez votre boutique en ligne 100 % paiement à la livraison (COD) avec Store Builder Shrine Pro, Form Builder COD, suivi livreurs et Adeshina IA.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "EcomSate — Votre boutique. Votre marque. Votre commerce.",
+    title: "EcomSate — Créez votre boutique COD et pilotez votre vrai bénéfice.",
     description:
-      "La plateforme e-commerce SaaS pensée pour les commerçants africains, propulsée par Adeshina IA.",
+      "La plateforme e-commerce pensée pour les vendeurs Cash on Delivery (COD), propulsée par Adeshina IA.",
   },
 };
 
@@ -56,7 +56,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen bg-white text-[#1E293B] antialiased">
+      <body className="min-h-screen bg-white text-[#15232D] antialiased">
         <PlatformProvider>
           {children}
           <AdeshinaFloatingWidget />

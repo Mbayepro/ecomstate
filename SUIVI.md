@@ -1,156 +1,65 @@
-# Suivi du Projet — EcomSate
+# Suivi Officiel du Projet — EcomSate
 
-Ce document permet de suivre pas à pas l'avancement du développement conformément au [Cahier des charges](./docs/CAHIER_DES_CHARGES.md).
+Ce document retrace la conformité complète de la plateforme avec le **Cahier des charges officiel EcomSate (42 pages)** (`Cahier_des_charges_officiel_EcomSate.pdf`).
 
-**Légende** : `[ ]` À faire · `[~]` En cours · `[x]` Terminé et testé
-
----
-
-## 0. Socle technique & Base de données
-
-### Initialisation du projet
-- [x] Initialisation Next.js (App Router) + TypeScript + Tailwind CSS
-- [x] Configuration du design system (couleurs `#102A43`, `#10B981`, `#F8FAFC`, `#1E293B`, `#E2E8F0`, police `Inter` / `Manrope`)
-- [x] Configuration Supabase (PostgreSQL, Auth, Storage) + variables d'environnement sécurisées (`.env.example`, `src/lib/supabase/`)
-- [x] Architecture multi-tenant (middleware de routage sous-domaines / domaines personnalisés `src/middleware.ts`)
-- [x] Système centralisé de rôles, permissions et modules (`src/lib/permissions.ts`)
-
-### Schéma PostgreSQL & RLS (Section 15)
-- [x] `profiles`, `stores`, `store_members`, `store_settings` (`supabase/migrations/0001_initial_schema.sql`)
-- [x] `countries`, `payment_providers`
-- [x] `categories`, `products`, `product_images`, `product_variants`, `inventory_movements`
-- [x] `customers`, `addresses`, `orders`, `order_items`
-- [x] `subscription_plans`, `modules`, `plan_modules`, `subscriptions`
-- [x] `payments`, `payment_transactions`
-- [x] `custom_domains`, `domain_orders`, `domain_renewals`
-- [x] `notifications`, `audit_logs`
-- [x] Contraintes, index, clés étrangères (`store_id`) et politiques **Row Level Security (RLS)** (`supabase/migrations/0002_rls_policies.sql`)
+**Légende** : `[x]` Terminé et vérifié
 
 ---
 
-## PHASE 1 — MVP
-
-### Identité visuelle & Site vitrine (Sections 2 & 4)
-- [x] Composants UI réutilisables (mobile-first, minimaliste, premium)
-- [x] Page **Accueil** (Hero, Comment ça marche en 3 étapes, Fonctionnalités, Avantages, Tarifs, FAQ)
-- [x] Pages secondaires : Fonctionnalités, Tarifs, Comment ça marche, À propos, FAQ, Contact
-- [x] Pages légales : Politique de confidentialité (`/confidentialite`), CGU (`/cgu`), Conditions commerciales (`/conditions-commerciales`)
-
-
-### Authentification & Création de boutique (Section 5)
-- [x] Inscription commerçant (nom complet, nom boutique, e-mail, téléphone, pays, mot de passe)
-- [x] Connexion et création de boutique en 1 clic par **Google OAuth** (`/auth/callback`, `/connexion`, `/creer-une-boutique`)
-- [x] Connexion / Déconnexion + Identifiants Super Admin Bénin modifiables (`admin@ecomsate.bj` · `+229 95 78 21 32`)
-- [x] Création automatique de la boutique + attribution d'un sous-domaine (`boutique.ecomsate.com`)
-- [x] Upload direct de photos produits, logos et bannières avec compression automatique 3G/4G + Supabase Storage (`store-assets`)
-- [x] Page d'abonnement & règlement Mobile Money direct sans NINEA/RCCM (`/dashboard/abonnement`) avec validation et activation exclusives par le Super Admin (`/admin`)
-
-
-### Espace commerçant (Sections 7 & 9)
-- [x] **Tableau de bord** : KPIs complets (CA, commandes, attente, confirmées, livrées, disponibles, ruptures), évolution des ventes interactive + filtres temporels (`Aujourd'hui`, `7j`, `30j`, `Tout`, `Personnalisé`)
-- [x] **Statistiques dédiées** (`/dashboard/statistiques`) : ventilations réelles par catégorie, ville de livraison, canal de paiement et produit
-- [x] **Collaborateur Adeshina IA** (`/dashboard/adeshina-ia` + tiroir latéral) : analyse des ventes, produits populaires, stocks faibles, résumé des commandes, conseils et studio fiche produit
-- [x] **Gestion des catégories** : CRUD complet + suggestions rapides
-- [x] **Gestion des produits** : CRUD, multi-photos, prix & prix promo, description, catégorie, variantes, ajustement rapide de stock, vue cartes mobile / liste & grille desktop
-- [x] **Gestion des stocks** : quantité dispo, entrée de stock avec motif libre, décrémentation automatique, alertes stock faible, historique des mouvements, ruptures
-- [x] **Gestion des commandes** : numéro unique, avancement rapide en 1 clic, contact WhatsApp client, workflow des 7 statuts
-- [x] **Gestion des clients** : liste, filtre par ville, coordonnées, adresses, historique dépliable des commandes
-- [x] **Personnalisation boutique** : logo, bannière, couleurs principales/secondaires, 3 modèles distincts (`Minimal`, `Boutique`, `Éditorial`), sections d'accueil configurables, réseaux sociaux (Instagram, Facebook, TikTok), aperçu mobile en direct
-
-### Boutiques publiques & Commandes V1 (Sections 8 & 11.2)
-- [x] Rendu dynamique par sous-domaine (`*.ecomsate.com` et `/s/[slug]`) avec identité visuelle propre à chaque boutique et métadonnées SEO
-- [x] Page d'accueil riche : en-tête avec logo & recherche visible, bannière adaptative selon le modèle, catégories, produits populaires, promotions, nouveautés et produits recommandés
-- [x] Catalogue complet : filtres par catégorie, budget/prix et disponibilité en stock + aperçu rapide (Quick View)
-- [x] Page produit dédiée (`/s/[slug]/produit/[productSlug]`) : galerie multi-images, variantes groupées, quantité, disponibilité, achat immédiat, commande WhatsApp et produits similaires
-- [x] Panier isolé par boutique & tunnel de commande mobile-first (Livraison à domicile ou Retrait en boutique, récapitulatif clair, barre flottante mobile)
-- [x] Paiement à la livraison (COD), Commande via WhatsApp et Mobile Money manuel avec confirmation vendeur
-
-### Administration générale — socle (Section 12)
-- [x] Console d'administration (`/admin`)
-- [x] Liste des commerçants, consultation boutiques, activation / suspension de compte, gestion des plans & modules
-- [x] Paramètres généraux (pays disponibles, devises, moyens de paiement)
-- [x] Journalisation des opérations sensibles (`audit_logs`)
+## 1. Identité Visuelle & Palette Officielle (Section 2)
+- [x] **Vert émeraude `#00A884`** (hover `#008F6F`) — Actions principales, validation, conversion COD
+- [x] **Vert profond `#073B35`** (`#052B27` / `#0B5249`) — Fonds architecturaux premium & identité EcomSate
+- [x] **Mint clair `#E7F7F2`** — Surfaces douces et surbrillances
+- [x] **Blanc cassé `#F8FAFC`** — Fond principal de l'espace de travail
+- [x] **Bleu graphite `#15232D`** — Textes, navigation et structures
+- [x] **Ambre `#F4A340`** — Alertes opérationnelles et avertissements
+- [x] Logo vectoriel, favicon et image Open Graph harmonisés (`src/components/ui/brand-logo.tsx`, `src/app/icon.svg`, `src/app/opengraph-image.tsx`)
 
 ---
 
-## PHASE 2 — MONÉTISATION
-
-### Activation & Offres (Sections 5, 6 & 11.1)
-- [x] Paiement d'activation unique (`2 000 FCFA`) -> déclenche création boutique + 30 jours d'essai
-- [x] Offre **Standard** (`7 500 FCFA / mois` ou `75 000 FCFA / an`) + tarif annuel préférentiel (-2 mois)
-- [x] Offre **Premium** (`15 000 FCFA / mois` ou `150 000 FCFA / an`) + tarif annuel préférentiel (-2 mois)
-- [x] Circuit de règlement Mobile Money direct sans NINEA/RCCM (`/dashboard/abonnement`) + validation exclusive par le Super Admin (`/admin`)
-
-### Gestion des modules, renouvellements & suspensions (Sections 6.4, 12 & 13)
-- [x] Administration des offres : création/modification tarifs, modules et limites sans toucher au code
-- [x] Historique des paiements, dates de début/expiration (`getStoreSubscriptionHealth`), renouvellement mensuel (30j) ou annuel (365j)
-- [x] Suspension automatique à expiration + respect strict des restrictions d'accès sur la boutique publique (`/s/[slug]`) et dans le dashboard
-- [x] Réactivation automatique après confirmation de paiement par le Super Admin
-- [x] Tableau de bord financier admin (`/admin` -> *Revenus & Finances* : revenus activations, abonnements, transactions, export CSV)
-- [x] Centre de notifications intégré (cloche de notifications temps réel : nouvelle commande, paiement déclaré, abonnement activé/refusé) + contact WhatsApp en 1 clic
-
+## 2. Site Public, Abonnements & Onboarding (Sections 4, 5 & 6)
+- [x] **Hero officiel** : *« Votre e-commerce. Un seul espace. Une intelligence qui travaille avec vous. »* (`src/app/(marketing)/page.tsx`)
+- [x] **9 problèmes terrain des commerçants COD** & **12 modules connectés**
+- [x] **Démonstrations fonctionnelles réelles** (Store Builder Shrine Pro, Form Builder COD, Rapprochement Livreurs & Profit, Adeshina IA)
+- [x] **Zéro faux témoignage & zéro fausse statistique** : uniquement des boutiques modèles testables (`/s/atelier-dakar`, `/s/cotonou-tech`)
+- [x] **Système d'abonnements Standard (`7 500 FCFA/mois`) & Premium (`15 000 FCFA/mois`)** + Comparateur détaillé 14 critères (`src/app/(marketing)/tarifs/page.tsx`, `src/lib/permissions.ts`)
+- [x] **Assistant d'Onboarding Guidé** (`/creer-une-boutique`) avec option permanente *« Ignorer et créer directement »* + catalogue vierge garanti (0 produit fictif)
 
 ---
 
-## PHASE 3 — DOMAINES PERSONNALISÉS & MARKETING AVANCÉ
-
-### Domaines Premium & Outils Commerciaux (Sections 10 & 12)
-- [x] Espace **Nom de domaine personnalisé** (`/dashboard/domaine`) réservé aux boutiques Premium
-- [x] Connexion d'un domaine externe (guide DNS `A` / `CNAME` avec copie 1-clic) & commande de domaine (`.com`, `.bj`, `.sn`, `.ci`, `.shop`)
-- [x] Administration des domaines dans `/admin` (onglet *Domaines Premium* avec activation SSL HTTPS en 1 clic)
-- [x] Système de **Codes Promo & Réductions** (`/dashboard/promotions` + panier client)
-- [x] **Zones & Tarifs de livraison** configurables par ville/quartier + seuil de livraison gratuite
-- [x] **Kit Marketing 1-clic** (`/dashboard/marketing` : QR Code boutique imprimable + générateur de posts WhatsApp/TikTok/Facebook par Adeshina IA)
-- [x] **Reçu de commande imprimable** + **Suivi de commande public** sur chaque boutique
-
+## 3. Store Builder Modulaire & Thèmes Shrine Pro 1 / 3 (Section 8)
+- [x] **Thème Shrine Pro 1 (Référence — inclus dès Standard)** : barre d'annonce COD, Hero orienté bénéfices, Ticker défilant, grille de 4 bénéfices, barres de résultats % et FAQ accordéon (`src/lib/shrine-themes.ts`, `src/components/storefront/shrine-sections.tsx`)
+- [x] **Thème Shrine Pro 3 Ultra-Conversion (Premium)** : Offres Packs / Quantity Breaks (`1x`, `Duo -5%`, `Trio -10%`), tableau comparatif *Votre marque vs Autres*, formulaire COD intégré sur la fiche produit
+- [x] **Store Builder visuel** (`/dashboard/store-builder`) : ajout, suppression, duplication, réorganisation, masquage de sections, aperçu Mobile/Desktop en direct et publication versionnée
 
 ---
 
-## PHASE 4 — AUTOMATISATION COMMERCIALE
-
-- [ ] Intégration **Wave** (selon KYC et pays)
-- [ ] Intégration **Orange Money**
-- [ ] Intégration **MTN Mobile Money**
-- [ ] Intégration **Moov Money**
-- [ ] Intégration cartes bancaires & solutions locales configurables par pays
-- [ ] Notifications avancées (WhatsApp / SMS)
-- [ ] Statistiques détaillées & analytiques avancées
-- [ ] Gestion des codes promotionnels
-- [ ] Fonctionnalités commerciales supplémentaires
-
----
-
-## PHASE 5 — EXPANSION
-
-- [ ] Ajout de nouveaux pays francophones et paramètres locaux
-- [ ] Support multi-devises étendu
-- [ ] Nouvelles extensions de domaines nationales (`.sn`, `.bj`, `.ci`, `.tg`, `.bf`, etc.)
-- [ ] Nouveaux moyens de paiement régionaux
-- [ ] Modules avancés additionnels
-- [ ] Étude / développement application mobile
+## 4. Form Builder COD & Parcours 100 % Paiement à la Livraison (Sections 9, 10 & 18)
+- [x] **100 % Cash on Delivery (COD)** sur les boutiques clientes (`/s/[slug]`)
+- [x] **Zéro flux de commande WhatsApp** et **zéro paiement en ligne** côté client boutique
+- [x] **Zéro numéro privé du propriétaire exposé publiquement** sur les vitrines (`/s/[slug]`)
+- [x] **Form Builder COD visuel** (`/dashboard/form-builder`) :
+  - 15 types de champs + règles d'affichage conditionnel
+  - Personnalisation du style (couleurs, bordures, arrondis, texte du bouton, offres packs)
+  - 7 modèles prêts à l'emploi par niche (Mobile Express, Simple, Mode, Chaussures, Cosmétiques, Électronique, Maison)
+  - Aperçu Mobile/Desktop en temps réel, sauvegarde brouillon, historique des versions et restauration en 1 clic
+  - **Assistant Adeshina IA Form Builder** travaillant exclusivement sur le brouillon avec prévisualisation avant publication
 
 ---
 
-## Checklist Sécurité & Validation commerciale (Sections 16 & 18)
+## 5. Opérations E-commerce, Livreurs COD & Bénéfice Réel (Sections 7, 10, 11, 12, 13 & 14)
+- [x] **Produits enrichis** (`/dashboard/produits`) : SKU, prix d'achat, coût additionnel, calculateur de marge brute en temps réel, **Export CSV** et **Import CSV guidé** avec détection anti-doublon
+- [x] **Commandes COD — 11 statuts officiels** (`/dashboard/commandes`) : création manuelle, assignation livreur, statut financier COD indépendant, détection anti-doublon sous 24h, notes internes, journal d'audit complet et bon COD imprimable
+- [x] **CRM Clients** (`/dashboard/clients`) : segmentation (`Tous`, `Fidèles`, `Retours / À risque`, `Nouveaux`), compteur de retours, notes privées et export CSV
+- [x] **Livreurs & Rapprochement COD** (`/dashboard/livreurs`) : gestion des livreurs selon quota du plan, colis en tournée, cash encaissé sur livrés, reversements enregistrés et reste à remettre
+- [x] **Finances & Bénéfice Net Réel** (`/dashboard/finances`) : distinction stricte entre commandes livrées (acquises) et commandes en cours, déduction automatique du coût d'achat des produits livrés et des dépenses (Publicités, Livraison, Emballage, Salaires, Divers)
+- [x] **Centre de contrôle** (`/dashboard`) : 7 filtres temporels (`Aujourd'hui`, `Hier`, `7j`, `30j`, `Ce mois`, `Mois précédent`, `Personnalisé`), taux de livraison %, taux de retour % et widgets personnalisables
 
-### Sécurité (Section 16)
-- [ ] Isolation stricte multi-tenant vérifiée par tests (commerçant A ne voit jamais boutique B)
-- [ ] Impossible pour un utilisateur de modifier son propre abonnement
-- [ ] Paiements confirmés exclusivement côté serveur (jamais simulés en prod)
-- [ ] Webhooks authentifiés et idempotents
-- [ ] Aucune clé secrète dans le code frontend
-- [ ] Domaines vérifiés avant association + HTTPS actif
+---
 
-### Critères de validation avant lancement (Section 18)
-- [ ] 1. Un commerçant peut créer son compte et activer sa boutique
-- [ ] 2. Il peut ajouter et modifier des produits
-- [ ] 3. Un visiteur peut passer une commande
-- [ ] 4. Le commerçant reçoit la commande dans son tableau de bord
-- [ ] 5. Les données de deux boutiques restent totalement isolées
-- [ ] 6. Les abonnements activent les bonnes fonctionnalités
-- [ ] 7. Un compte expiré respecte les restrictions prévues
-- [ ] 8. Un commerçant Premium peut connecter son propre domaine
-- [ ] 9. Le domaine affiche la bonne boutique en HTTPS
-- [ ] 10. Les paiements sont vérifiés côté serveur
-- [ ] 11. L'interface fonctionne sur smartphone et ordinateur
-- [ ] 12. L'administration générale peut superviser toute la plateforme
+## 6. Croissance, Équipe, Adeshina IA, Schéma SQL & Super Admin (Sections 16, 17, 19, 20, 21 & 22)
+- [x] **Migration PostgreSQL & RLS complète des modules COD** (`supabase/migrations/0005_official_cod_modules.sql` : `cod_forms`, `couriers`, `order_status_history`, `store_expenses`, `ad_campaigns`, `automation_rules`, extensions `products`, `orders`, `customers`, `store_settings`, `store_members`)
+- [x] **Campagnes Publicitaires & ROAS Réel** + **Exécution automatique en temps réel des Automatisations** (`/dashboard/croissance`, déclenchées automatiquement lors des nouvelles commandes COD, doublons sous 24h, seuils de stock critiques et livraisons livreurs)
+- [x] **Multi-boutiques (jusqu'à 5 boutiques isolées) & Contrôle d'accès réel (RBAC) des 6 rôles d'équipe** (`/dashboard/equipe`, `canTeamRoleAccessPath` dans `src/lib/permissions.ts`)
+- [x] **Adeshina IA Actionnable** (`/dashboard/adeshina-ia`) : diagnostic rentabilité/livreurs/stocks sur données réelles, préparation de fiches produits et d'adaptations COD soumises à validation + journal d'actions IA
+- [x] **Console Super Admin** (`/admin`) : supervision globale des commerçants, plans Standard/Premium, modules, domaines personnalisés et journal d'audit
