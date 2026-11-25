@@ -29,7 +29,9 @@ import {
   ShieldCheck,
   ShoppingBag,
   Sparkles,
+  Tag,
   Users,
+
   X,
 } from "lucide-react";
 import { BrandLogo, BrandLogoMark } from "@/components/ui/brand-logo";
@@ -82,8 +84,14 @@ const NAV_GROUPS: NavGroup[] = [
         icon: Boxes,
         badgeType: "stock",
       },
+      {
+        href: "/dashboard/promotions",
+        label: "Codes Promo",
+        icon: Tag,
+      },
     ],
   },
+
   {
     title: "Boutique & IA",
     items: [

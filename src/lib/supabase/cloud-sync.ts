@@ -16,7 +16,9 @@ export interface SharedCloudSnapshot {
   customers?: { id: string }[];
   orders?: { id: string }[];
   inventoryMovements?: { id: string }[];
+  promoCodes?: { id: string }[];
   plans?: { id: string }[];
+
   modules?: { key: string }[];
   countries?: { code: string }[];
   auditLogs?: { id: string }[];

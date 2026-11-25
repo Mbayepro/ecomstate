@@ -12,7 +12,9 @@ import type {
   OrderStatus,
   PaymentMethodCode,
   Product,
+  PromoCode,
   Store,
+
   StoreSettings,
   StoreStatus,
   SubscriptionPlan,
@@ -114,7 +116,9 @@ interface PlatformState {
   customers: Customer[];
   orders: Order[];
   inventoryMovements: InventoryMovement[];
+  promoCodes: PromoCode[];
   plans: SubscriptionPlan[];
+
   modules: ModulePermission[];
   countries: CountryConfig[];
   auditLogs: AuditLog[];
@@ -143,7 +147,10 @@ interface PlaceOrderInput {
   paymentReference?: string;
   notes?: string;
   deliveryFee: number;
+  promoCode?: string;
+  discountAmount?: number;
   items: {
+
     productId: string;
     productName: string;
     variantLabel?: string;
@@ -208,6 +215,22 @@ interface PlatformContextValue extends PlatformState {
     patch: Partial<StoreSettings>,
     storeName?: string
   ) => void;
+  savePromoCode: (
+    storeId: string,
+    data: {
+      id?: string;
+      code: string;
+      discountType: "percent" | "fixed";
+      discountValue: number;
+      minOrderAmount: number;
+      maxUses: number | null;
+      expiresAt?: string | null;
+      isActive: boolean;
+    }
+  ) => { ok: boolean; error?: string };
+  togglePromoCodeActive: (storeId: string, promoId: string) => void;
+  deletePromoCode: (storeId: string, promoId: string) => void;
+
   // Public storefront checkout
   placeOrder: (input: PlaceOrderInput) => Order;
   // Direct Mobile Money Subscriptions (Zero NINEA / RCCM required)
@@ -331,7 +354,23 @@ const DEFAULT_STATE: PlatformState = {
   customers: INITIAL_CUSTOMERS,
   orders: INITIAL_ORDERS,
   inventoryMovements: INITIAL_INVENTORY_MOVEMENTS,
+  promoCodes: [
+    {
+      id: "promo-dakar-bienvenue",
+      storeId: "store-atelier-dakar",
+      code: "BIENVENUE10",
+      discountType: "percent",
+      discountValue: 10,
+      minOrderAmount: 10000,
+      maxUses: 100,
+      usedCount: 3,
+      expiresAt: null,
+      isActive: true,
+      createdAt: "2026-02-05T10:00:00.000Z",
+    },
+  ],
   plans: DEFAULT_PLANS,
+
   modules: DEFAULT_MODULES,
   countries: INITIAL_COUNTRIES,
   auditLogs: INITIAL_AUDIT_LOGS,
@@ -403,7 +442,9 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
         customers: state.customers,
         orders: state.orders,
         inventoryMovements: state.inventoryMovements,
+        promoCodes: state.promoCodes,
         plans: state.plans,
+
         modules: state.modules,
         countries: state.countries,
         auditLogs: state.auditLogs,
@@ -422,7 +463,9 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
     state.customers,
     state.orders,
     state.inventoryMovements,
+    state.promoCodes,
     state.plans,
+
     state.modules,
     state.countries,
     state.auditLogs,
@@ -466,7 +509,12 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
           cloud.inventoryMovements as unknown as InventoryMovement[],
           prev.inventoryMovements as unknown as InventoryMovement[]
         ) as unknown as InventoryMovement[],
+        promoCodes: mergeById(
+          cloud.promoCodes as unknown as PromoCode[],
+          prev.promoCodes as unknown as PromoCode[]
+        ) as unknown as PromoCode[],
         subscriptionPayments: mergeById(
+
           cloud.subscriptionPayments as unknown as SubscriptionPaymentRequest[],
           prev.subscriptionPayments as unknown as SubscriptionPaymentRequest[]
         ) as unknown as SubscriptionPaymentRequest[],
@@ -1156,7 +1204,14 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
       (sum, item) => sum + item.unitPrice * item.quantity,
       0
     );
-    const totalAmount = subtotal + input.deliveryFee;
+    const discountAmount = Math.max(
+      0,
+      Math.min(subtotal, Math.round(input.discountAmount ?? 0))
+    );
+    const totalAmount = Math.max(
+      0,
+      subtotal - discountAmount + input.deliveryFee
+    );
     const nowIso = new Date().toISOString();
     const orderNumber = generateOrderNumber();
 
@@ -1177,7 +1232,10 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
           : "new",
       subtotal,
       deliveryFee: input.deliveryFee,
+      promoCode: input.promoCode?.trim().toUpperCase() || undefined,
+      discountAmount: discountAmount > 0 ? discountAmount : undefined,
       totalAmount,
+
       items: input.items.map((i) => ({
         ...i,
         totalPrice: i.unitPrice * i.quantity,
@@ -1250,7 +1308,16 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
         products: updatedProducts,
         customers: updatedCustomers,
         inventoryMovements: [...newMovements, ...prev.inventoryMovements],
+        promoCodes: newOrder.promoCode
+          ? (prev.promoCodes ?? []).map((pc) =>
+              pc.storeId === input.storeId &&
+              pc.code.toUpperCase() === newOrder.promoCode
+                ? { ...pc, usedCount: pc.usedCount + 1 }
+                : pc
+            )
+          : prev.promoCodes,
         notifications: [
+
           {
             id: `notif-ord-${Date.now()}`,
             recipientRole: "merchant",
@@ -1541,6 +1608,104 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
     }));
   };
 
+  const savePromoCode = (
+    storeId: string,
+    data: {
+      id?: string;
+      code: string;
+      discountType: "percent" | "fixed";
+      discountValue: number;
+      minOrderAmount: number;
+      maxUses: number | null;
+      expiresAt?: string | null;
+      isActive: boolean;
+    }
+  ): { ok: boolean; error?: string } => {
+    const cleanCode = data.code
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9_-]/g, "");
+    if (cleanCode.length < 3) {
+      return {
+        ok: false,
+        error: "Le code promo doit contenir au moins 3 caractères (lettres/chiffres).",
+      };
+    }
+    const duplicate = (state.promoCodes ?? []).some(
+      (p) =>
+        p.storeId === storeId &&
+        p.code.toUpperCase() === cleanCode &&
+        p.id !== data.id
+    );
+    if (duplicate) {
+      return {
+        ok: false,
+        error: `Le code ${cleanCode} existe déjà dans votre boutique.`,
+      };
+    }
+
+    setState((prev) => {
+      const list = prev.promoCodes ?? [];
+      if (data.id) {
+        return {
+          ...prev,
+          promoCodes: list.map((p) =>
+            p.id === data.id && p.storeId === storeId
+              ? {
+                  ...p,
+                  code: cleanCode,
+                  discountType: data.discountType,
+                  discountValue: Math.max(1, data.discountValue),
+                  minOrderAmount: Math.max(0, data.minOrderAmount),
+                  maxUses: data.maxUses,
+                  expiresAt: data.expiresAt || null,
+                  isActive: data.isActive,
+                }
+              : p
+          ),
+        };
+      }
+
+      const created: PromoCode = {
+        id: `promo-${Date.now()}`,
+        storeId,
+        code: cleanCode,
+        discountType: data.discountType,
+        discountValue: Math.max(1, data.discountValue),
+        minOrderAmount: Math.max(0, data.minOrderAmount),
+        maxUses: data.maxUses,
+        usedCount: 0,
+        expiresAt: data.expiresAt || null,
+        isActive: data.isActive,
+        createdAt: new Date().toISOString(),
+      };
+      return { ...prev, promoCodes: [created, ...list] };
+    });
+
+    return { ok: true };
+  };
+
+  const togglePromoCodeActive = (storeId: string, promoId: string) => {
+    setState((prev) => ({
+      ...prev,
+      promoCodes: (prev.promoCodes ?? []).map((p) =>
+        p.id === promoId && p.storeId === storeId
+          ? { ...p, isActive: !p.isActive }
+          : p
+      ),
+    }));
+  };
+
+  const deletePromoCode = (storeId: string, promoId: string) => {
+    setState((prev) => ({
+      ...prev,
+      promoCodes: (prev.promoCodes ?? []).filter(
+        (p) => !(p.id === promoId && p.storeId === storeId)
+      ),
+    }));
+  };
+
+
 
 
   return (
@@ -1565,7 +1730,11 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
         adjustStock,
         updateOrderStatus,
         updateStoreSettings,
+        savePromoCode,
+        togglePromoCodeActive,
+        deletePromoCode,
         placeOrder,
+
         submitSubscriptionPayment,
         adminReviewSubscriptionPayment,
         markNotificationRead,

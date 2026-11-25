@@ -13,7 +13,9 @@ import {
   ShoppingBag,
   Smartphone,
   Store as StoreIcon,
+  Tag,
   Trash2,
+
   Truck,
   X,
 } from "lucide-react";
@@ -58,7 +60,7 @@ export function StoreCartAndModals() {
     clearCart,
   } = useStorefront();
 
-  const { placeOrder } = usePlatform();
+  const { placeOrder, promoCodes } = usePlatform();
 
   const primary = store.settings.primaryColor || "#102A43";
   const secondary = store.settings.secondaryColor || "#10B981";
@@ -66,7 +68,71 @@ export function StoreCartAndModals() {
   // Mode de livraison (domicile vs retrait en boutique)
   const [deliveryMode, setDeliveryMode] = useState<"home" | "pickup">("home");
   const deliveryFee = deliveryMode === "home" ? 1500 : 0;
-  const orderTotal = cartSubtotal + deliveryFee;
+
+  // Code promo client isolé à cette boutique
+  const [promoInput, setPromoInput] = useState("");
+  const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
+
+  const activePromo = useMemo(() => {
+    if (!appliedPromoCode) return null;
+    const found = (promoCodes ?? []).find(
+      (p) =>
+        p.storeId === store.id &&
+        p.code.toUpperCase() === appliedPromoCode.toUpperCase() &&
+        p.isActive
+    );
+    if (!found) return null;
+    if (found.minOrderAmount > cartSubtotal) return null;
+    if (found.maxUses !== null && found.usedCount >= found.maxUses) return null;
+    if (found.expiresAt && new Date(found.expiresAt).getTime() < Date.now()) {
+      return null;
+    }
+    return found;
+  }, [appliedPromoCode, promoCodes, store.id, cartSubtotal]);
+
+  const discountAmount = useMemo(() => {
+    if (!activePromo) return 0;
+    if (activePromo.discountType === "percent") {
+      return Math.round((cartSubtotal * activePromo.discountValue) / 100);
+    }
+    return Math.min(cartSubtotal, activePromo.discountValue);
+  }, [activePromo, cartSubtotal]);
+
+  const orderTotal = Math.max(0, cartSubtotal - discountAmount + deliveryFee);
+
+  const handleApplyPromo = () => {
+    setPromoError(null);
+    const clean = promoInput.trim().toUpperCase();
+    if (!clean) return;
+    const found = (promoCodes ?? []).find(
+      (p) => p.storeId === store.id && p.code.toUpperCase() === clean
+    );
+    if (!found || !found.isActive) {
+      setPromoError("Code promo invalide ou inactif dans cette boutique.");
+      return;
+    }
+    if (found.expiresAt && new Date(found.expiresAt).getTime() < Date.now()) {
+      setPromoError("Ce code promo a expiré.");
+      return;
+    }
+    if (found.maxUses !== null && found.usedCount >= found.maxUses) {
+      setPromoError("Ce code promo a atteint sa limite d'utilisations.");
+      return;
+    }
+    if (cartSubtotal < found.minOrderAmount) {
+      setPromoError(
+        `Achat minimum requis : ${formatCurrency(
+          found.minOrderAmount,
+          store.currency
+        )}.`
+      );
+      return;
+    }
+    setAppliedPromoCode(found.code);
+    setPromoInput("");
+  };
+
 
   // Formulaire client optimisé mobile
   const [customerName, setCustomerName] = useState("");
@@ -117,7 +183,16 @@ export function StoreCartAndModals() {
               store.currency
             )})`
       }`,
+      ...(order.promoCode && order.discountAmount
+        ? [
+            `Code promo (${order.promoCode}) : -${formatCurrency(
+              order.discountAmount,
+              store.currency
+            )}`,
+          ]
+        : []),
       `*Total à régler : ${formatCurrency(order.totalAmount, store.currency)}*`,
+
       `Client : ${order.customerName} (${order.customerPhone})`,
     ];
     return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
@@ -145,7 +220,10 @@ export function StoreCartAndModals() {
       paymentReference,
       notes,
       deliveryFee,
+      promoCode: activePromo?.code,
+      discountAmount: discountAmount > 0 ? discountAmount : undefined,
       items: cart.map((c) => ({
+
         productId: c.product.id,
         productName: c.product.name,
         variantLabel: c.variantLabel,
@@ -156,8 +234,12 @@ export function StoreCartAndModals() {
     });
 
     setConfirmedOrder(order);
+    setAppliedPromoCode(null);
+    setPromoInput("");
+    setPromoError(null);
     clearCart();
     setCheckoutStep("done");
+
 
     // Si le client choisit "Commande via WhatsApp", ouvrir WhatsApp directement
     if (paymentMethod === "whatsapp_order") {
@@ -894,15 +976,70 @@ export function StoreCartAndModals() {
               )}
             </div>
 
-            {/* Pied fixe du tiroir avec calcul automatique du total */}
+            {/* Pied fixe du tiroir avec code promo & calcul automatique du total */}
             {checkoutStep !== "done" && cart.length > 0 && (
               <div className="border-t border-slate-200 bg-white p-5">
+                {/* Champ Code Promo */}
+                <div className="mb-3.5">
+                  {activePromo ? (
+                    <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs">
+                      <span className="inline-flex items-center gap-1.5 font-bold text-emerald-800">
+                        <Tag className="h-3.5 w-3.5 text-[#10B981]" />
+                        Code {activePromo.code} appliqué (-
+                        {formatCurrency(discountAmount, store.currency)})
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setAppliedPromoCode(null)}
+                        className="font-semibold text-rose-600 hover:underline cursor-pointer"
+                      >
+                        Retirer
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={promoInput}
+                          onChange={(e) =>
+                            setPromoInput(e.target.value.toUpperCase())
+                          }
+                          placeholder="Code promo (ex: BIENVENUE10)"
+                          className="h-9.5 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-semibold uppercase text-slate-900 placeholder:normal-case placeholder:font-normal focus:border-slate-900 focus:bg-white focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleApplyPromo}
+                          className="rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-800 hover:bg-slate-50 cursor-pointer"
+                        >
+                          Appliquer
+                        </button>
+                      </div>
+                      {promoError && (
+                        <p className="mt-1 text-[11px] font-medium text-rose-600">
+                          {promoError}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <div className="space-y-1 text-xs sm:text-sm">
                   <div className="flex justify-between text-slate-500">
                     <span>Sous-total</span>
                     <span>{formatCurrency(cartSubtotal, store.currency)}</span>
                   </div>
+                  {discountAmount > 0 && activePromo && (
+                    <div className="flex justify-between font-semibold text-[#10B981]">
+                      <span>Réduction ({activePromo.code})</span>
+                      <span>
+                        -{formatCurrency(discountAmount, store.currency)}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-slate-500">
+
                     <span>
                       {deliveryMode === "pickup"
                         ? "Retrait en boutique"

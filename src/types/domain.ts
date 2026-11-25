@@ -183,7 +183,10 @@ export interface Order {
   status: OrderStatus;
   subtotal: number;
   deliveryFee: number;
+  promoCode?: string;
+  discountAmount?: number;
   totalAmount: number;
+
   items: OrderItem[];
   notes?: string;
   createdAt: string;
@@ -198,3 +201,18 @@ export interface AuditLog {
   details: string;
   createdAt: string;
 }
+
+export interface PromoCode {
+  id: string;
+  storeId: string;
+  code: string;
+  discountType: "percent" | "fixed";
+  discountValue: number;
+  minOrderAmount: number;
+  maxUses: number | null;
+  usedCount: number;
+  expiresAt?: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
