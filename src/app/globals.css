@@ -1,0 +1,272 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-navy: #102A43;
+  --color-navy-light: #1B3B5A;
+  --color-navy-dark: #0A1D2F;
+  --color-emerald-brand: #10B981;
+  --color-emerald-hover: #059669;
+  --color-surface: #F8FAFC;
+  --color-slate-brand: #1E293B;
+  --color-border-brand: #E2E8F0;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: "Manrope", "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #0B1F33;
+    color: #1E293B;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+}
+
+.bg-navy-architectural {
+  background-color: #102A43;
+  background-image:
+    radial-gradient(circle at 18% 18%, rgba(16, 185, 129, 0.14), transparent 42%),
+    radial-gradient(circle at 85% 25%, rgba(16, 185, 129, 0.09), transparent 38%),
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 42px 42px, 42px 42px;
+}
+
+.bg-navy-deep {
+  background-color: #0B1F33;
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.bg-dots-subtle {
+  background-image: radial-gradient(rgba(16, 42, 67, 0.09) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* ==========================================================================
+   Système d'animations fluides & micro-interactions (60fps)
+   ========================================================================== */
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tabPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.992);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes drawerSlideLeft {
+  from {
+    opacity: 0.6;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes backdropFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+@keyframes pulseRing {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.42);
+  }
+  70% {
+    box-shadow: 0 0 0 11px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+@keyframes barGrow {
+  from {
+    transform: scaleY(0.08);
+    opacity: 0.3;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes marqueeScroll {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes typingBounce {
+  0%, 80%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-fade-up-delay-1 {
+  animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+}
+
+.animate-fade-up-delay-2 {
+  animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.24s both;
+}
+
+.animate-page-enter {
+  animation: pageEnter 0.36s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-tab-panel {
+  animation: tabPanelIn 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-modal-in {
+  animation: modalIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-drawer-in {
+  animation: drawerSlideLeft 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-backdrop {
+  animation: backdropFade 0.2s ease-out both;
+}
+
+.animate-float {
+  animation: floatSlow 4.8s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: floatSlow 5.4s ease-in-out 1.4s infinite;
+}
+
+.animate-pulse-emerald {
+  animation: pulseRing 2.4s infinite;
+}
+
+.animate-bar-grow {
+  transform-origin: bottom;
+  animation: barGrow 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marqueeScroll 32s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+.typing-dot {
+  animation: typingBounce 1.2s infinite ease-in-out;
+}
+.typing-dot:nth-child(2) {
+  animation-delay: 0.16s;
+}
+.typing-dot:nth-child(3) {
+  animation-delay: 0.32s;
+}
+
+.hover-lift {
+  transition:
+    transform 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.22s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px -12px rgba(16, 42, 67, 0.13);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .animate-fade-up-delay-1,
+  .animate-fade-up-delay-2,
+  .animate-page-enter,
+  .animate-tab-panel,
+  .animate-modal-in,
+  .animate-drawer-in,
+  .animate-float,
+  .animate-float-delayed,
+  .animate-bar-grow,
+  .animate-marquee {
+    animation: none !important;
+  }
+}
