@@ -41,7 +41,26 @@ export const ADESHINA_SECTORS: AdeshinaStoreBlueprint[] = [
       { name: "Robes & Cérémonies", description: "Créations chic pour vos événements" },
       { name: "Accessoires", description: "Sacs, foulards et bijoux" },
     ],
-    sampleProducts: [],
+    sampleProducts: [
+      {
+        name: "Ensemble Lin & Soie Prestige Teranga",
+        price: 35000,
+        promoPrice: 28500,
+        description:
+          "Confection artisanale en lin pur respirant et broderie fine ton sur ton. Tenue élégante adaptée aux cérémonies et au quotidien. Vérification du colis à domicile et paiement 100 % à la livraison.",
+        variants: "Taille:M, Taille:L, Taille:XL, Taille:XXL",
+        imageUrl: "/images/african-fashion-model-teranga.jpg",
+      },
+      {
+        name: "Tunique Cérémonie Broderie Royale",
+        price: 25000,
+        promoPrice: 21000,
+        description:
+          "Coupe classique revisitée avec finitions soignées. Tissu infroissable premium pour un confort thermique optimal toute la journée.",
+        variants: "Taille:L, Taille:XL",
+        imageUrl: "/images/hero-african-founder-fashion.jpg",
+      },
+    ],
   },
   {
     sectorId: "beaute",
@@ -60,7 +79,17 @@ export const ADESHINA_SECTORS: AdeshinaStoreBlueprint[] = [
       { name: "Soins Capillaires", description: "Chantilly karité, huiles et masques" },
       { name: "Parfums & Corps", description: "Laits corporels et brumes parfumées" },
     ],
-    sampleProducts: [],
+    sampleProducts: [
+      {
+        name: "Sérum Botanique Éclat & Beurre de Karité Brut",
+        price: 22000,
+        promoPrice: 17500,
+        description:
+          "Formule naturelle 100% bio enrichie en vitamines A, E & F. Nourrit intensément, estompe les taches, unifie le teint et redonne de l'éclat dès 14 jours. Payez à la livraison après réception.",
+        variants: "Format:Flacon 50ml, Format:Pack Duo 2x50ml (-20%)",
+        imageUrl: "/images/african-beauty-glow-portrait.jpg",
+      },
+    ],
   },
   {
     sectorId: "tech",
@@ -79,7 +108,18 @@ export const ADESHINA_SECTORS: AdeshinaStoreBlueprint[] = [
       { name: "Charge & Énergie", description: "Powerbanks et chargeurs GaN 65W" },
       { name: "Montres & Accessoires", description: "Smartwatches et supports" },
     ],
-    sampleProducts: [],
+    sampleProducts: [
+      {
+        name: "Écouteurs Pro Sans Fil ANC & Boîtier Affichage LED",
+        price: 29000,
+        promoPrice: 22000,
+        description:
+          "Réduction active du bruit ultra-performante (ANC 35dB), basses profondes HD, autonomie record 36h avec boîtier compact. Câble USB-C inclus. Testez le son à la livraison.",
+        variants: "Couleur:Noir Mat, Couleur:Blanc Titane",
+        imageUrl:
+          "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=800&q=80",
+      },
+    ],
   },
   {
     sectorId: "chaussures",
@@ -98,7 +138,17 @@ export const ADESHINA_SECTORS: AdeshinaStoreBlueprint[] = [
       { name: "Sneakers & Urbain", description: "Baskets confortables au quotidien" },
       { name: "Mocassins & Ville", description: "Chaussures habillées bureau & cérémonie" },
     ],
-    sampleProducts: [],
+    sampleProducts: [
+      {
+        name: "Mocassins Cuir Véritable Cousu Main",
+        price: 38000,
+        promoPrice: 32000,
+        description:
+          "Cuir pleine fleur tanné avec soin, semelle ergonomique grand confort et coutures renforcées. Essayage possible à la livraison avant paiement du livreur.",
+        variants: "Pointure:40, Pointure:41, Pointure:42, Pointure:43, Pointure:44",
+        imageUrl: "/images/african-sneakers-leather-studio.jpg",
+      },
+    ],
   },
   {
     sectorId: "maison",
@@ -117,7 +167,18 @@ export const ADESHINA_SECTORS: AdeshinaStoreBlueprint[] = [
       { name: "Organisation & Rangement", description: "Solutions gain de place" },
       { name: "Décoration & Luminaire", description: "Ambiance chaleureuse" },
     ],
-    sampleProducts: [],
+    sampleProducts: [
+      {
+        name: "Mélangeur & Robot Culinaire Multi-Fonctions 8-en-1",
+        price: 42000,
+        promoPrice: 34500,
+        description:
+          "Moteur cuivre 1200W puissant, lames inox japonaises haute résistance et bol incassable 2L. Idéal piment, sauces, jus et smoothies. Test de mise sous tension à la livraison.",
+        variants: "Capacité:Bol 2L Standard, Capacité:Pack Complet 2L + Mini Hachoir",
+        imageUrl:
+          "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=800&q=80",
+      },
+    ],
   },
 ];
 

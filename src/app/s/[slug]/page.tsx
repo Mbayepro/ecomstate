@@ -275,7 +275,11 @@ export default function PublicStorefrontHomePage() {
       {/* Grille produits */}
       <div className="mt-6">
         {filteredCatalog.length === 0 ? (
-          <EmptyCatalogState onReset={resetAllFilters} />
+          <EmptyCatalogState
+            onReset={resetAllFilters}
+            storeTotalProducts={products.length}
+            isSearchingOrFiltering={isSearchingOrFiltering}
+          />
         ) : (
           <div className="grid grid-cols-2 gap-3.5 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
             {filteredCatalog.map((p) => (

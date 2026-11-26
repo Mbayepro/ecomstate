@@ -12,81 +12,55 @@ export interface EcomSateThemeDefinition {
 }
 
 /**
- * Thèmes modulaires EcomSate basés sur les architectures Shrine Pro 1 (Référence Standard) et Shrine Pro 3 (Conversion Premium)
+ * Architecture Officielle des Thèmes EcomSate (Section 5 & Audio 3 Propriétaire) :
+ * - Plan Essai & Standard (7 500 FCFA/mois) : Thème Shrine Pro 1 (Référence COD) initié automatiquement dès l'ouverture.
+ * - Plan Premium (15 000 FCFA/mois — celui qui paie plus) : Débloque le Grand Thème Shrine Pro 3 Ultra-Conversion
+ *   (vendu à plus de 1 000 $ sur Shopify) avec l'intégralité des blocs de conversion du dossier `shrine-pro-theme`.
  */
 export const ECOMSATE_THEMES: EcomSateThemeDefinition[] = [
   {
     id: "shrine_pro_1",
-    name: "Shrine Référence (Thème Officiel)",
+    name: "Shrine Pro 1 (Référence COD)",
     tier: "standard",
-    badge: "Inclus Standard",
+    badge: "Inclus · Essai & Standard (7 500 FCFA)",
     description:
-      "Le thème de référence haute conversion : barre d'annonce COD, Hero orienté bénéfices, grille d'avantages 4 icônes, résultats prouvés et FAQ rassurante.",
+      "Initié automatiquement dès la création de votre boutique : bannière Hero, barre d'annonce COD, bandeau d'engagements, grille de 4 avantages, résultats et FAQ.",
     defaultPrimary: "#073B35",
     defaultSecondary: "#00A884",
     features: [
       "Barre d'annonce Paiement à la livraison",
-      "Bandeau défilant (Ticker) d'engagements",
-      "Grille de 4 bénéfices clés (2 cols mobile / 4 desktop)",
-      "Barres de résultats & satisfaction",
-      "FAQ accordéon anti-objections COD",
+      "Bandeau défilant d'engagements (Ticker)",
+      "Grille de 4 bénéfices clés",
+      "Description produit enrichie (Photos, GIFs & Vidéos)",
+      "Formulaire COD Express intégré sur la fiche produit",
+      "Barres de résultats & FAQ accordéon",
     ],
   },
   {
     id: "shrine_pro_3",
-    name: "Shrine Pro 3 Ultra-Conversion",
+    name: "Shrine Pro 3 (Ultra-Conversion COD)",
     tier: "premium",
-    badge: "Premium",
+    badge: "Exclusif Plan Premium (15 000 FCFA) · Valeur +1 000 $",
     description:
-      "Version avancée orientée ROAS TikTok/Meta : offres groupées (Packs 1x / 2x / 3x), tableau comparatif Nous vs Autres, sections enrichies et fiche produit orientée conversion.",
+      "Le grand thème complet haute conversion (valeur +1 000 $ sur Shopify) réservé aux abonnés Premium : Packs 1x/2x/3x BUNDLE & SAVE, chronologie de livraison 3 étapes, compte à rebours, comparatif Nous vs Autres, avis vérifiés, témoignages sociaux et barre d'achat collante.",
     defaultPrimary: "#073B35",
     defaultSecondary: "#00A884",
     features: [
-      "Offres Packs / Quantity Breaks (1 acheté, Pack Duo, Pack Trio)",
-      "Tableau comparatif visuel (Votre marque vs Autres)",
-      "Bandeau défilant haute visibilité",
-      "FAQ Premium + Garanties livraison à domicile",
-      "Formulaire COD intégré sur la fiche produit",
+      "Étoiles vertes Trustpilot (4,9/5) & 4 arguments cochés sous le titre",
+      "Offres Packs BUNDLE & SAVE (1x, Pack Duo 2x, Pack Trio 3x + avantage)",
+      "Chronologie visuelle de livraison 3 étapes avec dates calculées",
+      "Compte à rebours promotionnel en direct (Heures : Minutes : Secondes)",
+      "Mise en scène produit entourée de 4 points forts illustrés",
+      "Tableau comparatif visuel (Votre boutique vs Autres vendeurs)",
+      "Avis acheteurs vérifiés 4,9/5 + Témoignages sociaux type commentaires",
+      "Barre de commande collante en bas d'écran au défilement (Sticky COD)",
     ],
-  },
-  {
-    id: "minimal",
-    name: "Minimal Épuré",
-    tier: "standard",
-    badge: "Inclus Standard",
-    description:
-      "Présentation claire et rapide avec accès immédiat au catalogue et filtrage instantané sur réseau mobile.",
-    defaultPrimary: "#073B35",
-    defaultSecondary: "#00A884",
-    features: ["Catalogue direct", "Ultra-léger 3G/4G", "Cartes carrées épurées"],
-  },
-  {
-    id: "boutique",
-    name: "Boutique Prestige (Mode & Beauté)",
-    tier: "premium",
-    badge: "Premium",
-    description:
-      "Grande bannière immersive et cartes produits format portrait idéales pour le prêt-à-porter, les chaussures et les cosmétiques.",
-    defaultPrimary: "#073B35",
-    defaultSecondary: "#00A884",
-    features: ["Visuel plein écran", "Cartes portrait 4:5", "Mise en avant looks"],
-  },
-  {
-    id: "editorial",
-    name: "Éditorial Marque",
-    tier: "premium",
-    badge: "Premium",
-    description:
-      "Mise en page centrée façon marque D2C pour raconter l'histoire et la qualité de vos produits.",
-    defaultPrimary: "#073B35",
-    defaultSecondary: "#00A884",
-    features: ["Storytelling marque", "Sections aérées", "Focus produit vedette"],
   },
 ];
 
 export function createDefaultShrineSections(
   storeName: string,
-  themeId: StoreTemplateId = "shrine_pro_1"
+  themeId: StoreTemplateId = "shrine_pro_3"
 ): StoreSectionBlock[] {
   const base: StoreSectionBlock[] = [
     {

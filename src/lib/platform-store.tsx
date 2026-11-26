@@ -60,7 +60,11 @@ import {
   createDefaultShrineSections,
   ECOMSATE_THEMES,
 } from "@/lib/shrine-themes";
-import { ADESHINA_SECTORS, getBlueprintBySector } from "@/lib/adeshina-ai";
+import {
+  ADESHINA_SECTORS,
+  getBlueprintBySector,
+  type AdeshinaStoreBlueprint,
+} from "@/lib/adeshina-ai";
 
 import { generateOrderNumber, slugify } from "@/lib/utils";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -567,6 +571,60 @@ const DEFAULT_STATE: PlatformState = {
   auditLogs: INITIAL_AUDIT_LOGS,
 };
 
+/**
+ * Initialise les premiers produits prêts à vendre lors de la création d'une boutique
+ * afin que la prévisualisation Shrine Pro 3 ne soit jamais vide ou déserte.
+ */
+function createInitialStoreProducts(
+  storeId: string,
+  categoryId: string,
+  blueprint: AdeshinaStoreBlueprint | null
+): Product[] {
+  if (!blueprint?.sampleProducts || blueprint.sampleProducts.length === 0) {
+    return [];
+  }
+  return blueprint.sampleProducts.map((sp, idx) => {
+    const pSlug = slugify(sp.name) || `produit-${idx + 1}`;
+    const variantsList: Product["variants"] = [];
+    if (sp.variants) {
+      const parts = sp.variants.split(",").map((p) => p.trim()).filter(Boolean);
+      for (const pt of parts) {
+        const [optName, optVal] = pt.includes(":") ? pt.split(":") : ["Option", pt];
+        variantsList.push({
+          id: `var-${storeId}-${idx}-${variantsList.length}`,
+          name: optName.trim(),
+          value: (optVal || "").trim(),
+          priceDelta: 0,
+          stock: 12,
+          sku: `${pSlug.toUpperCase().slice(0, 4)}-${(optVal || "").trim().slice(0, 4)}`,
+        });
+      }
+    }
+    return {
+      id: `prod-${storeId}-${idx + 1}`,
+      storeId,
+      categoryId,
+      name: sp.name,
+      slug: pSlug,
+      shortDescription:
+        sp.description.length > 120 ? sp.description.slice(0, 117) + "..." : sp.description,
+      description: sp.description,
+      costPrice: Math.round(sp.price * 0.45),
+      additionalCost: 1000,
+      price: sp.price,
+      promoPrice: sp.promoPrice ?? Math.round(sp.price * 0.85),
+      sku: `PROD-${Date.now().toString().slice(-4)}-${idx + 1}`,
+      stock: 14,
+      lowStockThreshold: 4,
+      images: [sp.imageUrl],
+      variants: variantsList,
+      isPopular: true,
+      isActive: true,
+      createdAt: new Date().toISOString(),
+    };
+  });
+}
+
 const PlatformContext = createContext<PlatformContextValue | null>(null);
 
 export function PlatformProvider({ children }: { children: React.ReactNode }) {
@@ -603,17 +661,32 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
           parsed.stores = parsed.stores.map((st) => {
             const rawPrimary = (st.settings?.primaryColor || "").toLowerCase();
             const rawSecondary = (st.settings?.secondaryColor || "").toLowerCase();
+            const resolvedTemplate: StoreTemplateId =
+              st.planCode === "premium"
+                ? st.settings?.template || "shrine_pro_3"
+                : st.settings?.template === "shrine_pro_3"
+                  ? "shrine_pro_1"
+                  : st.settings?.template || "shrine_pro_1";
             const builderSections =
               st.settings?.builderSections && st.settings.builderSections.length > 0
-                ? st.settings.builderSections
-                : createDefaultShrineSections(
-                  st.name,
-                  st.planCode === "premium" ? "shrine_pro_3" : "shrine_pro_1"
-                );
+                ? st.planCode !== "premium"
+                  ? st.settings.builderSections.filter(
+                      (sec) =>
+                        sec.type !== "bundle_deals" &&
+                        sec.type !== "comparison_table"
+                    )
+                  : st.settings.builderSections
+                : createDefaultShrineSections(st.name, resolvedTemplate);
+            const upgradedBanner =
+              st.id === "store-atelier-dakar" &&
+              (!st.settings?.bannerUrl || st.settings.bannerUrl.includes("unsplash.com"))
+                ? "/images/hero-african-founder-fashion.jpg"
+                : st.settings?.bannerUrl;
             return {
               ...st,
               settings: {
                 ...st.settings,
+                bannerUrl: upgradedBanner,
                 primaryColor:
                   !rawPrimary || legacyNavy.has(rawPrimary)
                     ? "#073B35"
@@ -622,31 +695,32 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
                   !rawSecondary || rawSecondary === "#10b981" || rawSecondary === "#059669"
                     ? "#00A884"
                     : st.settings.secondaryColor,
-                template:
-                  st.id === "store-atelier-dakar"
-                    ? "shrine_pro_3"
-                    : st.id === "store-cotonou-tech"
-                      ? "shrine_pro_1"
-                      : st.settings.template || "shrine_pro_1",
+                template: resolvedTemplate,
                 builderSections,
               },
             };
           });
         }
 
-        // Nettoyer les produits exemples auto-générés dans les vraies boutiques nouvellement créées (hors boutiques Démo)
+        // Mettre à jour les visuels éditoriaux africains des produits de démonstration en cache
         if (Array.isArray(parsed.products)) {
-          const sampleNames = new Set(
-            ADESHINA_SECTORS.flatMap((sec) =>
-              sec.sampleProducts.map((sp) => sp.name.toLowerCase())
-            )
-          );
-          parsed.products = parsed.products.filter((p) => {
-            const isDemoStore =
-              p.storeId === "store-atelier-dakar" ||
-              p.storeId === "store-cotonou-tech";
-            if (isDemoStore) return true;
-            return !sampleNames.has(p.name.toLowerCase());
+          parsed.products = parsed.products.map((p) => {
+            if (p.id === "prod-1") {
+              return {
+                ...p,
+                images: [
+                  "/images/african-fashion-model-teranga.jpg",
+                  "/images/hero-african-founder-fashion.jpg",
+                ],
+              };
+            }
+            if (p.id === "prod-2") {
+              return {
+                ...p,
+                images: ["/images/african-sneakers-leather-studio.jpg"],
+              };
+            }
+            return p;
           });
         }
         setState((prev) => ({
@@ -1136,7 +1210,7 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
           settings: {
             primaryColor: blueprint?.primaryColor ?? "#073B35",
             secondaryColor: blueprint?.secondaryColor ?? "#00A884",
-            template: blueprint?.template ?? "shrine_pro_1",
+            template: "shrine_pro_1",
             description:
               blueprint?.description ??
               `Bienvenue chez ${storeName}. Commandez en ligne et payez uniquement à la livraison.`,
@@ -1176,8 +1250,12 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
             },
           ];
 
-        // Une nouvelle boutique démarre toujours avec un catalogue vide (0 produit fictif)
-        const generatedProducts: Product[] = [];
+        // Pré-remplit un produit modèle prêt à vendre pour tester immédiatement la puissance de conversion de Shrine Pro 3
+        const generatedProducts: Product[] = createInitialStoreProducts(
+          storeId,
+          generatedCategories[0]?.id || `cat-${storeId}-1`,
+          blueprint
+        );
         const initialCodForm = createInitialCodFormConfig(
           storeId,
           blueprint?.codPresetId ?? "mobile_fast",
@@ -1250,8 +1328,7 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
       ? getBlueprintBySector(input.sectorId || "mode", input.storeName)
       : null;
 
-    const chosenTemplate: StoreTemplateId =
-      input.templateId ?? blueprint?.template ?? "shrine_pro_1";
+    const chosenTemplate: StoreTemplateId = "shrine_pro_1";
 
     const newStore: Store = {
       id: storeId,
@@ -1318,8 +1395,12 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
         },
       ];
 
-    // Une nouvelle boutique démarre toujours avec un catalogue vide (0 produit fictif, 0 fausse commande)
-    const generatedProducts: Product[] = [];
+    // Pré-remplit un produit modèle prêt à vendre pour tester immédiatement la puissance de conversion de Shrine Pro 3
+    const generatedProducts: Product[] = createInitialStoreProducts(
+      storeId,
+      generatedCategories[0]?.id || `cat-${Date.now()}-0`,
+      blueprint
+    );
     const initialCodForm = createInitialCodFormConfig(
       storeId,
       blueprint?.codPresetId ?? "mobile_fast",
@@ -2574,9 +2655,20 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
   ) => {
     setState((prev) => ({
       ...prev,
-      stores: prev.stores.map((s) =>
-        s.id === storeId ? { ...s, planCode } : s
-      ),
+      stores: prev.stores.map((s) => {
+        if (s.id !== storeId) return s;
+        const nextTemplate: StoreTemplateId =
+          planCode === "premium" ? "shrine_pro_3" : "shrine_pro_1";
+        return {
+          ...s,
+          planCode,
+          settings: {
+            ...s.settings,
+            template: nextTemplate,
+            builderSections: createDefaultShrineSections(s.name, nextTemplate),
+          },
+        };
+      }),
       auditLogs: [
         {
           id: `log-${Date.now()}`,
@@ -2741,16 +2833,26 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
         ),
         stores:
           decision === "approved"
-            ? prev.stores.map((s) =>
-              s.id === target.storeId
-                ? {
+            ? prev.stores.map((s) => {
+                if (s.id !== target.storeId) return s;
+                const unlockShrinePro3 = target.planCode === "premium";
+                return {
                   ...s,
                   status: "active",
                   planCode: target.planCode,
                   subscriptionEndsAt: nextExpiry.toISOString(),
-                }
-                : s
-            )
+                  settings: unlockShrinePro3
+                    ? {
+                        ...s.settings,
+                        template: "shrine_pro_3",
+                        builderSections: createDefaultShrineSections(
+                          s.name,
+                          "shrine_pro_3"
+                        ),
+                      }
+                    : s.settings,
+                };
+              })
             : prev.stores,
         notifications: [
           {

@@ -41,6 +41,10 @@ import {
 import { BrandLogo, BrandLogoMark } from "@/components/ui/brand-logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  ActiveVoicePlayerBar,
+  VoiceAudioButton,
+} from "@/components/ui/voice-audio-button";
 import { AdeshinaCollaboratorDrawer } from "@/components/dashboard/adeshina-drawer";
 import { usePlatform } from "@/lib/platform-store";
 import {
@@ -872,18 +876,28 @@ export default function DashboardLayout({
 
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
           <div key={pathname} className="animate-page-enter space-y-5">
-            {hasRouteAccess && PAGE_UTILITY_GUIDE[pathname] && (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#00A884]/30 bg-[#E7F7F2]/60 px-4 py-3 text-xs text-[#073B35]">
-                <div className="flex items-center gap-2.5">
-                  <span className="inline-flex shrink-0 items-center rounded-lg bg-[#073B35] px-2.5 py-1 text-[11px] font-extrabold text-white">
-                    À quoi sert cette page ?
-                  </span>
-                  <p className="font-semibold text-[#15232D]">
-                    {PAGE_UTILITY_GUIDE[pathname].utility}
-                  </p>
+            {hasRouteAccess &&
+              pathname !== "/dashboard" &&
+              PAGE_UTILITY_GUIDE[pathname] && (
+                <div className="flex flex-col gap-3 rounded-2xl border border-[#00A884]/30 bg-[#E7F7F2]/65 px-4 py-3 text-xs text-[#073B35] shadow-2xs sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <span className="inline-flex shrink-0 items-center rounded-lg bg-[#073B35] px-2.5 py-1 text-[11px] font-extrabold text-white">
+                      {PAGE_UTILITY_GUIDE[pathname].title}
+                    </span>
+                    <p className="font-semibold leading-snug text-[#15232D]">
+                      {PAGE_UTILITY_GUIDE[pathname].utility}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <VoiceAudioButton
+                      textToSpeak={`${PAGE_UTILITY_GUIDE[pathname].title}. ${PAGE_UTILITY_GUIDE[pathname].utility}`}
+                      variant="pill"
+                      label="Écouter l'aide"
+                      title="Écouter l'explication vocale de cette page"
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
             {hasRouteAccess ? (
               children
             ) : (
@@ -916,8 +930,8 @@ export default function DashboardLayout({
         </main>
       </div>
 
-      {/* Navigation mobile fixe en bas */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 flex h-16 items-center justify-around border-t border-[#E2E8F0] bg-white/95 px-1 backdrop-blur-md lg:hidden">
+      {/* Dock mobile flottant style Shopify Mobile */}
+      <nav className="fixed inset-x-3 bottom-3 z-30 mx-auto flex h-15 max-w-md items-center justify-around rounded-full border border-slate-200/90 bg-white/95 px-2 shadow-[0_12px_32px_rgba(15,23,42,0.16)] backdrop-blur-md lg:hidden">
         {MOBILE_BOTTOM_TABS.map((tab) => {
           const Icon = tab.icon;
           const active =
@@ -956,6 +970,8 @@ export default function DashboardLayout({
           <span>IA</span>
         </button>
       </nav>
+
+      <ActiveVoicePlayerBar />
 
       <AdeshinaCollaboratorDrawer
         open={copilotOpen}

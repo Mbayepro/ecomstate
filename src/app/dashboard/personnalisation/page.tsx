@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { SingleImageUploadField } from "@/components/ui/image-upload-field";
+import { StoreFontSelector } from "@/components/storefront/store-font-selector";
 import { DashboardPageHeader } from "@/components/dashboard/page-header";
 
 import { usePlatform } from "@/lib/platform-store";
@@ -300,6 +301,15 @@ export default function DashboardPersonnalisationPage() {
                       />
                     </div>
                   </div>
+                </div>
+
+                <div className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
+                  <StoreFontSelector
+                    settings={activeStore.settings}
+                    onChange={(patch) =>
+                      updateStoreSettings(activeStore.id, patch)
+                    }
+                  />
                 </div>
 
                 <div>

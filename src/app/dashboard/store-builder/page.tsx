@@ -21,6 +21,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ShrineSectionsRenderer } from "@/components/storefront/shrine-sections";
+import { StoreFontSelector } from "@/components/storefront/store-font-selector";
+import {
+  getActiveFontDisplayName,
+  getStoreFontStyleVars,
+  StoreDynamicFontInjector,
+} from "@/lib/store-fonts";
 import { canUseModule } from "@/lib/permissions";
 import { usePlatform } from "@/lib/platform-store";
 import {
@@ -252,39 +258,145 @@ export default function StoreBuilderPage() {
         </div>
       )}
 
-      {/* 1. Sélecteur de Thèmes (Shrine Pro 1 Standard & Shrine Pro 3 Premium) */}
-      <Card>
-        <CardContent className="p-5">
+      {/* 1. Vitrine active façon Shopify Online Store + Bibliothèque de Thèmes */}
+      <div className="overflow-hidden rounded-3xl border border-[#E2E8F0] bg-white shadow-sm">
+        <StoreDynamicFontInjector settings={activeStore.settings} />
+
+        {/* Fenêtre navigateur de la boutique active avec barre verre dépoli (Style Shopify) */}
+        <div
+          className="relative overflow-hidden bg-slate-900"
+          style={getStoreFontStyleVars(activeStore.settings)}
+        >
+          <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2.5 text-xs">
+            <div className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+              <span className="ml-2 font-bold text-slate-600">
+                {activeStore.customDomain || activeStore.subdomain}
+              </span>
+            </div>
+            <span className="rounded-full bg-[#E7F7F2] px-2.5 py-0.5 text-[10px] font-extrabold text-[#073B35]">
+              Police : {getActiveFontDisplayName(activeStore.settings)}
+            </span>
+          </div>
+
+          <div
+            className="relative h-56 w-full overflow-hidden sm:h-64"
+            style={{
+              backgroundColor: activeStore.settings.primaryColor || "#073B35",
+            }}
+          >
+            <img
+              src={
+                activeStore.settings.bannerUrl ||
+                storeProducts[0]?.images?.[0] ||
+                "/images/african-fashion-model-teranga.jpg"
+              }
+              alt={activeStore.name}
+              className="h-full w-full object-cover opacity-55"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+
+            <div className="absolute inset-x-0 top-6 px-6 text-center text-white sm:top-10">
+              <h2
+                className="text-2xl font-extrabold tracking-tight sm:text-4xl"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {activeStore.name}
+              </h2>
+              <p className="mx-auto mt-1.5 max-w-lg text-xs text-white/85 sm:text-sm">
+                {activeStore.settings.description}
+              </p>
+              <span
+                className="mt-3 inline-block rounded-full px-4 py-1.5 text-xs font-extrabold text-white shadow-md"
+                style={{
+                  backgroundColor:
+                    activeStore.settings.secondaryColor || "#00A884",
+                }}
+              >
+                Commander · Paiement à la livraison
+              </span>
+            </div>
+
+            {/* Barre inférieure en verre dépoli inspirée de Shopify Online Store */}
+            <div className="absolute inset-x-3 bottom-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/15 bg-black/55 px-4 py-3 text-white backdrop-blur-md">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-extrabold text-white">
+                  {activeStore.customDomain || activeStore.subdomain}
+                </p>
+                <p className="text-[11px] text-slate-300">
+                  {ECOMSATE_THEMES.find(
+                    (t) => t.id === activeStore.settings.template
+                  )?.name ?? "Shrine Pro 3"}{" "}
+                  · Police {getActiveFontDisplayName(activeStore.settings)}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href="#editeur-sections"
+                  className="rounded-full bg-white px-4 py-2 text-xs font-extrabold text-[#15232D] shadow-sm transition hover:bg-slate-100"
+                >
+                  Modifier le thème
+                </a>
+                <Link
+                  href={`/s/${activeStore.slug}`}
+                  target="_blank"
+                  className="inline-flex items-center gap-1 rounded-full border border-white/25 bg-white/10 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-white/20"
+                >
+                  Prévisualiser
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Découvrir & Appliquer les thèmes */}
+        <div className="p-5">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-extrabold text-[#15232D]">
-              1. Bibliothèque de Thèmes EcomSate
-            </h2>
+            <div>
+              <h2 className="text-base font-extrabold text-[#15232D]">
+                Découvrir les thèmes EcomSate
+              </h2>
+              <p className="text-xs text-slate-500">
+                Changez d&apos;architecture en un clic sans perdre vos produits
+              </p>
+            </div>
             <span className="text-xs text-slate-500">
-              Plan actif :{" "}
+              Formule :{" "}
               <strong className="uppercase text-[#073B35]">
                 {activeStore.planCode}
               </strong>
             </span>
           </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {ECOMSATE_THEMES.map((theme) => {
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            {ECOMSATE_THEMES.map((theme, idx) => {
               const isCurrent = activeStore.settings.template === theme.id;
               const locked = theme.tier === "premium" && !canUsePremiumThemes;
+              const thumbImg =
+                idx === 0
+                  ? "/images/hero-african-founder-fashion.jpg"
+                  : "/images/hero-african-founder-beauty.jpg";
               return (
                 <div
                   key={theme.id}
-                  className={`flex flex-col justify-between rounded-2xl border p-4 transition ${
+                  className={`overflow-hidden rounded-2xl border transition ${
                     isCurrent
-                      ? "border-2 border-[#00A884] bg-[#E7F7F2]/40"
+                      ? "border-2 border-[#00A884] bg-[#E7F7F2]/25"
                       : "border-[#E2E8F0] bg-[#F8FAFC]"
                   }`}
                 >
-                  <div>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-extrabold text-[#15232D]">
-                        {theme.name}
-                      </span>
+                  <div className="relative h-36 w-full overflow-hidden bg-slate-200">
+                    <img
+                      src={thumbImg}
+                      alt={theme.name}
+                      className="h-full w-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
+                    <div className="absolute left-3 top-3">
                       <Badge
                         variant={
                           theme.tier === "premium" ? "warning" : "success"
@@ -293,83 +405,97 @@ export default function StoreBuilderPage() {
                         {theme.badge}
                       </Badge>
                     </div>
-                    <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                      {theme.description}
-                    </p>
                   </div>
 
-                  <div className="mt-4 pt-2">
-                    <Button
-                      size="sm"
-                      variant={isCurrent ? "primary" : "outline"}
-                      className="w-full"
-                      onClick={() => handleSelectTheme(theme.id)}
-                    >
-                      {locked ? (
-                        <>
-                          <Lock className="h-3.5 w-3.5" />
-                          Débloquer en Premium
-                        </>
-                      ) : isCurrent ? (
-                        <>
-                          <Check className="h-3.5 w-3.5" />
-                          Thème actif
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="h-3.5 w-3.5" />
-                          Appliquer ce thème
-                        </>
-                      )}
-                    </Button>
+                  <div className="flex items-center justify-between gap-3 p-4">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-extrabold text-[#15232D]">
+                        {theme.name}
+                      </p>
+                      <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">
+                        {theme.description}
+                      </p>
+                    </div>
+
+                    {locked ? (
+                      <Link
+                        href="/dashboard/abonnement"
+                        className="shrink-0 rounded-full bg-[#073B35] px-4 py-2 text-xs font-extrabold text-[#7CE3C8] transition hover:bg-[#0a4f47]"
+                      >
+                        Débloquer (Premium)
+                      </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleSelectTheme(theme.id)}
+                        className={`shrink-0 rounded-full px-4 py-2 text-xs font-extrabold transition cursor-pointer ${
+                          isCurrent
+                            ? "bg-[#00A884] text-white"
+                            : "border border-slate-300 bg-white text-[#15232D] hover:border-[#073B35]"
+                        }`}
+                      >
+                        {isCurrent ? "Actif" : "Appliquer"}
+                      </button>
+                    )}
                   </div>
                 </div>
               );
             })}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* 2. Constructeur de sections + Aperçu */}
-      <div className="grid gap-6 lg:grid-cols-12">
+      {/* 2. Constructeur de sections + Couleurs + Polices + Aperçu */}
+      <div id="editeur-sections" className="scroll-mt-20 grid gap-6 lg:grid-cols-12">
         <div className="space-y-5 lg:col-span-5">
-          {/* Couleurs globales */}
+          {/* Couleurs & Police d'écriture */}
           <Card>
-            <CardContent className="space-y-3 p-5">
-              <h3 className="text-sm font-extrabold text-[#15232D]">
-                Identité visuelle de la boutique
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-600">
-                    Couleur principale
-                  </label>
-                  <input
-                    type="color"
-                    value={activeStore.settings.primaryColor}
-                    onChange={(e) =>
-                      updateStoreSettings(activeStore.id, {
-                        primaryColor: e.target.value,
-                      })
-                    }
-                    className="mt-1 h-9.5 w-full rounded border border-[#E2E8F0] cursor-pointer"
-                  />
+            <CardContent className="space-y-5 p-5">
+              <div>
+                <h3 className="text-sm font-extrabold text-[#15232D]">
+                  Couleurs & Police d&apos;écriture
+                </h3>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600">
+                      Couleur principale
+                    </label>
+                    <input
+                      type="color"
+                      value={activeStore.settings.primaryColor}
+                      onChange={(e) =>
+                        updateStoreSettings(activeStore.id, {
+                          primaryColor: e.target.value,
+                        })
+                      }
+                      className="mt-1 h-9.5 w-full rounded-lg border border-[#E2E8F0] cursor-pointer"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600">
+                      Couleur boutons COD
+                    </label>
+                    <input
+                      type="color"
+                      value={activeStore.settings.secondaryColor}
+                      onChange={(e) =>
+                        updateStoreSettings(activeStore.id, {
+                          secondaryColor: e.target.value,
+                        })
+                      }
+                      className="mt-1 h-9.5 w-full rounded-lg border border-[#E2E8F0] cursor-pointer"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-600">
-                    Couleur d&apos;action COD
-                  </label>
-                  <input
-                    type="color"
-                    value={activeStore.settings.secondaryColor}
-                    onChange={(e) =>
-                      updateStoreSettings(activeStore.id, {
-                        secondaryColor: e.target.value,
-                      })
-                    }
-                    className="mt-1 h-9.5 w-full rounded border border-[#E2E8F0] cursor-pointer"
-                  />
-                </div>
+              </div>
+
+              <div className="border-t border-[#E2E8F0] pt-4">
+                <StoreFontSelector
+                  settings={activeStore.settings}
+                  onChange={(patch) =>
+                    updateStoreSettings(activeStore.id, patch)
+                  }
+                />
               </div>
             </CardContent>
           </Card>
@@ -622,6 +748,7 @@ export default function StoreBuilderPage() {
             </div>
 
             <div
+              style={getStoreFontStyleVars(activeStore.settings)}
               className={`mx-auto max-h-[780px] overflow-y-auto rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] shadow-inner ${
                 previewMode === "mobile" ? "max-w-[390px]" : "w-full"
               }`}

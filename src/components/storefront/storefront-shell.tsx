@@ -24,6 +24,10 @@ import {
   getStoreSubscriptionHealth,
   ORDER_STATUS_META,
 } from "@/lib/permissions";
+import {
+  getStoreFontStyleVars,
+  StoreDynamicFontInjector,
+} from "@/lib/store-fonts";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 /**
@@ -66,9 +70,14 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
 
   const primary = store.settings.primaryColor || "#073B35";
   const secondary = store.settings.secondaryColor || "#00A884";
+  const storeFontVars = getStoreFontStyleVars(store.settings);
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#F8FAFC] text-[#15232D]">
+    <div
+      className="flex min-h-screen flex-col bg-[#F8FAFC] text-[#15232D]"
+      style={storeFontVars}
+    >
+      <StoreDynamicFontInjector settings={store.settings} />
       {/* Barre supérieure : Livraison COD & Suivi de commande en ligne */}
       <div
         className="px-4 py-2 text-xs text-white"

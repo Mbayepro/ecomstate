@@ -28,11 +28,16 @@ import {
   StatMetricCard,
 } from "@/components/dashboard/page-header";
 import { MultiImageUploadField } from "@/components/ui/image-upload-field";
+import { ProductDescriptionMediaField } from "@/components/dashboard/product-description-media-field";
 import { usePlatform } from "@/lib/platform-store";
 import { getModuleLimit } from "@/lib/permissions";
 import { generateProductCopyWithAdeshina } from "@/lib/adeshina-ai";
 import { formatCurrency } from "@/lib/utils";
-import type { Product, ProductVariant } from "@/types/domain";
+import type {
+  Product,
+  ProductDescriptionMedia,
+  ProductVariant,
+} from "@/types/domain";
 
 export default function DashboardProduitsPage() {
   const {
@@ -70,6 +75,9 @@ export default function DashboardProduitsPage() {
   const [lowStockThreshold, setLowStockThreshold] = useState("5");
   const [shortDescription, setShortDescription] = useState("");
   const [description, setDescription] = useState("");
+  const [descriptionMedia, setDescriptionMedia] = useState<
+    ProductDescriptionMedia[]
+  >([]);
   const [imagesText, setImagesText] = useState("");
   const [variantsText, setVariantsText] = useState("");
   const [isActive, setIsActive] = useState(true);
@@ -134,6 +142,7 @@ export default function DashboardProduitsPage() {
     setLowStockThreshold("5");
     setShortDescription("");
     setDescription("");
+    setDescriptionMedia([]);
     setImagesText("");
     setVariantsText("");
     setIsActive(true);
@@ -154,6 +163,7 @@ export default function DashboardProduitsPage() {
     setLowStockThreshold(String(p.lowStockThreshold));
     setShortDescription(p.shortDescription ?? "");
     setDescription(p.description);
+    setDescriptionMedia(p.descriptionMedia ?? []);
     setImagesText(p.images.join("\n"));
     setVariantsText(p.variants.map((v) => `${v.name}:${v.value}`).join(", "));
     setIsActive(p.isActive);
@@ -189,6 +199,8 @@ export default function DashboardProduitsPage() {
       categoryId: categoryId || storeCategories[0]?.id || "",
       shortDescription: shortDescription.trim() || undefined,
       description: description.trim(),
+      descriptionMedia:
+        descriptionMedia.length > 0 ? descriptionMedia : undefined,
       costPrice: Number(costPrice) || 0,
       additionalCost: Number(additionalCost) || 0,
       price: Number(price) || 0,
@@ -834,6 +846,11 @@ export default function DashboardProduitsPage() {
                   className="w-full rounded-lg border border-[#E2E8F0] px-3.5 py-2 text-sm focus:border-[#00A884] focus:outline-none"
                 />
               </div>
+
+              <ProductDescriptionMediaField
+                items={descriptionMedia}
+                onChange={setDescriptionMedia}
+              />
 
               <MultiImageUploadField
                 label="Photos du produit"

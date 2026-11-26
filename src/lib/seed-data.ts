@@ -81,8 +81,7 @@ export const INITIAL_STORES: Store[] = [
       primaryColor: "#073B35",
       secondaryColor: "#00A884",
       template: "shrine_pro_3",
-      bannerUrl:
-        "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&w=1400&q=80",
+      bannerUrl: "/images/hero-african-founder-fashion.jpg",
       description:
         "Prêt-à-porter contemporain et maroquinerie confectionnés avec soin. Commandez en 30 secondes et réglez uniquement à la réception de votre colis.",
       whatsappPhone: "+221774582210",
@@ -136,8 +135,7 @@ export const INITIAL_STORES: Store[] = [
       primaryColor: "#073B35",
       secondaryColor: "#00A884",
       template: "shrine_pro_1",
-      bannerUrl:
-        "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1400&q=80",
+      bannerUrl: "/images/african-courier-motorbike-dispatch.jpg",
       description:
         "Accessoires audio, batteries haute capacité et équipements connectés vérifiés avec garantie locale et paiement à la livraison.",
       whatsappPhone: "+22997123456",
@@ -190,6 +188,20 @@ export const INITIAL_PRODUCTS: Product[] = [
     shortDescription: "Lin naturel respirant, broderie fine ton sur ton — Idéal cérémonies & quotidien.",
     description:
       "Ensemble deux pièces en lin naturel respirant avec broderie fine ton sur ton. Coupe fluide idéale pour les cérémonies et le quotidien. Vérification à la livraison avant paiement.",
+    descriptionMedia: [
+      {
+        id: "dm-seed-1",
+        type: "image",
+        url: "/images/hero-african-founder-fashion.jpg",
+        caption: "Tombé fluide en lin naturel · Finitions cousues main dans notre atelier",
+      },
+      {
+        id: "dm-seed-2",
+        type: "image",
+        url: "/images/african-cod-delivery-handover.jpg",
+        caption: "Livraison à votre porte : vous vérifiez la coupe et la matière avant de payer",
+      },
+    ],
     costPrice: 16500,
     additionalCost: 1000,
     price: 45000,
@@ -198,8 +210,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     stock: 14,
     lowStockThreshold: 5,
     images: [
-      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
-      "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=80",
+      "/images/african-fashion-model-teranga.jpg",
+      "/images/hero-african-founder-fashion.jpg",
     ],
     variants: [
       { id: "v-1", name: "Taille", value: "M", sku: "ADK-LIN-001-M", stock: 6 },
@@ -227,7 +239,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     stock: 8,
     lowStockThreshold: 5,
     images: [
-      "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=900&q=80",
+      "/images/african-sneakers-leather-studio.jpg",
     ],
     variants: [
       { id: "v-4", name: "Pointure", value: "40", stock: 3 },

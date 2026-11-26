@@ -35,12 +35,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FormattedAiText } from "@/components/ui/formatted-ai-text";
 import { AnimatedNumber, Reveal, ScrollProgress, SpotlightCard } from "@/components/ui/motion";
+import {
+  MerchantEditorialMarquee,
+  RotatingHeroPhrase,
+  ShopifyBentoShowcase,
+  ShopifyHeroReel,
+} from "@/components/marketing/shopify-african-showcase";
 import { DEFAULT_PLANS, PLAN_COMPARISON_ROWS } from "@/lib/permissions";
 import { askAdeshinaIA } from "@/lib/adeshina-ai";
 import { formatCurrency } from "@/lib/utils";
 
 /**
- * Section 4.2 — Les 9 problèmes réels rencontrés par les commerçants COD
+ * Section 4.2 — Les 9 problèmes réels rencontrés par les commerçants COD (Enrichis de visuels éditoriaux africains)
  */
 const MERCHANT_PAIN_POINTS = [
   {
@@ -48,54 +54,110 @@ const MERCHANT_PAIN_POINTS = [
     title: "Commandes dispersées",
     desc: "Informations perdues dans des messages vocaux, commentaires et discussions non structurées.",
     solution: "Centralisé dans un flux unique à 11 statuts COD",
+    image: "/images/african-woman-mobile-shopping.jpg",
+    tag: "Flux Centralisé",
   },
   {
     icon: Store,
     title: "Difficulté à créer une boutique pro",
     desc: "Outils techniques complexes ou thèmes inadaptés à la vente rapide sur smartphone.",
-    solution: "Store Builder Shrine Pro prêt en quelques minutes",
+    solution: "Thème Shrine Pro 3 prêt en quelques minutes",
+    image: "/images/hero-african-founder-fashion.jpg",
+    tag: "Shrine Pro 3",
   },
   {
     icon: FormInput,
-    title: "Formulaires de commande non adaptés",
+    title: "Formulaires de commande inadaptés",
     desc: "Formulaires longs demandant e-mail, code postal ou carte bancaire qui font fuir les acheteurs COD.",
     solution: "Form Builder 100 % COD optimisé pour mobile",
+    image: "/images/african-fashion-model-teranga.jpg",
+    tag: "1 Clic COD",
   },
   {
     icon: Boxes,
     title: "Erreurs de suivi de stock",
     desc: "Ventes d'articles déjà en rupture faute de décrémentation et de réintégration des retours.",
     solution: "Stocks liés en temps réel aux livraisons & retours",
+    image: "/images/hero-african-founder-beauty.jpg",
+    tag: "Stock Temps Réel",
   },
   {
     icon: UserX,
     title: "Clients difficiles à relancer",
     desc: "Aucun historique centralisé des acheteurs fidèles ni des numéros à fort taux de refus.",
     solution: "CRM automatique : clients fidèles vs retours",
+    image: "/images/african-beauty-glow-portrait.jpg",
+    tag: "CRM Client",
   },
   {
     icon: Truck,
     title: "Livreurs difficiles à suivre",
     desc: "Manque de clarté sur qui détient quels colis, quels colis sont livrés et lesquels reviennent.",
     solution: "Assignation par livreur et taux de livraison réel",
+    image: "/images/african-courier-motorbike-dispatch.jpg",
+    tag: "Suivi Livreurs",
   },
   {
     icon: Wallet,
     title: "Encaissements COD mal contrôlés",
     desc: "Écarts fréquents entre le cash encaissé chez le client final et les reversements reçus.",
     solution: "Rapprochement financier COD franc par franc",
+    image: "/images/african-cod-delivery-handover.jpg",
+    tag: "Contrôle Cash",
   },
   {
     icon: Calculator,
     title: "Aucune visibilité sur le bénéfice réel",
     desc: "Confusion entre chiffre d'affaires commandé, ventes réellement livrées et profit net après dépenses.",
     solution: "Calcul du vrai bénéfice net sur commandes livrées",
+    image: "/images/african-merchant-packaging-cod.jpg",
+    tag: "Bénéfice Net",
   },
   {
     icon: Clock,
     title: "Manque de temps pour analyser",
     desc: "Impossible de savoir rapidement quel produit ou quelle campagne publicitaire est vraiment rentable.",
     solution: "Copilote Adeshina IA connecté à vos vrais chiffres",
+    image: "/images/african-sneakers-leather-studio.jpg",
+    tag: "Adeshina IA",
+  },
+];
+
+/**
+ * La chaîne réelle du Cash on Delivery en 4 étapes illustrées
+ */
+const COD_WORKFLOW_STEPS = [
+  {
+    step: "01",
+    title: "Commande en 30 secondes",
+    subtitle: "Sans carte bancaire",
+    desc: "Votre cliente remplit un formulaire épuré (Nom, Téléphone, Ville, Quartier & Repère) optimisé pour mobile en 1 clic.",
+    image: "/images/african-woman-mobile-shopping.jpg",
+    badge: "1 Clic Mobile",
+  },
+  {
+    step: "02",
+    title: "Préparation & Colis soigné",
+    subtitle: "Validation express",
+    desc: "Votre équipe confirme la commande, prépare le colis avec soin et l'assigne directement au livreur dans EcomSate.",
+    image: "/images/african-merchant-packaging-cod.jpg",
+    badge: "Préparation & Suivi",
+  },
+  {
+    step: "03",
+    title: "Départ Livreur & Tournée",
+    subtitle: "Suivi par zone",
+    desc: "Chaque livreur connaît ses adresses, repères et montants COD attendus. Vous suivez son taux de livraison en direct.",
+    image: "/images/african-courier-motorbike-dispatch.jpg",
+    badge: "Tournée tracée",
+  },
+  {
+    step: "04",
+    title: "Remise Colis & Bénéfice Net",
+    subtitle: "Franc par franc",
+    desc: "La cliente vérifie son colis et paie à la livraison. EcomSate rapproche le cash reversé et calcule votre vrai bénéfice net.",
+    image: "/images/african-cod-delivery-handover.jpg",
+    badge: "Bénéfice Réel Calculé",
   },
 ];
 
@@ -259,13 +321,23 @@ export default function HomePage() {
                 </span>
               </h1>
 
+              {/* Sous-ligne dynamique style Shopify ("Be the next...") */}
+              <div className="rounded-2xl border border-white/12 bg-white/6 px-4 py-3 backdrop-blur-xs">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#7CE3C8]">
+                  Bâtissez dès aujourd&apos;hui votre
+                </p>
+                <p className="mt-0.5 text-lg font-extrabold text-white sm:text-xl">
+                  <RotatingHeroPhrase />
+                </p>
+              </div>
+
               <p className="max-w-xl text-base leading-relaxed text-slate-200 sm:text-lg">
                 Créez votre boutique, gérez vos commandes, maîtrisez vos
                 bénéfices et développez votre activité avec{" "}
                 <strong className="font-semibold text-white">Adeshina IA</strong>.
               </p>
 
-              <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center">
+              <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center">
                 <Link href="/creer-une-boutique">
                   <Button variant="primary" size="lg" className="w-full sm:w-auto">
                     Créer ma boutique
@@ -283,14 +355,14 @@ export default function HomePage() {
                 </a>
               </div>
 
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-2 text-xs font-medium text-[#E7F7F2] sm:text-sm">
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-1 text-xs font-medium text-[#E7F7F2] sm:text-sm">
                 <span className="inline-flex items-center gap-1.5">
                   <Check className="h-4 w-4 text-[#00A884]" />
                   100 % Paiement à la livraison (COD)
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <Check className="h-4 w-4 text-[#00A884]" />
-                  Thèmes Shrine Pro 1 & 3 intégrés
+                  Thème officiel Shrine Pro 3 inclus
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <Check className="h-4 w-4 text-[#00A884]" />
@@ -299,120 +371,84 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Colonne droite : Aperçu architectural réel du Centre de contrôle EcomSate */}
+            {/* Colonne droite : Story Reel Éditorial Africain & UI Flottantes style Shopify */}
             <div className="lg:col-span-6">
-              <Reveal direction="right" delayMs={120}>
-                <div className="animate-float rounded-2xl border border-white/15 bg-[#052B27]/90 p-5 shadow-2xl backdrop-blur-md">
-                  <div className="flex items-center justify-between border-b border-white/10 pb-3.5">
-                    <div className="flex items-center gap-1.5">
-                      <span className="h-2.5 w-2.5 rounded-full bg-rose-400/70" />
-                      <span className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
-                      <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
-                    </div>
-                    <div className="flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-medium text-[#E7F7F2]">
-                      <Lock className="h-3 w-3 text-[#00A884]" />
-                      Centre de contrôle EcomSate · Temps réel
-                    </div>
-                    <span className="rounded-full bg-[#00A884]/20 px-2.5 py-0.5 text-[11px] font-bold text-[#00A884]">
-                      100 % COD
-                    </span>
-                  </div>
-
-                  {/* Blocs opérationnels réels avec compteurs animés */}
-                  <div className="mt-4 grid grid-cols-3 gap-2.5">
-                    <div className="rounded-xl border border-white/10 bg-white/6 p-3 transition hover:border-[#00A884]/50">
-                      <p className="text-[11px] text-slate-300">CA Livré vérifié</p>
-                      <p className="mt-1 text-base font-extrabold text-white sm:text-lg">
-                        <AnimatedNumber value={69000} suffix=" FCFA" />
-                      </p>
-                      <p className="mt-0.5 text-[11px] font-semibold text-[#00A884]">
-                        Commandes livrées
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-white/10 bg-white/6 p-3 transition hover:border-[#F4A340]/50">
-                      <p className="text-[11px] text-slate-300">Cash chez livreurs</p>
-                      <p className="mt-1 text-base font-extrabold text-[#F4A340] sm:text-lg">
-                        <AnimatedNumber value={29000} suffix=" FCFA" />
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-slate-300">
-                        À récupérer
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-white/10 bg-white/6 p-3 transition hover:border-[#00A884]/50">
-                      <p className="text-[11px] text-slate-300">Bénéfice net réel</p>
-                      <p className="mt-1 text-base font-extrabold text-[#00A884] sm:text-lg">
-                        <AnimatedNumber value={27500} suffix=" FCFA" />
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-slate-300">
-                        Coûts & pubs déduits
-                      </p>
-                    </div>
-                  </div>
-
-                {/* Aperçu Form Builder COD + Adeshina IA */}
-                <div className="mt-3.5 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-xl border border-white/10 bg-white/6 p-3.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-white">
-                        Form Builder COD actif
-                      </span>
-                      <span className="rounded bg-[#00A884]/20 px-2 py-0.5 text-[10px] font-bold text-[#00A884]">
-                        Packs 1x / 2x / 3x
-                      </span>
-                    </div>
-                    <div className="mt-2.5 space-y-1.5 text-[11px] text-slate-200">
-                      <div className="rounded border border-white/10 bg-white/5 px-2.5 py-1.5">
-                        Nom complet & Téléphone principal *
-                      </div>
-                      <div className="rounded border border-white/10 bg-white/5 px-2.5 py-1.5">
-                        Ville / Zone + Quartier & Repère *
-                      </div>
-                      <div className="rounded bg-[#00A884] px-2.5 py-1.5 text-center font-bold text-white">
-                        Confirmer — Paiement à la livraison
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col justify-between rounded-xl border border-[#00A884]/35 bg-[#073B35] p-3.5">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#00A884] text-white">
-                          <Bot className="h-4 w-4" />
-                        </span>
-                        <div>
-                          <p className="text-xs font-bold text-white">Adeshina IA</p>
-                          <p className="text-[10px] text-[#E7F7F2]">
-                            Analyse opérationnelle
-                          </p>
-                        </div>
-                      </div>
-                      <p className="mt-2.5 text-[11px] leading-relaxed text-slate-200">
-                        « Le produit <strong>Ensemble Lin Teranga</strong> génère{" "}
-                        <strong>54 % de marge nette</strong>. 1 reversement COD
-                        livreur (29 000 FCFA) est en attente de validation. »
-                      </p>
-                    </div>
-                    <div className="mt-3 flex gap-2">
-                      <Link href="/s/atelier-dakar" className="flex-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full border-white/20 bg-white/10 text-xs text-white hover:bg-white/20"
-                        >
-                          Vitrine COD
-                        </Button>
-                      </Link>
-                      <Link href="/dashboard" className="flex-1">
-                        <Button variant="primary" size="sm" className="w-full text-xs">
-                          Ouvrir Démo
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-                </div>
+              <Reveal direction="right" delayMs={100}>
+                <ShopifyHeroReel />
               </Reveal>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* RUBAN VISUEL INFINI DES ENTREPRENEURES & BOUTIQUES AFRICAINES (STYLE SHOPIFY) */}
+      <MerchantEditorialMarquee />
+
+      {/* GRILLE BENTO ASYMÉTRIQUE INTERACTIVE : PHOTOS ÉDITORIALES + MICRO-UI VIVANTES */}
+      <ShopifyBentoShowcase />
+
+      {/* NOUVELLE SECTION VISUELLE : LA CHAÎNE DU CASH ON DELIVERY EN 4 ÉTAPES ILLUSTRÉES */}
+      <section id="workflow-cod" className="border-b border-[#E2E8F0] bg-[#F8FAFC] py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal className="mx-auto max-w-3xl text-center">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#00A884]/30 bg-[#E7F7F2] px-3.5 py-1 text-xs font-bold text-[#073B35]">
+              <Truck className="h-3.5 w-3.5 text-[#00A884]" />
+              La réalité du terrain africain en images
+            </span>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#15232D] sm:text-4xl">
+              Comment fonctionne le Cash on Delivery avec EcomSate ?
+            </h2>
+            <p className="mt-3 text-base text-slate-600">
+              De la commande sur smartphone jusqu&apos;à l&apos;encaissement du cash entre vos mains,
+              chaque étape est maîtrisée avec précision.
+            </p>
+          </Reveal>
+
+          <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {COD_WORKFLOW_STEPS.map((ws, idx) => (
+              <Reveal key={ws.step} delayMs={idx * 80}>
+                <SpotlightCard className="group flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-xs transition-all duration-300 hover:border-[#00A884] hover:shadow-xl">
+                  <div>
+                    {/* Photo réelle de l'étape */}
+                    <div className="relative h-44 w-full overflow-hidden bg-slate-100">
+                      <img
+                        src={ws.image}
+                        alt={ws.title}
+                        className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+                      
+                      <span className="absolute left-3 top-3 rounded-lg bg-[#073B35]/90 px-2.5 py-1 text-xs font-extrabold text-[#00A884] shadow-md backdrop-blur-xs">
+                        Étape {ws.step}
+                      </span>
+
+                      <span className="absolute bottom-2.5 left-3 right-3 truncate text-[11px] font-bold text-white/95">
+                        {ws.badge}
+                      </span>
+                    </div>
+
+                    <div className="p-5">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-[#00A884]">
+                        {ws.subtitle}
+                      </p>
+                      <h3 className="mt-1 text-base font-extrabold text-[#15232D] group-hover:text-[#073B35]">
+                        {ws.title}
+                      </h3>
+                      <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                        {ws.desc}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-slate-100 p-4 pt-3">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#073B35]">
+                      <Check className="h-3.5 w-3.5 text-[#00A884]" />
+                      Géré nativement par EcomSate
+                    </span>
+                  </div>
+                </SpotlightCard>
+              </Reveal>
+            ))}
           </div>
         </div>
       </section>
@@ -436,33 +472,50 @@ export default function HomePage() {
               const Icon = item.icon;
               return (
                 <Reveal key={item.title} delayMs={idx * 65}>
-                  <SpotlightCard className="group flex h-full flex-col justify-between rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-xs hover:border-[#00A884]/45">
+                  <SpotlightCard className="group flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-xs transition-all duration-300 hover:border-[#00A884]/60 hover:shadow-xl">
                     <div>
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <span className="icon-wiggle flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-[#D97706] ring-1 ring-amber-200/60 transition-all duration-300 group-hover:scale-110 group-hover:-rotate-3 group-hover:bg-[#073B35] group-hover:text-[#00A884] group-hover:ring-[#073B35]">
-                            <Icon className="h-5 w-5" />
-                          </span>
-                          <span className="rounded-lg bg-[#FEF3C7]/80 px-2.5 py-1 text-[11px] font-extrabold tracking-wider text-[#92400E] transition-colors group-hover:bg-[#E7F7F2] group-hover:text-[#073B35]">
-                            0{idx + 1}
+                      {/* Photo d'illustration réelle */}
+                      <div className="relative h-36 w-full overflow-hidden bg-slate-100">
+                        <img
+                          src={item.image}
+                          alt={item.title}
+                          className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
+
+                        {/* Tag supérieur */}
+                        <div className="absolute left-3 top-3 flex items-center gap-2">
+                          <span className="rounded-lg bg-[#073B35]/90 px-2 py-0.5 text-[10px] font-extrabold text-[#00A884] backdrop-blur-xs">
+                            {item.tag}
                           </span>
                         </div>
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 transition-colors group-hover:text-[#00A884]">
-                          Défi COD
+
+                        <span className="absolute right-3 top-3 rounded-lg bg-white/90 px-2 py-0.5 text-[11px] font-extrabold text-[#15232D] shadow-xs">
+                          0{idx + 1}
                         </span>
+
+                        <div className="absolute bottom-2.5 left-3 flex items-center gap-2">
+                          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#073B35] text-[#00A884] shadow-md ring-1 ring-white/20">
+                            <Icon className="h-4 w-4" />
+                          </span>
+                          <span className="text-xs font-bold text-white drop-shadow-xs">
+                            {item.title}
+                          </span>
+                        </div>
                       </div>
 
-                      <h3 className="mt-4 text-base font-extrabold text-[#15232D] transition-colors group-hover:text-[#073B35]">
-                        {item.title}
-                      </h3>
-                      <p className="mt-2 text-xs leading-relaxed text-slate-600 sm:text-[13px]">
-                        {item.desc}
-                      </p>
+                      <div className="p-5 pt-3.5">
+                        <p className="text-xs leading-relaxed text-slate-600 sm:text-[13px]">
+                          {item.desc}
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="shine-sweep mt-5 flex items-start gap-2 rounded-xl border border-[#00A884]/20 bg-[#E7F7F2]/55 px-3.5 py-2.5 text-xs font-bold leading-snug text-[#073B35] transition-all duration-300 group-hover:border-[#00A884] group-hover:bg-[#073B35] group-hover:text-white">
-                      <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#00A884]" />
-                      <span>{item.solution}</span>
+                    <div className="p-5 pt-0">
+                      <div className="shine-sweep flex items-start gap-2 rounded-xl border border-[#00A884]/25 bg-[#E7F7F2]/60 px-3.5 py-2.5 text-xs font-bold leading-snug text-[#073B35] transition-all duration-300 group-hover:border-[#00A884] group-hover:bg-[#073B35] group-hover:text-white">
+                        <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#00A884]" />
+                        <span>{item.solution}</span>
+                      </div>
                     </div>
                   </SpotlightCard>
                 </Reveal>
@@ -609,34 +662,79 @@ export default function HomePage() {
                     </Link>
                   </div>
                 </div>
-                <div className="space-y-3 rounded-xl border border-white/12 bg-[#073B35] p-5 lg:col-span-6">
-                  <div className="rounded-lg bg-[#00A884] px-3 py-1.5 text-center text-xs font-bold text-white">
-                    Livraison rapide · Vous payez uniquement à la réception !
+                <div className="space-y-3 rounded-2xl border border-white/15 bg-[#073B35] p-5 lg:col-span-6 shadow-xl">
+                  <div className="rounded-xl bg-[#00A884] px-3.5 py-1.5 text-center text-xs font-bold text-white shadow-sm">
+                    ⚡ LIVRAISON RAPIDE 24H-48H · VOUS PAYEZ UNIQUEMENT À LA RÉCEPTION !
                   </div>
-                  <div className="rounded-lg border border-white/10 bg-white/8 p-4">
-                    <p className="text-xs font-semibold text-[#00A884]">
-                      SECTION HERO SHRINE PRO
-                    </p>
-                    <p className="mt-1 text-base font-bold text-white">
-                      Atelier Dakar Mode — Collection Teranga
-                    </p>
-                    <p className="mt-1 text-xs text-slate-300">
-                      Offres Packs 1x / 2x / 3x · Tableau comparatif · FAQ COD
-                    </p>
+
+                  <div className="grid gap-3 sm:grid-cols-12 rounded-xl border border-white/10 bg-white/6 p-3.5">
+                    {/* Photo produit modèle avec badge promotion */}
+                    <div className="relative aspect-square overflow-hidden rounded-xl bg-slate-900 sm:col-span-5">
+                      <img
+                        src="/images/african-fashion-model-teranga.jpg"
+                        alt="Ensemble Lin & Soie Prestige Teranga"
+                        className="h-full w-full object-cover"
+                      />
+                      <span className="absolute left-2 top-2 rounded-lg bg-[#00A884] px-2 py-0.5 text-[10px] font-extrabold text-white">
+                        -20% COD
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col justify-between sm:col-span-7">
+                      <div>
+                        <div className="flex items-center gap-1 text-[11px] text-[#F4A340]">
+                          {"★".repeat(5)}
+                          <span className="font-bold text-white ml-1">4.9/5</span>
+                          <span className="text-slate-300">(148 avis)</span>
+                        </div>
+                        <h4 className="mt-1 text-sm font-extrabold text-white">
+                          Ensemble Lin & Soie Prestige Teranga
+                        </h4>
+                        <div className="mt-1 flex items-baseline gap-2">
+                          <span className="text-base font-extrabold text-[#00A884]">
+                            28 500 FCFA
+                          </span>
+                          <span className="text-xs text-slate-400 line-through">
+                            35 000 FCFA
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Barre d'urgence & rareté stock */}
+                      <div className="mt-2 space-y-1">
+                        <div className="flex items-center justify-between text-[10px] font-bold">
+                          <span className="text-[#F4A340]">🔥 Plus que 7 articles en stock</span>
+                          <span className="text-slate-300">Offre limitée</span>
+                        </div>
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/20">
+                          <div className="h-full w-3/4 rounded-full bg-[#F4A340]" />
+                        </div>
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Offres Packs Shrine Pro 3 */}
                   <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                    <div className="rounded-lg border border-white/10 bg-white/6 p-2.5">
-                      <p className="font-bold text-white">1 Unité</p>
-                      <p className="text-[#00A884]">Tarif standard</p>
+                    <div className="rounded-xl border border-white/15 bg-white/6 p-2">
+                      <p className="font-bold text-white text-[11px]">1 Unité</p>
+                      <p className="text-[10px] text-slate-300">28 500 F</p>
+                      <p className="text-[9px] text-[#00A884] font-semibold">Standard</p>
                     </div>
-                    <div className="rounded-lg border border-[#00A884] bg-[#00A884]/15 p-2.5">
-                      <p className="font-bold text-white">Pack Duo (2x)</p>
-                      <p className="text-[#00A884]">Populaire</p>
+                    <div className="rounded-xl border-2 border-[#00A884] bg-[#00A884]/20 p-2 shadow-xs">
+                      <p className="font-bold text-white text-[11px]">Pack Duo (2x)</p>
+                      <p className="text-[10px] text-white font-extrabold">49 000 F</p>
+                      <p className="text-[9px] text-[#00A884] font-bold">Économie 8 000 F</p>
                     </div>
-                    <div className="rounded-lg border border-white/10 bg-white/6 p-2.5">
-                      <p className="font-bold text-white">Pack Trio (3x)</p>
-                      <p className="text-[#F4A340]">Meilleure offre</p>
+                    <div className="rounded-xl border border-white/15 bg-white/6 p-2">
+                      <p className="font-bold text-white text-[11px]">Pack Trio (3x)</p>
+                      <p className="text-[10px] text-slate-300">69 000 F</p>
+                      <p className="text-[9px] text-[#F4A340] font-bold">Super Offre</p>
                     </div>
+                  </div>
+
+                  {/* Bouton de commande COD direct */}
+                  <div className="rounded-xl bg-[#00A884] py-2.5 text-center text-xs font-extrabold text-white shadow-md transition hover:bg-[#00A884]/90 cursor-pointer">
+                    COMMANDER MAINTENANT — PAIEMENT À LA LIVRAISON
                   </div>
                 </div>
               </div>

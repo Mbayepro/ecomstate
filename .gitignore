@@ -29,4 +29,6 @@ next-env.d.ts
 
 # archives de référence locales
 *.zip
+/shrine-pro-theme/
+/audio*.ogg
 

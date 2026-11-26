@@ -110,40 +110,49 @@ export function AdeshinaFloatingWidget() {
 
   return (
     <>
-      {/* Bouton flottant Adeshina IA */}
-      <div className="fixed bottom-5 right-5 z-40 flex items-center gap-1.5">
+      {/* Bouton flottant Adeshina IA (Style Shopify/Intercom ultra-net) */}
+      <div className="fixed bottom-5 right-5 z-40 flex items-center">
         {!open && (
-          <>
-            <button
-              type="button"
-              onClick={() => setDismissed(true)}
-              className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-800/80 text-white/70 backdrop-blur-xs transition hover:bg-slate-900 hover:text-white cursor-pointer shadow-md"
-              title="Masquer Adeshina IA"
-              aria-label="Masquer Adeshina IA"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
+          <div className="group relative flex items-center">
+            {/* Bouton d'ouverture principal */}
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="animate-pulse-emerald group flex items-center gap-3 rounded-full border border-white/20 bg-[#073B35] py-2.5 pl-3.5 pr-4 text-white shadow-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-2xl active:scale-98 cursor-pointer"
+              className="relative flex items-center gap-3 rounded-full border border-emerald-500/30 bg-gradient-to-r from-[#073B35] to-[#0a4d45] py-2.5 pl-3 pr-4 text-white shadow-[0_12px_32px_-6px_rgba(7,59,53,0.55)] transition-all duration-300 hover:-translate-y-1 hover:border-[#00A884] hover:shadow-[0_18px_40px_-6px_rgba(0,168,132,0.45)] active:scale-98 cursor-pointer ring-2 ring-emerald-500/20"
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#00A884] text-white transition-transform duration-200 group-hover:rotate-12">
-                <Sparkles className="h-4 w-4" />
+              {/* Ping glow beacon */}
+              <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#00A884] to-[#073B35] text-white shadow-inner">
+                <Sparkles className="h-4 w-4 text-[#E7F7F2]" />
+                <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#00A884] opacity-75" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#00A884] ring-1.5 ring-white" />
+                </span>
               </span>
+
               <div className="text-left">
                 <p className="flex items-center gap-1.5 text-xs font-extrabold tracking-wide text-white">
                   Adeshina IA
-                  <span className="rounded-full bg-[#00A884]/25 px-2 py-0.5 text-[10px] font-semibold text-[#00A884]">
+                  <span className="rounded-full bg-[#00A884]/25 px-2 py-0.5 text-[10px] font-bold text-[#7CE3C8]">
                     En ligne
                   </span>
                 </p>
-                <p className="text-[10px] text-slate-300">
+                <p className="text-[10px] text-slate-300 font-medium">
                   Guide visiteur & créateur
                 </p>
               </div>
             </button>
-          </>
+
+            {/* Micro bouton discret de masquage au hover */}
+            <button
+              type="button"
+              onClick={() => setDismissed(true)}
+              className="absolute -top-2 -left-2 flex h-5 w-5 items-center justify-center rounded-full bg-slate-900/90 text-white/70 opacity-0 shadow-md backdrop-blur-xs transition-opacity duration-200 group-hover:opacity-100 hover:bg-slate-900 hover:text-white cursor-pointer ring-1 ring-white/20"
+              title="Masquer Adeshina IA"
+              aria-label="Masquer Adeshina IA"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
         )}
       </div>
 

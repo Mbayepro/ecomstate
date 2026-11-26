@@ -153,7 +153,52 @@ export function StoreProductCard({
   );
 }
 
-export function EmptyCatalogState({ onReset }: { onReset?: () => void }) {
+export function EmptyCatalogState({
+  onReset,
+  storeTotalProducts = 0,
+  isSearchingOrFiltering = false,
+}: {
+  onReset?: () => void;
+  storeTotalProducts?: number;
+  isSearchingOrFiltering?: boolean;
+}) {
+  if (!isSearchingOrFiltering && storeTotalProducts === 0) {
+    return (
+      <div className="rounded-3xl border border-dashed border-[#00A884]/40 bg-[#E7F7F2]/40 p-8 text-center sm:p-12">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#073B35] text-[#00A884] shadow-md">
+          <ShoppingBag className="h-7 w-7" />
+        </div>
+        <div className="mt-4">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#00A884] px-3 py-1 text-xs font-extrabold text-white">
+            Thème officiel Shrine Pro 3 actif
+          </span>
+        </div>
+        <h3 className="mt-3 text-lg font-extrabold text-[#073B35] sm:text-xl">
+          Votre vitrine Shrine Pro 3 est prête à vendre !
+        </h3>
+        <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-slate-600 sm:text-sm">
+          Vous n&apos;avez pas encore publié d&apos;article dans cette boutique.
+          Ajoutez votre premier produit en 1 clic dans votre tableau de bord commerçant.
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <Link
+            href="/dashboard/produits"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#073B35] px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#073B35]/90"
+          >
+            <Plus className="h-4 w-4 text-[#00A884]" />
+            Ajouter mon premier produit
+          </Link>
+          <Link
+            href="/dashboard/store-builder"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
+          >
+            Personnaliser mon thème Shrine Pro 3
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-14 text-center">
       <ShoppingBag className="mx-auto h-10 w-10 text-slate-300" />

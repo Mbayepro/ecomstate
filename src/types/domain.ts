@@ -123,10 +123,23 @@ export interface StoreSectionBlock {
   items?: StoreSectionItem[];
 }
 
+export type StoreFontId =
+  | "modern"
+  | "luxury"
+  | "beauty"
+  | "rounded"
+  | "bold_tech"
+  | "classic"
+  | "custom_google"
+  | "custom_file";
+
 export interface StoreSettings {
   primaryColor: string;
   secondaryColor: string;
   template: StoreTemplateId;
+  fontFamily?: StoreFontId;
+  customFontName?: string;
+  customFontDataUrl?: string;
   logoUrl?: string;
   bannerUrl?: string;
   description: string;
@@ -194,6 +207,13 @@ export interface ProductVariant {
   stock: number;
 }
 
+export interface ProductDescriptionMedia {
+  id: string;
+  type: "image" | "gif" | "video";
+  url: string;
+  caption?: string;
+}
+
 export interface Product {
   id: string;
   storeId: string;
@@ -202,6 +222,7 @@ export interface Product {
   slug: string;
   shortDescription?: string;
   description: string;
+  descriptionMedia?: ProductDescriptionMedia[];
   costPrice?: number;
   additionalCost?: number;
   price: number;
