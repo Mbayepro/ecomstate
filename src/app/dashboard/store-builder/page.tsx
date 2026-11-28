@@ -512,6 +512,35 @@ export default function StoreBuilderPage() {
                   }
                 />
               </div>
+
+              <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5">
+                <div>
+                  <p className="text-xs font-extrabold text-[#15232D]">
+                    Preuve sociale temps réel (Shrine Pro 3)
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    Affiche une notification discrète d&apos;achats COD récents sur la vitrine.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateStoreSettings(activeStore.id, {
+                      enableLiveSocialProof:
+                        activeStore.settings.enableLiveSocialProof === false,
+                    })
+                  }
+                  className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-extrabold transition cursor-pointer ${
+                    activeStore.settings.enableLiveSocialProof !== false
+                      ? "bg-[#00A884] text-white"
+                      : "border border-slate-300 bg-white text-slate-600"
+                  }`}
+                >
+                  {activeStore.settings.enableLiveSocialProof !== false
+                    ? "Activée"
+                    : "Désactivée"}
+                </button>
+              </div>
             </CardContent>
           </Card>
 

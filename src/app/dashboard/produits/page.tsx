@@ -11,6 +11,7 @@ import {
   Package,
   Plus,
   Search,
+  Share2,
   Sparkles,
   Tag,
   Trash2,
@@ -29,6 +30,8 @@ import {
 } from "@/components/dashboard/page-header";
 import { MultiImageUploadField } from "@/components/ui/image-upload-field";
 import { ProductDescriptionMediaField } from "@/components/dashboard/product-description-media-field";
+import { ProductPromoPosterModal } from "@/components/dashboard/product-promo-poster-modal";
+import { VoiceProductDictation } from "@/components/dashboard/voice-product-dictation";
 import { usePlatform } from "@/lib/platform-store";
 import { getModuleLimit } from "@/lib/permissions";
 import { generateProductCopyWithAdeshina } from "@/lib/adeshina-ai";
@@ -62,6 +65,7 @@ export default function DashboardProduitsPage() {
   const [csvText, setCsvText] = useState("");
   const [csvFeedback, setCsvFeedback] = useState<string | null>(null);
   const [editing, setEditing] = useState<Product | null>(null);
+  const [posterProduct, setPosterProduct] = useState<Product | null>(null);
 
   // États du formulaire enrichi (Section 7.2)
   const [name, setName] = useState("");
@@ -601,6 +605,15 @@ export default function DashboardProduitsPage() {
                           <div className="inline-flex items-center gap-1">
                             <button
                               type="button"
+                              onClick={() => setPosterProduct(p)}
+                              title="Générer une affiche Statut WhatsApp / TikTok"
+                              className="inline-flex items-center gap-1 rounded-lg border border-[#00A884]/35 bg-[#E7F7F2]/60 px-2.5 py-1.5 text-xs font-extrabold text-[#073B35] hover:bg-[#00A884] hover:text-white cursor-pointer"
+                            >
+                              <Share2 className="h-3.5 w-3.5" />
+                              Affiche
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => openEdit(p)}
                               className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 cursor-pointer"
                             >
@@ -698,6 +711,19 @@ export default function DashboardProduitsPage() {
             </div>
 
             <form onSubmit={handleSave} className="mt-5 space-y-4">
+              <VoiceProductDictation
+                onApply={(parsed) => {
+                  setName(parsed.name);
+                  if (parsed.costPrice) setCostPrice(parsed.costPrice);
+                  if (parsed.price) setPrice(parsed.price);
+                  if (parsed.promoPrice) setPromoPrice(parsed.promoPrice);
+                  if (parsed.stock) setStock(parsed.stock);
+                  setShortDescription(parsed.shortDescription);
+                  setDescription(parsed.description);
+                  if (!variantsText) setVariantsText(parsed.variantsText);
+                }}
+              />
+
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="sm:col-span-2">
                   <Input
@@ -906,6 +932,12 @@ export default function DashboardProduitsPage() {
           </div>
         </div>
       )}
+
+      <ProductPromoPosterModal
+        product={posterProduct}
+        store={activeStore}
+        onClose={() => setPosterProduct(null)}
+      />
     </div>
   );
 }

@@ -164,6 +164,7 @@ export interface StoreSettings {
   builderSections?: StoreSectionBlock[];
   publishedVersion?: number;
   isPublished?: boolean;
+  enableLiveSocialProof?: boolean;
   mobileMoneyNumber?: string;
   mobileMoneyInstructions?: string;
 }

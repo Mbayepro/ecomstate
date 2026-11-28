@@ -1,16 +1,22 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   AlertTriangle,
   Check,
   Clock,
+  Copy,
   Download,
+  ExternalLink,
   MapPin,
   Phone,
   Plus,
   Printer,
+  QrCode,
   Search,
+  ShieldAlert,
+  ShieldCheck,
   ShoppingBag,
   Truck,
   X,
@@ -23,6 +29,10 @@ import {
   CodFinancialStatusPill,
   OrderStatusPill,
 } from "@/components/dashboard/status-pill";
+import {
+  buildQrCodeImageUrl,
+  computeCustomerTrustProfile,
+} from "@/lib/cod-trust-score";
 import { usePlatform } from "@/lib/platform-store";
 import { ORDER_STATUS_META } from "@/lib/permissions";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -63,6 +73,7 @@ export default function DashboardCommandesPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
   const [receiptOrder, setReceiptOrder] = useState<Order | null>(null);
+  const [copiedQrLink, setCopiedQrLink] = useState(false);
   const [manualModalOpen, setManualModalOpen] = useState(false);
 
   // Création manuelle de commande (Section 10.6)
@@ -213,6 +224,7 @@ export default function DashboardCommandesPage() {
 
   const renderOrderDetail = (ord: Order) => {
     const nextAction = getNextLogicalAction(ord.status);
+    const trust = computeCustomerTrustProfile(ord.customerPhone, storeOrders);
 
     return (
       <div key={ord.id} className="space-y-4">
@@ -231,6 +243,29 @@ export default function DashboardCommandesPage() {
             </h2>
           </div>
           <OrderStatusPill status={ord.status} showIcon />
+        </div>
+
+        {/* Bouclier Anti-Refus COD (Indice de fiabilité du numéro client) */}
+        <div
+          className={`flex items-start gap-2.5 rounded-xl border p-3 text-xs ${
+            trust.level === "risk"
+              ? "border-rose-300 bg-rose-50 text-rose-950"
+              : trust.level === "trusted"
+                ? "border-[#00A884]/35 bg-[#E7F7F2]/65 text-[#073B35]"
+                : "border-sky-200 bg-sky-50/70 text-sky-950"
+          }`}
+        >
+          {trust.level === "risk" ? (
+            <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
+          ) : (
+            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#00A884]" />
+          )}
+          <div>
+            <p className="font-extrabold">
+              Bouclier COD : {trust.label}
+            </p>
+            <p className="mt-0.5 text-[11px] opacity-90">{trust.detail}</p>
+          </div>
         </div>
 
         {ord.isDuplicateWarning && (
@@ -333,10 +368,10 @@ export default function DashboardCommandesPage() {
             <button
               type="button"
               onClick={() => setReceiptOrder(ord)}
-              className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#E2E8F0] bg-white px-2.5 text-xs font-bold text-[#15232D] hover:bg-slate-50 cursor-pointer"
+              className="inline-flex h-8 items-center gap-1 rounded-lg bg-[#073B35] px-2.5 text-xs font-extrabold text-white hover:bg-[#0a4f47] cursor-pointer"
             >
-              <Printer className="h-3.5 w-3.5 text-[#00A884]" />
-              Bon COD
+              <QrCode className="h-3.5 w-3.5 text-[#7CE3C8]" />
+              Étiquette QR
             </button>
           </div>
         </div>
@@ -530,6 +565,10 @@ export default function DashboardCommandesPage() {
               <div className="divide-y divide-[#E2E8F0]">
                 {filtered.map((ord) => {
                   const active = selectedOrder?.id === ord.id;
+                  const trust = computeCustomerTrustProfile(
+                    ord.customerPhone,
+                    storeOrders
+                  );
                   return (
                     <button
                       key={ord.id}
@@ -548,6 +587,17 @@ export default function DashboardCommandesPage() {
                             {ord.orderNumber}
                           </span>
                           <OrderStatusPill status={ord.status} />
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
+                              trust.level === "risk"
+                                ? "bg-rose-100 text-rose-800"
+                                : trust.level === "trusted"
+                                  ? "bg-[#E7F7F2] text-[#073B35]"
+                                  : "bg-sky-100 text-sky-800"
+                            }`}
+                          >
+                            {trust.label}
+                          </span>
                           {ord.isDuplicateWarning && (
                             <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-900">
                               Doublon ?
@@ -720,91 +770,154 @@ export default function DashboardCommandesPage() {
         </div>
       )}
 
-      {/* Bon de livraison COD imprimable */}
-      {receiptOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
-          <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-dashed border-[#CBD5E1] pb-4">
-              <div>
-                <p className="text-base font-extrabold text-[#15232D]">
-                  {activeStore.name}
-                </p>
-                <p className="text-xs text-slate-500">
-                  Bon de Livraison Cash on Delivery (COD)
-                </p>
-              </div>
-              <span className="rounded-lg bg-[#073B35] px-2.5 py-1 font-mono text-xs font-bold text-white">
-                {receiptOrder.orderNumber}
-              </span>
-            </div>
+      {/* Étiquette Colis COD + QR Code Validation Livreur en 1 Scan */}
+      {receiptOrder && (() => {
+        const courierUrl =
+          typeof window !== "undefined"
+            ? `${window.location.origin}/livraison/${receiptOrder.id}`
+            : `https://ecomstate.vercel.app/livraison/${receiptOrder.id}`;
+        const qrImgUrl = buildQrCodeImageUrl(courierUrl, 180);
 
-            <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl bg-[#F8FAFC] p-3.5 text-xs">
-              <div>
-                <p className="text-[10px] font-bold uppercase text-slate-400">
-                  Destinataire
-                </p>
-                <p className="mt-0.5 font-bold text-[#15232D]">
-                  {receiptOrder.customerName}
-                </p>
-                <p className="text-slate-600">{receiptOrder.customerPhone}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase text-slate-400">
-                  Adresse & Livreur
-                </p>
-                <p className="mt-0.5 font-semibold text-[#15232D]">
-                  {receiptOrder.deliveryAddress}
-                </p>
-                <p className="text-slate-600">
-                  {receiptOrder.courierName || "Livraison directe"}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-4 divide-y divide-[#E2E8F0] border-y border-[#E2E8F0] text-xs">
-              {receiptOrder.items.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between py-2.5"
-                >
-                  <span>
-                    {item.quantity} × {item.productName}{" "}
-                    {item.variantLabel ? `(${item.variantLabel})` : ""}
-                  </span>
-                  <span className="font-bold">
-                    {formatCurrency(item.totalPrice, activeStore.currency)}
-                  </span>
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+            <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-2xl">
+              <div className="flex items-center justify-between border-b border-dashed border-[#CBD5E1] pb-4">
+                <div>
+                  <p className="text-base font-black text-[#15232D]">
+                    {activeStore.name}
+                  </p>
+                  <p className="text-xs font-semibold text-slate-500">
+                    Étiquette Colis COD & Validation Livreur QR
+                  </p>
                 </div>
-              ))}
-            </div>
+                <span className="rounded-lg bg-[#073B35] px-2.5 py-1 font-mono text-xs font-bold text-white">
+                  {receiptOrder.orderNumber}
+                </span>
+              </div>
 
-            <div className="mt-4 flex justify-between text-base font-extrabold text-[#073B35]">
-              <span>Montant à encaisser à la livraison :</span>
-              <span className="text-[#00A884]">
-                {formatCurrency(receiptOrder.totalAmount, activeStore.currency)}
-              </span>
-            </div>
+              {/* Montant COD en gros caractères */}
+              <div className="mt-4 rounded-2xl border-2 border-[#073B35] bg-[#E7F7F2]/50 p-3.5 text-center">
+                <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#073B35]">
+                  Montant exact à encaisser en espèces
+                </p>
+                <p className="mt-0.5 text-2xl font-black text-[#073B35]">
+                  {formatCurrency(receiptOrder.totalAmount, activeStore.currency)}
+                </p>
+              </div>
 
-            <div className="mt-6 flex justify-end gap-2 border-t border-[#E2E8F0] pt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setReceiptOrder(null)}
-              >
-                Fermer
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => window.print()}
-              >
-                <Printer className="h-3.5 w-3.5" />
-                Imprimer
-              </Button>
+              <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl bg-[#F8FAFC] p-3.5 text-xs">
+                <div>
+                  <p className="text-[10px] font-bold uppercase text-slate-400">
+                    Destinataire
+                  </p>
+                  <p className="mt-0.5 font-extrabold text-[#15232D]">
+                    {receiptOrder.customerName}
+                  </p>
+                  <p className="font-semibold text-slate-700">
+                    {receiptOrder.customerPhone}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase text-slate-400">
+                    Adresse & Livreur
+                  </p>
+                  <p className="mt-0.5 font-semibold text-[#15232D]">
+                    {receiptOrder.deliveryAddress} ({receiptOrder.deliveryCity})
+                  </p>
+                  <p className="text-slate-600">
+                    {receiptOrder.courierName || "Livraison directe"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 divide-y divide-[#E2E8F0] border-y border-[#E2E8F0] text-xs">
+                {receiptOrder.items.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between py-2.5"
+                  >
+                    <span className="font-semibold text-[#15232D]">
+                      {item.quantity} × {item.productName}{" "}
+                      {item.variantLabel ? `(${item.variantLabel})` : ""}
+                    </span>
+                    <span className="font-bold">
+                      {formatCurrency(item.totalPrice, activeStore.currency)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bloc QR Code Livreur 1-Scan */}
+              <div className="mt-4 flex flex-col items-center gap-4 rounded-2xl border border-[#00A884]/35 bg-[#F8FAFC] p-4 sm:flex-row">
+                <img
+                  src={qrImgUrl}
+                  alt="QR Code Validation Livreur"
+                  className="h-28 w-28 shrink-0 rounded-xl border border-slate-200 bg-white p-1.5"
+                />
+                <div className="space-y-2 text-center sm:text-left">
+                  <p className="text-xs font-black text-[#073B35]">
+                    Scan Livreur en 1 clic à la remise du colis
+                  </p>
+                  <p className="text-[11px] leading-snug text-slate-600">
+                    Le livreur scanne ce QR Code devant le client pour valider{" "}
+                    <strong>Colis livré + Cash encaissé</strong> instantanément.
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard?.writeText(courierUrl);
+                        setCopiedQrLink(true);
+                        setTimeout(() => setCopiedQrLink(false), 2000);
+                      }}
+                      className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-bold text-[#15232D] hover:bg-slate-50 cursor-pointer"
+                    >
+                      {copiedQrLink ? (
+                        <>
+                          <Check className="h-3 w-3 text-[#00A884]" />
+                          Lien copié
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3 w-3" />
+                          Copier lien livreur
+                        </>
+                      )}
+                    </button>
+
+                    <Link
+                      href={`/livraison/${receiptOrder.id}`}
+                      target="_blank"
+                      className="inline-flex items-center gap-1 rounded-lg bg-[#00A884] px-2.5 py-1 text-[11px] font-extrabold text-white hover:bg-[#009474]"
+                    >
+                      Tester l&apos;écran livreur
+                      <ExternalLink className="h-3 w-3" />
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 flex justify-end gap-2 border-t border-[#E2E8F0] pt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setReceiptOrder(null)}
+                >
+                  Fermer
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => window.print()}
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  Imprimer l&apos;étiquette
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

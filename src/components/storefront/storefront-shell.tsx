@@ -19,6 +19,7 @@ import {
   useStorefront,
 } from "@/components/storefront/storefront-context";
 import { StoreCartAndModals } from "@/components/storefront/cart-drawer";
+import { LiveSocialProofToast } from "@/components/storefront/live-social-proof-toast";
 import { usePlatform } from "@/lib/platform-store";
 import {
   canStoreAcceptLiveOrders,
@@ -40,6 +41,7 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
   const {
     store,
     categories,
+    products,
     searchQuery,
     setSearchQuery,
     cartCount,
@@ -537,6 +539,7 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       )}
+      <LiveSocialProofToast store={store} products={products} />
     </div>
   );
 }
