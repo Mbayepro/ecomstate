@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   CheckCircle2,
   Lock,
@@ -10,6 +10,11 @@ import {
   Tag,
   Truck,
 } from "lucide-react";
+import {
+  COUNTRY_DIAL_LIST,
+  formatPhoneWithDialCode,
+  getCountryDialMeta,
+} from "@/lib/country-dial-codes";
 import { canStoreAcceptLiveOrders } from "@/lib/permissions";
 import { usePlatform } from "@/lib/platform-store";
 import { formatCurrency } from "@/lib/utils";
@@ -77,7 +82,21 @@ export function CodDynamicForm({
     deliveryZones[0]?.id ?? "default-cod-zone"
   );
   const [packQty, setPackQty] = useState<1 | 2 | 3>(1);
+  const [phoneDialCountry, setPhoneDialCountry] = useState<string>(
+    store.countryCode || "BJ"
+  );
   const [values, setValues] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (store.countryCode) {
+      setPhoneDialCountry(store.countryCode);
+    }
+  }, [store.countryCode]);
+
+  const activeDialMeta = useMemo(
+    () => getCountryDialMeta(phoneDialCountry),
+    [phoneDialCountry]
+  );
   const [promoInput, setPromoInput] = useState("");
   const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
   const [promoMsg, setPromoMsg] = useState<string | null>(null);
@@ -241,10 +260,16 @@ export function CodDynamicForm({
       values.full_name ||
       Object.entries(values).find(([k]) => k.includes("name"))?.[1] ||
       "Client Boutique";
-    const customerPhone =
+    const rawCustomerPhone =
       values.phone ||
       Object.entries(values).find(([k]) => k.includes("phone"))?.[1] ||
-      "Non renseigné";
+      "";
+    const customerPhone = rawCustomerPhone
+      ? formatPhoneWithDialCode(activeDialMeta.dialCode, rawCustomerPhone)
+      : "Non renseigné";
+    const formattedSecondaryPhone = values.secondary_phone
+      ? formatPhoneWithDialCode(activeDialMeta.dialCode, values.secondary_phone)
+      : undefined;
     const deliveryCity = values.city || selectedZone?.name || store.settings.address;
     const addressParts = [
       values.commune,
@@ -279,7 +304,7 @@ export function CodDynamicForm({
       storeId: store.id,
       customerName,
       customerPhone,
-      secondaryPhone: values.secondary_phone,
+      secondaryPhone: formattedSecondaryPhone,
       deliveryCity,
       deliveryAddress,
       commune: values.commune,
@@ -586,12 +611,56 @@ export function CodDynamicForm({
             );
           }
 
-          const inputType =
-            field.type === "phone" || field.type === "secondary_phone"
-              ? "tel"
-              : field.type === "quantity"
-              ? "number"
-              : "text";
+          if (field.type === "phone" || field.type === "secondary_phone") {
+            return (
+              <div key={field.id}>
+                <label className="block text-xs font-bold">
+                  {field.label}{" "}
+                  {field.required && <span className="text-rose-500">*</span>}
+                </label>
+                <div
+                  className={`mt-1 flex overflow-hidden border ${radiusCls}`}
+                  style={{
+                    backgroundColor: style.fieldBg,
+                    borderColor: style.borderColor,
+                  }}
+                >
+                  <select
+                    aria-label="Indicatif pays"
+                    value={phoneDialCountry}
+                    onChange={(e) => setPhoneDialCountry(e.target.value)}
+                    className="h-11 shrink-0 border-r border-slate-200 bg-slate-50 px-2.5 text-xs font-extrabold text-[#073B35] focus:outline-none cursor-pointer"
+                  >
+                    {COUNTRY_DIAL_LIST.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.code} {c.dialCode} ({c.name})
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="tel"
+                    value={val}
+                    onChange={(e) =>
+                      setValues((prev) => ({
+                        ...prev,
+                        [field.name]: e.target.value,
+                      }))
+                    }
+                    placeholder={activeDialMeta.placeholder}
+                    className="h-11 min-w-0 flex-1 bg-transparent px-3 text-base sm:text-sm focus:outline-none"
+                    style={{ color: style.textColor }}
+                  />
+                </div>
+                {field.helpText && (
+                  <p className="mt-0.5 text-[11px] text-slate-400">
+                    {field.helpText}
+                  </p>
+                )}
+              </div>
+            );
+          }
+
+          const inputType = field.type === "quantity" ? "number" : "text";
 
           return (
             <div key={field.id}>

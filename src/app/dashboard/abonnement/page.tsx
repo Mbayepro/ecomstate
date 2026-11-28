@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DashboardPageHeader } from "@/components/dashboard/page-header";
+import { getCountryDialMeta } from "@/lib/country-dial-codes";
 import { usePlatform } from "@/lib/platform-store";
 import {
   getStoreSubscriptionHealth,
@@ -48,7 +49,8 @@ export default function DashboardAbonnementPage() {
   );
   const [operator, setOperator] = useState(MOBILE_OPERATORS[0]);
   const [senderPhone, setSenderPhone] = useState(
-    activeStore?.ownerPhone ?? "+229 "
+    activeStore?.ownerPhone ??
+      `${getCountryDialMeta(activeStore?.countryCode).dialCode} `
   );
   const [transactionReference, setTransactionReference] = useState("");
   const [copiedPhone, setCopiedPhone] = useState(false);

@@ -36,6 +36,11 @@ import {
   usePlatform,
 } from "@/lib/platform-store";
 import { ADESHINA_SECTORS, getBlueprintBySector } from "@/lib/adeshina-ai";
+import {
+  COUNTRY_DIAL_LIST,
+  formatPhoneWithDialCode,
+  getCountryDialMeta,
+} from "@/lib/country-dial-codes";
 import { formatCurrency, slugify } from "@/lib/utils";
 import { signInWithGoogleOAuth } from "@/lib/supabase/client";
 import type { StoreTemplateId } from "@/types/domain";
@@ -149,14 +154,6 @@ const NICHE_OPTIONS: NicheOption[] = [
   },
 ];
 
-const COUNTRY_FLAGS: Record<string, string> = {
-  BJ: "🇧🇯",
-  SN: "🇸🇳",
-  CI: "🇨🇮",
-  TG: "🇹🇬",
-  BF: "🇧🇫",
-};
-
 const STEPS_META = [
   { num: 1 as const, label: "Secteur & Pays", short: "Activité" },
   { num: 2 as const, label: "Nom & Shrine Pro 3", short: "Boutique" },
@@ -176,6 +173,12 @@ export default function CreerUneBoutiquePage() {
     "already_selling" | "starting"
   >("already_selling");
   const [countryCode, setCountryCode] = useState("BJ");
+  const [phoneCountryCode, setPhoneCountryCode] = useState("BJ");
+
+  const handleSelectCountry = (code: string) => {
+    setCountryCode(code);
+    setPhoneCountryCode(code);
+  };
 
   // Étape 2 : Nom de boutique, Thème Shrine Pro 3 & Adeshina IA
   const [storeName, setStoreName] = useState("");
@@ -206,10 +209,21 @@ export default function CreerUneBoutiquePage() {
     }
   }, []);
 
-  const activeCountries = useMemo(
-    () => countries.filter((c) => c.isActive),
-    [countries]
-  );
+  const activeCountries = useMemo(() => {
+    const fromStore = countries.filter((c) => c.isActive);
+    const existingCodes = new Set(fromStore.map((c) => c.code));
+    const extras = COUNTRY_DIAL_LIST.filter(
+      (d) => d.code !== "FR" && !existingCodes.has(d.code)
+    ).map((d) => ({
+      code: d.code,
+      name: d.name,
+      currency: d.currency,
+      phonePrefix: d.dialCode,
+      isActive: true,
+      paymentProviders: ["Paiement à la livraison (COD)"],
+    }));
+    return [...fromStore, ...extras];
+  }, [countries]);
 
   const selectedCountry = useMemo(
     () =>
@@ -221,6 +235,11 @@ export default function CreerUneBoutiquePage() {
         phonePrefix: "+229",
       },
     [activeCountries, countryCode]
+  );
+
+  const selectedPhoneDial = useMemo(
+    () => getCountryDialMeta(phoneCountryCode),
+    [phoneCountryCode]
   );
 
   const resolvedSectorId = sectorId === "general" ? "mode" : sectorId;
@@ -247,9 +266,13 @@ export default function CreerUneBoutiquePage() {
     setError(null);
     setGoogleLoading(true);
     try {
+      const formattedPhone = formatPhoneWithDialCode(
+        selectedPhoneDial.dialCode,
+        phone
+      );
       const prefs: PendingOAuthStorePrefs = {
         storeName: liveDisplayStoreName,
-        phone: phone.trim() || undefined,
+        phone: formattedPhone || undefined,
         countryCode,
         sectorId: resolvedSectorId,
         useAdeshinaSetup,
@@ -275,11 +298,15 @@ export default function CreerUneBoutiquePage() {
       setError("Le mot de passe doit contenir au moins 6 caractères.");
       return;
     }
+    const formattedPhone = formatPhoneWithDialCode(
+      selectedPhoneDial.dialCode,
+      phone
+    );
     const res = registerMerchant({
       fullName,
       storeName: liveDisplayStoreName,
       email,
-      phone,
+      phone: formattedPhone,
       countryCode,
       password,
       sectorId: resolvedSectorId,
@@ -546,7 +573,7 @@ export default function CreerUneBoutiquePage() {
                           <button
                             key={c.code}
                             type="button"
-                            onClick={() => setCountryCode(c.code)}
+                            onClick={() => handleSelectCountry(c.code)}
                             className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-bold transition-all cursor-pointer ${
                               isSelected
                                 ? "border-[#073B35] bg-[#073B35] text-white shadow-sm"
@@ -885,17 +912,34 @@ export default function CreerUneBoutiquePage() {
                           </span>
                         </label>
                         <div className="flex overflow-hidden rounded-xl border border-[#CBD5E1] bg-white focus-within:border-[#00A884] focus-within:ring-3 focus-within:ring-[#00A884]/15">
-                          <span className="inline-flex items-center gap-1 border-r border-[#E2E8F0] bg-[#F8FAFC] px-2.5 text-xs font-bold text-[#073B35]">
-                            <span>{COUNTRY_FLAGS[countryCode] ?? "🌍"}</span>
-                            <span>{selectedCountry.phonePrefix}</span>
-                          </span>
+                          <select
+                            aria-label="Indicatif téléphonique du pays"
+                            value={phoneCountryCode}
+                            onChange={(e) => {
+                              const nextCode = e.target.value;
+                              setPhoneCountryCode(nextCode);
+                              if (
+                                quickMode &&
+                                activeCountries.some((c) => c.code === nextCode)
+                              ) {
+                                setCountryCode(nextCode);
+                              }
+                            }}
+                            className="h-11 shrink-0 border-r border-[#E2E8F0] bg-[#F8FAFC] px-2.5 text-xs font-extrabold text-[#073B35] focus:outline-none cursor-pointer"
+                          >
+                            {COUNTRY_DIAL_LIST.map((item) => (
+                              <option key={item.code} value={item.code}>
+                                {item.code} {item.dialCode} ({item.name})
+                              </option>
+                            ))}
+                          </select>
                           <input
                             type="tel"
                             required
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}
-                            placeholder="97 00 00 00"
-                            className="h-11 w-full px-3 text-sm font-medium text-[#15232D] focus:outline-none"
+                            placeholder={selectedPhoneDial.placeholder}
+                            className="h-11 min-w-0 flex-1 px-3 text-sm font-medium text-[#15232D] focus:outline-none"
                           />
                         </div>
                       </div>
@@ -905,20 +949,21 @@ export default function CreerUneBoutiquePage() {
                     {quickMode && (
                       <div>
                         <label className="mb-1.5 block text-xs font-extrabold text-[#15232D]">
-                          Pays & Devise
+                          Pays & Devise de la boutique
                         </label>
                         <div className="flex flex-wrap gap-1.5">
                           {activeCountries.map((c) => (
                             <button
                               key={c.code}
                               type="button"
-                              onClick={() => setCountryCode(c.code)}
-                              className={`rounded-lg border px-2.5 py-1.5 text-xs font-bold cursor-pointer ${countryCode === c.code
+                              onClick={() => handleSelectCountry(c.code)}
+                              className={`rounded-lg border px-2.5 py-1.5 text-xs font-bold cursor-pointer ${
+                                countryCode === c.code
                                   ? "border-[#073B35] bg-[#073B35] text-white"
                                   : "border-[#E2E8F0] bg-[#F8FAFC] text-[#15232D]"
-                                }`}
+                              }`}
                             >
-                              {COUNTRY_FLAGS[c.code] ?? "🌍"} {c.name} ({c.currency})
+                              {c.code} · {c.name} ({c.phonePrefix} · {c.currency})
                             </button>
                           ))}
                         </div>
