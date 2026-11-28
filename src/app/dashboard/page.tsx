@@ -46,6 +46,7 @@ import {
   StoreDynamicFontInjector,
 } from "@/lib/store-fonts";
 import { getRealPopularProducts } from "@/lib/adeshina-merchant-copilot";
+import { canStoreAcceptLiveOrders } from "@/lib/permissions";
 import { usePlatform } from "@/lib/platform-store";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 
@@ -346,10 +347,20 @@ export default function DashboardOverviewPage() {
         {/* Ligne supérieure : Statut boutique + Lien copiable + Période en 1 clic */}
         <div className="relative flex flex-col gap-3 border-b border-white/12 pb-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#00A884]/20 px-3 py-1 text-[11px] font-extrabold text-[#7CE3C8] ring-1 ring-[#00A884]/40">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-[#00A884]" />
-              Boutique ouverte
-            </span>
+            {canStoreAcceptLiveOrders(activeStore) ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#00A884]/20 px-3 py-1 text-[11px] font-extrabold text-[#7CE3C8] ring-1 ring-[#00A884]/40">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-[#00A884]" />
+                Ventes ouvertes
+              </span>
+            ) : (
+              <Link
+                href="/dashboard/abonnement"
+                className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/20 px-3 py-1 text-[11px] font-extrabold text-amber-200 ring-1 ring-amber-300/40 transition hover:bg-amber-400/30"
+              >
+                <Lock className="h-3 w-3 text-amber-300" />
+                Mode Aperçu · Activer pour vendre →
+              </Link>
+            )}
 
             <button
               type="button"

@@ -134,7 +134,7 @@ export const INITIAL_STORES: Store[] = [
     settings: {
       primaryColor: "#073B35",
       secondaryColor: "#00A884",
-      template: "shrine_pro_1",
+      template: "shrine_pro_3",
       bannerUrl: "/images/african-courier-motorbike-dispatch.jpg",
       description:
         "Accessoires audio, batteries haute capacité et équipements connectés vérifiés avec garantie locale et paiement à la livraison.",
@@ -162,7 +162,7 @@ export const INITIAL_STORES: Store[] = [
         showPopular: true,
         showPromotions: true,
       },
-      builderSections: createDefaultShrineSections("Cotonou Tech Store", "shrine_pro_1"),
+      builderSections: createDefaultShrineSections("Cotonou Tech Store", "shrine_pro_3"),
       publishedVersion: 1,
       isPublished: true,
     },

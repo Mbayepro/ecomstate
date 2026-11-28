@@ -48,6 +48,7 @@ import {
 import { AdeshinaCollaboratorDrawer } from "@/components/dashboard/adeshina-drawer";
 import { usePlatform } from "@/lib/platform-store";
 import {
+  canStoreAcceptLiveOrders,
   canTeamRoleAccessPath,
   getStoreSubscriptionHealth,
   TEAM_ROLE_LABELS,
@@ -862,7 +863,7 @@ export default function DashboardLayout({
               <AlertTriangle className="h-5 w-5 shrink-0 text-red-600" />
               <span>
                 <strong>Abonnement expiré ou boutique suspendue :</strong>{" "}
-                renouvelez votre formule pour réactiver votre boutique.
+                renouvelez votre formule pour réactiver les ventes de votre boutique.
               </span>
             </div>
             <Link
@@ -870,6 +871,21 @@ export default function DashboardLayout({
               className="rounded-lg bg-red-700 px-3 py-1.5 text-xs font-bold text-white"
             >
               Renouveler
+            </Link>
+          </div>
+        ) : !canStoreAcceptLiveOrders(activeStore) ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-200 bg-amber-50/90 px-6 py-2.5 text-xs text-amber-950">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 shrink-0 text-amber-600" />
+              <span>
+                <strong>Mode Aperçu (Thème Shrine Pro 3 actif) :</strong> votre boutique est visible et personnalisable. Activez votre abonnement pour ouvrir les ventes et recevoir des commandes.
+              </span>
+            </div>
+            <Link
+              href="/dashboard/abonnement"
+              className="rounded-lg bg-[#073B35] px-3.5 py-1.5 text-xs font-extrabold text-white transition hover:bg-[#0a4f47]"
+            >
+              Choisir un plan pour vendre →
             </Link>
           </div>
         ) : null}

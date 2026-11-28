@@ -1,13 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import React, { useMemo, useState } from "react";
 import {
   CheckCircle2,
+  Lock,
   ShieldCheck,
   Sparkles,
   Tag,
   Truck,
 } from "lucide-react";
+import { canStoreAcceptLiveOrders } from "@/lib/permissions";
 import { usePlatform } from "@/lib/platform-store";
 import { formatCurrency } from "@/lib/utils";
 import type {
@@ -55,6 +58,7 @@ export function CodDynamicForm({
   onOrderCreated,
 }: CodDynamicFormProps) {
   const { placeOrder, promoCodes } = usePlatform();
+  const salesUnlocked = canStoreAcceptLiveOrders(store);
 
   const deliveryZones = useMemo(() => {
     const zones = store.settings.deliveryZones ?? [];
@@ -195,6 +199,13 @@ export function CodDynamicForm({
     if (previewMode) {
       setFormError(
         "Mode Aperçu Form Builder : publiez le formulaire pour recevoir de vraies commandes sur votre boutique."
+      );
+      return;
+    }
+
+    if (!salesUnlocked) {
+      setFormError(
+        "Mode Aperçu Boutique : votre vitrine Shrine Pro 3 est prête ! Activez votre abonnement (dès 7 500 FCFA/mois) pour débloquer les ventes et recevoir des commandes clients."
       );
       return;
     }
@@ -673,9 +684,33 @@ export function CodDynamicForm({
       )}
 
       {formError && (
-        <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
-          {formError}
-        </p>
+        <div className="mt-3 space-y-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950">
+          <p className="font-semibold">{formError}</p>
+          {!salesUnlocked && (
+            <Link
+              href="/dashboard/abonnement"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#073B35] px-3 py-1.5 text-[11px] font-extrabold text-white hover:bg-[#0a4f47]"
+            >
+              <Lock className="h-3 w-3 text-[#7CE3C8]" />
+              Activer mon abonnement pour vendre →
+            </Link>
+          )}
+        </div>
+      )}
+
+      {!salesUnlocked && !previewMode && !formError && (
+        <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2 text-[11px] font-bold text-amber-900">
+          <span className="inline-flex items-center gap-1.5">
+            <Lock className="h-3.5 w-3.5 shrink-0 text-amber-600" />
+            Mode Aperçu (Payez l&apos;abonnement pour ouvrir les ventes)
+          </span>
+          <Link
+            href="/dashboard/abonnement"
+            className="shrink-0 underline decoration-amber-600 underline-offset-2 hover:text-[#073B35]"
+          >
+            Activer
+          </Link>
+        </div>
       )}
 
       <button

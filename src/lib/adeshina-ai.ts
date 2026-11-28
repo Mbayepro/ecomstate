@@ -34,7 +34,7 @@ export const ADESHINA_SECTORS: AdeshinaStoreBlueprint[] = [
       "Créations contemporaines, ensembles en lin, robes brodées et tenues confectionnées avec soin. Commandez en ligne et payez uniquement à la réception.",
     primaryColor: "#073B35",
     secondaryColor: "#00A884",
-    template: "shrine_pro_1",
+    template: "shrine_pro_3",
     codPresetId: "mode",
     categories: [
       { name: "Ensembles & Tuniques", description: "Coupes fluides en lin et coton" },
@@ -72,7 +72,7 @@ export const ADESHINA_SECTORS: AdeshinaStoreBlueprint[] = [
       "Cosmétiques naturels à base de beurre de karité pur, huiles précieuses et soins capillaires testés pour sublimer votre peau au quotidien.",
     primaryColor: "#073B35",
     secondaryColor: "#00A884",
-    template: "shrine_pro_1",
+    template: "shrine_pro_3",
     codPresetId: "cosmetiques",
     categories: [
       { name: "Soins Visage", description: "Sérums, crèmes hydratantes et nettoyants" },
@@ -101,7 +101,7 @@ export const ADESHINA_SECTORS: AdeshinaStoreBlueprint[] = [
       "Smartphones, écouteurs sans fil, montres connectées et accessoires de charge rapide testés et livrés directement à votre adresse.",
     primaryColor: "#073B35",
     secondaryColor: "#00A884",
-    template: "shrine_pro_1",
+    template: "shrine_pro_3",
     codPresetId: "electronique",
     categories: [
       { name: "Audio & Écouteurs", description: "Casques Bluetooth et écouteurs ANC" },
@@ -131,7 +131,7 @@ export const ADESHINA_SECTORS: AdeshinaStoreBlueprint[] = [
       "Sandales en cuir artisanal, mocassins habillés et sneakers urbaines sélectionnées pour leur durabilité. Paiement à la livraison.",
     primaryColor: "#073B35",
     secondaryColor: "#00A884",
-    template: "shrine_pro_1",
+    template: "shrine_pro_3",
     codPresetId: "chaussures",
     categories: [
       { name: "Cuir Artisanal", description: "Sandales et mules cousues main" },
@@ -160,7 +160,7 @@ export const ADESHINA_SECTORS: AdeshinaStoreBlueprint[] = [
       "Appareils pratiques pour la cuisine, rangement intelligent et décoration moderne livrés chez vous avec paiement à la réception.",
     primaryColor: "#073B35",
     secondaryColor: "#00A884",
-    template: "shrine_pro_1",
+    template: "shrine_pro_3",
     codPresetId: "maison",
     categories: [
       { name: "Cuisine & Appareils", description: "Ustensiles et électroménager compact" },

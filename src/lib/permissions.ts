@@ -78,10 +78,10 @@ export const DEFAULT_PLANS: SubscriptionPlan[] = [
     customDomainAllowed: false,
     isActive: true,
     features: [
-      "1 boutique en ligne + Store Builder",
-      "Thème initial de référence (Shrine Pro 1)",
-      "Jusqu'à 150 produits, variantes, prix d'achat & marges",
-      "Formulaire COD personnalisable (Form Builder)",
+      "1 boutique en ligne + Thème Shrine Pro 3 complet activé",
+      "Déblocage immédiat des ventes et commandes clients COD",
+      "Jusqu'à 150 produits (photos, GIFs & vidéos en description)",
+      "Formulaire COD personnalisable (Form Builder + Packs)",
       "Gestion commandes (11 statuts), clients & stocks",
       "Livraison, jusqu'à 5 livreurs & rapprochement COD",
       "Dépenses essentielles & calcul du bénéfice réel",
@@ -323,4 +323,17 @@ export function getStoreSubscriptionHealth(
     isExpiringSoon,
     statusLabel,
   };
+}
+
+/**
+ * Règle propriétaire :
+ * - Dès la création (`status === "trial"`), le commerçant dispose directement du grand thème
+ *   Shrine Pro 3 et peut personnaliser / prévisualiser toute sa boutique en conditions réelles.
+ * - En revanche, il doit régler et activer son abonnement (`status === "active"` et non expiré)
+ *   avant de pouvoir vendre et recevoir de vraies commandes clients.
+ */
+export function canStoreAcceptLiveOrders(store: Store): boolean {
+  if (store.status !== "active") return false;
+  const health = getStoreSubscriptionHealth(store);
+  return !health.isExpired;
 }

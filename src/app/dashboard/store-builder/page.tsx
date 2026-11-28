@@ -27,7 +27,10 @@ import {
   getStoreFontStyleVars,
   StoreDynamicFontInjector,
 } from "@/lib/store-fonts";
-import { canUseModule } from "@/lib/permissions";
+import {
+  canStoreAcceptLiveOrders,
+  canUseModule,
+} from "@/lib/permissions";
 import { usePlatform } from "@/lib/platform-store";
 import {
   createDefaultShrineSections,
@@ -320,35 +323,47 @@ export default function StoreBuilderPage() {
             </div>
 
             {/* Barre inférieure en verre dépoli inspirée de Shopify Online Store */}
-            <div className="absolute inset-x-3 bottom-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/15 bg-black/55 px-4 py-3 text-white backdrop-blur-md">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-extrabold text-white">
-                  {activeStore.customDomain || activeStore.subdomain}
-                </p>
-                <p className="text-[11px] text-slate-300">
-                  {ECOMSATE_THEMES.find(
-                    (t) => t.id === activeStore.settings.template
-                  )?.name ?? "Shrine Pro 3"}{" "}
-                  · Police {getActiveFontDisplayName(activeStore.settings)}
-                </p>
+            <div className="absolute inset-x-3 bottom-3 space-y-2 rounded-2xl border border-white/15 bg-black/60 p-3.5 text-white backdrop-blur-md">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-extrabold text-white">
+                    {activeStore.customDomain || activeStore.subdomain}
+                  </p>
+                  <p className="text-[11px] text-slate-300">
+                    {ECOMSATE_THEMES.find(
+                      (t) => t.id === activeStore.settings.template
+                    )?.name ?? "Shrine Pro 3"}{" "}
+                    · Police {getActiveFontDisplayName(activeStore.settings)}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <a
+                    href="#editeur-sections"
+                    className="rounded-full bg-white px-4 py-2 text-xs font-extrabold text-[#15232D] shadow-sm transition hover:bg-slate-100"
+                  >
+                    Modifier le thème
+                  </a>
+                  <Link
+                    href={`/s/${activeStore.slug}`}
+                    target="_blank"
+                    className="inline-flex items-center gap-1 rounded-full border border-white/25 bg-white/10 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-white/20"
+                  >
+                    Prévisualiser
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <a
-                  href="#editeur-sections"
-                  className="rounded-full bg-white px-4 py-2 text-xs font-extrabold text-[#15232D] shadow-sm transition hover:bg-slate-100"
-                >
-                  Modifier le thème
-                </a>
+              {!canStoreAcceptLiveOrders(activeStore) && (
                 <Link
-                  href={`/s/${activeStore.slug}`}
-                  target="_blank"
-                  className="inline-flex items-center gap-1 rounded-full border border-white/25 bg-white/10 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-white/20"
+                  href="/dashboard/abonnement"
+                  className="flex items-center justify-center gap-1.5 rounded-xl bg-white/15 py-2 text-xs font-extrabold text-[#7CE3C8] transition hover:bg-white/25"
                 >
-                  Prévisualiser
-                  <ExternalLink className="h-3.5 w-3.5" />
+                  <span>Choisir un abonnement pour lancer les ventes</span>
+                  <span>→</span>
                 </Link>
-              </div>
+              )}
             </div>
           </div>
         </div>

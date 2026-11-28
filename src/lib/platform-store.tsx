@@ -662,20 +662,10 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
             const rawPrimary = (st.settings?.primaryColor || "").toLowerCase();
             const rawSecondary = (st.settings?.secondaryColor || "").toLowerCase();
             const resolvedTemplate: StoreTemplateId =
-              st.planCode === "premium"
-                ? st.settings?.template || "shrine_pro_3"
-                : st.settings?.template === "shrine_pro_3"
-                  ? "shrine_pro_1"
-                  : st.settings?.template || "shrine_pro_1";
+              st.settings?.template || "shrine_pro_3";
             const builderSections =
               st.settings?.builderSections && st.settings.builderSections.length > 0
-                ? st.planCode !== "premium"
-                  ? st.settings.builderSections.filter(
-                      (sec) =>
-                        sec.type !== "bundle_deals" &&
-                        sec.type !== "comparison_table"
-                    )
-                  : st.settings.builderSections
+                ? st.settings.builderSections
                 : createDefaultShrineSections(st.name, resolvedTemplate);
             const upgradedBanner =
               st.id === "store-atelier-dakar" &&
@@ -1210,7 +1200,7 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
           settings: {
             primaryColor: blueprint?.primaryColor ?? "#073B35",
             secondaryColor: blueprint?.secondaryColor ?? "#00A884",
-            template: "shrine_pro_1",
+            template: "shrine_pro_3",
             description:
               blueprint?.description ??
               `Bienvenue chez ${storeName}. Commandez en ligne et payez uniquement à la livraison.`,
@@ -1226,7 +1216,7 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
               showPopular: true,
               showPromotions: true,
             },
-            builderSections: createDefaultShrineSections(storeName, "shrine_pro_1"),
+            builderSections: createDefaultShrineSections(storeName, "shrine_pro_3"),
             publishedVersion: 1,
             isPublished: true,
           },
@@ -1328,7 +1318,8 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
       ? getBlueprintBySector(input.sectorId || "mode", input.storeName)
       : null;
 
-    const chosenTemplate: StoreTemplateId = "shrine_pro_1";
+    const chosenTemplate: StoreTemplateId =
+      input.templateId ?? blueprint?.template ?? "shrine_pro_3";
 
     const newStore: Store = {
       id: storeId,
@@ -2433,6 +2424,19 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
   };
 
   const placeOrder = (input: PlaceOrderInput): Order => {
+    const targetStore = state.stores.find((s) => s.id === input.storeId);
+    if (
+      targetStore &&
+      (targetStore.status !== "active" ||
+        (targetStore.subscriptionEndsAt
+          ? new Date(targetStore.subscriptionEndsAt).getTime() < Date.now()
+          : false))
+    ) {
+      throw new Error(
+        "Boutique en Mode Aperçu : le commerçant doit activer son abonnement pour recevoir des commandes."
+      );
+    }
+
     const subtotal = input.items.reduce(
       (sum, item) => sum + item.unitPrice * item.quantity,
       0
@@ -2657,15 +2661,13 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
       ...prev,
       stores: prev.stores.map((s) => {
         if (s.id !== storeId) return s;
-        const nextTemplate: StoreTemplateId =
-          planCode === "premium" ? "shrine_pro_3" : "shrine_pro_1";
         return {
           ...s,
           planCode,
+          status: planCode === "trial" ? s.status : "active",
           settings: {
             ...s.settings,
-            template: nextTemplate,
-            builderSections: createDefaultShrineSections(s.name, nextTemplate),
+            template: s.settings.template || "shrine_pro_3",
           },
         };
       }),

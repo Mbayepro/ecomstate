@@ -21,7 +21,7 @@ import {
 import { StoreCartAndModals } from "@/components/storefront/cart-drawer";
 import { usePlatform } from "@/lib/platform-store";
 import {
-  getStoreSubscriptionHealth,
+  canStoreAcceptLiveOrders,
   ORDER_STATUS_META,
 } from "@/lib/permissions";
 import {
@@ -71,6 +71,7 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
   const primary = store.settings.primaryColor || "#073B35";
   const secondary = store.settings.secondaryColor || "#00A884";
   const storeFontVars = getStoreFontStyleVars(store.settings);
+  const salesUnlocked = canStoreAcceptLiveOrders(store);
 
   return (
     <div
@@ -78,6 +79,23 @@ function StorefrontChrome({ children }: { children: React.ReactNode }) {
       style={storeFontVars}
     >
       <StoreDynamicFontInjector settings={store.settings} />
+
+      {/* Bandeau Mode Aperçu (avant paiement d'abonnement) style Shopify */}
+      {!salesUnlocked && (
+        <div className="border-b border-amber-300/40 bg-slate-950 px-4 py-2.5 text-xs text-white">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2">
+            <p className="font-semibold text-amber-200">
+              Mode Aperçu Boutique · Thème Shrine Pro 3 complet activé. Réglez votre abonnement pour ouvrir les ventes et encaisser vos commandes.
+            </p>
+            <Link
+              href="/dashboard/abonnement"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#00A884] px-3.5 py-1 text-[11px] font-extrabold text-white transition hover:bg-[#009474]"
+            >
+              Activer ma boutique pour vendre →
+            </Link>
+          </div>
+        </div>
+      )}
       {/* Barre supérieure : Livraison COD & Suivi de commande en ligne */}
       <div
         className="px-4 py-2 text-xs text-white"
@@ -554,18 +572,15 @@ export function StorefrontClientShell({
     );
   }
 
-  const subHealth = getStoreSubscriptionHealth(store);
-
-  if (store.status === "suspended" || subHealth.isExpired) {
+  if (store.status === "suspended") {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-[#F8FAFC] p-6 text-center">
         <StoreIcon className="h-12 w-12 text-[#F4A340]" />
         <h1 className="mt-4 text-2xl font-extrabold text-[#15232D]">
-          {store.name} est temporairement indisponible
+          {store.name} est temporairement suspendue
         </h1>
         <p className="mt-2 max-w-md text-sm text-slate-600">
-          Cette boutique est actuellement suspendue ou en attente de
-          renouvellement d&apos;abonnement.
+          Cette boutique est actuellement suspendue par l&apos;administration.
         </p>
       </div>
     );

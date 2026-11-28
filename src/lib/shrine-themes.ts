@@ -19,12 +19,32 @@ export interface EcomSateThemeDefinition {
  */
 export const ECOMSATE_THEMES: EcomSateThemeDefinition[] = [
   {
-    id: "shrine_pro_1",
-    name: "Shrine Pro 1 (Référence COD)",
+    id: "shrine_pro_3",
+    name: "Shrine Pro 3 (Ultra-Conversion COD)",
     tier: "standard",
-    badge: "Inclus · Essai & Standard (7 500 FCFA)",
+    badge: "Thème Officiel Activé d'Office (Valeur +1 000 $)",
     description:
-      "Initié automatiquement dès la création de votre boutique : bannière Hero, barre d'annonce COD, bandeau d'engagements, grille de 4 avantages, résultats et FAQ.",
+      "Activé directement dès la création de votre boutique pour visualiser tout le potentiel de vente : Packs 1x/2x/3x BUNDLE & SAVE, chronologie de livraison 3 étapes, compte à rebours, comparatif Nous vs Autres, avis vérifiés, témoignages sociaux et barre d'achat collante.",
+    defaultPrimary: "#073B35",
+    defaultSecondary: "#00A884",
+    features: [
+      "Étoiles vertes Trustpilot (4,9/5) & 4 arguments cochés sous le titre",
+      "Offres Packs BUNDLE & SAVE (1x, Pack Duo 2x, Pack Trio 3x)",
+      "Chronologie visuelle de livraison 3 étapes avec dates calculées",
+      "Compte à rebours promotionnel en direct (Heures : Minutes : Secondes)",
+      "Mise en scène produit entourée de 4 points forts illustrés",
+      "Tableau comparatif visuel (Votre boutique vs Autres vendeurs)",
+      "Avis acheteurs vérifiés 4,9/5 + Témoignages sociaux type commentaires",
+      "Barre de commande collante en bas d'écran au défilement (Sticky COD)",
+    ],
+  },
+  {
+    id: "shrine_pro_1",
+    name: "Shrine Pro 1 (Épuré & Rapide)",
+    tier: "standard",
+    badge: "Variante Légère Incluse",
+    description:
+      "Variante minimaliste de Shrine Pro allant droit au catalogue : bannière Hero, barre d'annonce COD, bandeau d'engagements, grille de 4 avantages et FAQ.",
     defaultPrimary: "#073B35",
     defaultSecondary: "#00A884",
     features: [
@@ -34,26 +54,6 @@ export const ECOMSATE_THEMES: EcomSateThemeDefinition[] = [
       "Description produit enrichie (Photos, GIFs & Vidéos)",
       "Formulaire COD Express intégré sur la fiche produit",
       "Barres de résultats & FAQ accordéon",
-    ],
-  },
-  {
-    id: "shrine_pro_3",
-    name: "Shrine Pro 3 (Ultra-Conversion COD)",
-    tier: "premium",
-    badge: "Exclusif Plan Premium (15 000 FCFA) · Valeur +1 000 $",
-    description:
-      "Le grand thème complet haute conversion (valeur +1 000 $ sur Shopify) réservé aux abonnés Premium : Packs 1x/2x/3x BUNDLE & SAVE, chronologie de livraison 3 étapes, compte à rebours, comparatif Nous vs Autres, avis vérifiés, témoignages sociaux et barre d'achat collante.",
-    defaultPrimary: "#073B35",
-    defaultSecondary: "#00A884",
-    features: [
-      "Étoiles vertes Trustpilot (4,9/5) & 4 arguments cochés sous le titre",
-      "Offres Packs BUNDLE & SAVE (1x, Pack Duo 2x, Pack Trio 3x + avantage)",
-      "Chronologie visuelle de livraison 3 étapes avec dates calculées",
-      "Compte à rebours promotionnel en direct (Heures : Minutes : Secondes)",
-      "Mise en scène produit entourée de 4 points forts illustrés",
-      "Tableau comparatif visuel (Votre boutique vs Autres vendeurs)",
-      "Avis acheteurs vérifiés 4,9/5 + Témoignages sociaux type commentaires",
-      "Barre de commande collante en bas d'écran au défilement (Sticky COD)",
     ],
   },
 ];
